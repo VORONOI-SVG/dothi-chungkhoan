@@ -344,7 +344,7 @@ async function fetchTickerList() {
 
   for (const url of urls) {
     try {
-      const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const res  = await fetchWithTimeout(url, 8000);
       if (!res.ok) continue;
       const json = await res.json();
       const rows = json?.data || [];
@@ -559,55 +559,79 @@ function initCharts() {
 }
 
 /* ══════════════════════════════════════════════════════════
+   FETCH HELPER – uses AbortController (not AbortSignal.timeout)
+   for maximum browser compatibility
+   ══════════════════════════════════════════════════════════ */
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal })
+    .then(r => { clearTimeout(tid); return r; })
+    .catch(e => { clearTimeout(tid); throw e; });
+}
+
+/* ══════════════════════════════════════════════════════════
    LOAD CHART DATA – multi-source with CORS fallbacks
-   Priority: TCBS direct → Yahoo Finance → CORS proxy
+   Source priority:
+     1. Entrade X (KB Securities) – CORS open, TradingView format
+     2. SSI iBoard                – CORS open, TradingView format
+     3. TCBS direct               – might work on some networks
+     4. TCBS via corsproxy.io     – CORS proxy
+     5. TCBS via allorigins.win   – CORS proxy
    ══════════════════════════════════════════════════════════ */
 async function loadChartData() {
   if (!curTicker) return;
   showState('loading');
 
-  const now  = Math.floor(Date.now()/1000);
+  const now  = Math.floor(Date.now() / 1000);
   const from = rangeDays > 0
     ? now - rangeDays * 86400
-    : Math.floor(new Date('2000-01-01').getTime()/1000);
+    : Math.floor(new Date('2000-01-01').getTime() / 1000);
 
-  const yInterval = resolution==='W' ? '1wk' : resolution==='M' ? '1mo' : '1d';
-  // Yahoo Finance uses .VN for all Vietnamese stocks (HOSE/HNX/UPCOM)
-  const yahooTicker = `${curTicker}.VN`;
+  // Each provider uses its own resolution naming convention
+  const tcbsRes    = resolution; // D / W / M  (TCBS native)
+  const entradeRes = resolution === 'W' ? '1W' : resolution === 'M' ? '1M' : '1D'; // Entrade
+  const ssiRes     = resolution === 'W' ? 'W'  : resolution === 'M' ? 'M'  : 'D';  // SSI
 
-  const TCBS_URL = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
-    `?ticker=${encodeURIComponent(curTicker)}&type=stock&resolution=${resolution}` +
+  // ── Source URLs ───────────────────────────────────────
+  // 1. KB Securities / Entrade X (CORS-open, TradingView-compatible format)
+  const ENTRADE = `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock` +
+    `?from=${from}&to=${now}&symbol=${encodeURIComponent(curTicker)}&resolution=${entradeRes}`;
+
+  // 2. SSI iBoard (CORS-open)
+  const SSI = `https://iboard-query.ssi.com.vn/v2/stock-price/his-price` +
+    `?symbol=${encodeURIComponent(curTicker)}&resolution=${ssiRes}&from=${from}&to=${now}`;
+
+  // 3. TCBS direct
+  const TCBS = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
+    `?ticker=${encodeURIComponent(curTicker)}&type=stock&resolution=${tcbsRes}` +
     `&from=${from}&to=${now}`;
 
-  const YAHOO_URL = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}` +
-    `?period1=${from}&period2=${now}&interval=${yInterval}&includePrePost=false`;
-
-  const YAHOO2_URL = `https://query2.finance.yahoo.com/v8/finance/chart/${yahooTicker}` +
-    `?period1=${from}&period2=${now}&interval=${yInterval}&includePrePost=false`;
-
-  const PROXY1 = `https://corsproxy.io/?${encodeURIComponent(TCBS_URL)}`;
-  const PROXY2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS_URL)}`;
+  // 4-5. CORS proxies wrapping TCBS
+  const PROXY_CORS  = `https://corsproxy.io/?${encodeURIComponent(TCBS)}`;
+  const PROXY_ALLOR = `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS)}`;
 
   const attempts = [
-    { url: TCBS_URL,   parse: parseTCBS,  label: 'TCBS'     },
-    { url: YAHOO_URL,  parse: parseYahoo, label: 'Yahoo'    },
-    { url: YAHOO2_URL, parse: parseYahoo, label: 'Yahoo2'   },
-    { url: PROXY1,     parse: parseTCBS,  label: 'corsproxy'},
-    { url: PROXY2,     parse: parseTCBS,  label: 'allorigins'},
+    { url: ENTRADE,    parse: parseTVFormat, label: 'Entrade'    },
+    { url: SSI,        parse: parseTVFormat, label: 'SSI'        },
+    { url: TCBS,       parse: parseTCBS,     label: 'TCBS'       },
+    { url: PROXY_CORS, parse: parseTCBS,     label: 'corsproxy'  },
+    { url: PROXY_ALLOR,parse: parseTCBS,     label: 'allorigins' },
   ];
 
-  let lastErr = null;
+  const errors = [];
   for (const { url, parse, label } of attempts) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      if (!res.ok) { lastErr = `${label}: HTTP ${res.status}`; continue; }
+      const res  = await fetchWithTimeout(url, 12000);
+      if (!res.ok) { errors.push(`${label}: HTTP ${res.status}`); continue; }
       const json = await res.json();
       const candles = parse(json);
-      if (!candles || candles.length < 2) { lastErr = `${label}: dữ liệu trống`; continue; }
+      if (!candles || candles.length < 2) { errors.push(`${label}: no data`); continue; }
 
       const volData = candles.map(c => ({
-        time: c.time, value: c.volume,
-        color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)'
+        time:  c.time,
+        value: c.volume,
+        color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
       }));
 
       candleSeries.setData(candles);
@@ -616,16 +640,49 @@ async function loadChartData() {
       mainChart.timeScale().fitContent();
       showState('chart');
       document.getElementById('ohlc').style.display = 'flex';
-      return; // success
+      console.log(`[VNChart] Data loaded from ${label}`);
+      return; // ✓ success
     } catch (e) {
-      lastErr = e.message;
+      errors.push(`${label}: ${e.message}`);
     }
   }
 
-  showState('error', `Không tải được dữ liệu cho mã ${curTicker}. Kiểm tra kết nối và thử lại.`);
+  // All sources failed
+  console.error('[VNChart] All sources failed:', errors);
+  showState('error',
+    `Không tải được dữ liệu cho "${curTicker}".\n` +
+    `Nguồn đã thử: ${errors.join(' | ')}`
+  );
 }
 
-/* ── Data parsers ────────────────────────────────────── */
+/* ── Parsers ─────────────────────────────────────────── */
+
+// TradingView-compatible format: { t:[ts], o:[...], h:[...], l:[...], c:[...], v:[...] }
+// Used by Entrade X and SSI iBoard
+function parseTVFormat(json) {
+  const t = json?.t || json?.time || [];
+  const o = json?.o || json?.open  || [];
+  const h = json?.h || json?.high  || [];
+  const l = json?.l || json?.low   || [];
+  const c = json?.c || json?.close || [];
+  const v = json?.v || json?.volume|| [];
+  if (!Array.isArray(t) || !t.length) return null;
+
+  const candles = t.map((ts, i) => {
+    const ov=+o[i], hv=+h[i], lv=+l[i], cv=+c[i];
+    // Reject any bar with non-finite OHLC
+    if (!isFinite(ov)||!isFinite(hv)||!isFinite(lv)||!isFinite(cv)) return null;
+    // ts might be seconds or milliseconds
+    const sec = ts > 1e10 ? Math.floor(ts / 1000) : ts;
+    // normalise to UTC midnight so Lightweight Charts date axis works correctly
+    const d = new Date(sec * 1000);
+    const midnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / 1000;
+    return { time: midnight, open:ov, high:hv, low:lv, close:cv, volume:isFinite(+v[i]) ? +v[i] : 0 };
+  }).filter(Boolean).sort((a,b) => a.time - b.time);
+  return dedup(candles);
+}
+
+// TCBS format: { data: [{ tradingDate, open, high, low, close, volume }] }
 function parseTCBS(json) {
   const rows = json?.data || json?.stockPriceList || [];
   if (!rows.length) return null;
@@ -640,28 +697,7 @@ function parseTCBS(json) {
       close: +(r.close || r.priceClose || 0),
       volume:+(r.volume|| r.dealVolume || 0),
     };
-  }).filter(Boolean).sort((a,b)=>a.time-b.time);
-  return dedup(candles);
-}
-
-function parseYahoo(json) {
-  const result = json?.chart?.result?.[0];
-  if (!result) return null;
-  const ts    = result.timestamp || [];
-  const quote = result.indicators?.quote?.[0] || {};
-  const { open=[], high=[], low=[], close=[], volume=[] } = quote;
-  if (!ts.length) return null;
-
-  const candles = ts.map((t, i) => {
-    const o=open[i], h=high[i], l=low[i], c=close[i];
-    if (o==null||h==null||l==null||c==null) return null;
-    // Yahoo uses Unix seconds already; normalise to midnight
-    const d = new Date(t*1000);
-    const noon = Math.floor(new Date(
-      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-    ).getTime()/1000);
-    return { time:noon, open:+o, high:+h, low:+l, close:+c, volume:+(volume[i]||0) };
-  }).filter(Boolean).sort((a,b)=>a.time-b.time);
+  }).filter(Boolean).sort((a,b) => a.time - b.time);
   return dedup(candles);
 }
 
