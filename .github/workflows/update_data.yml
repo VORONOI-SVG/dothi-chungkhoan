@@ -1,1 +1,34 @@
+name: Update Vietnamese Stock Data
 
+on:
+  schedule:
+    # Run Mon–Fri at 18:30 UTC = 01:30 ICT (after HOSE/HNX close at 15:00 ICT)
+    - cron: '30 18 * * 1-5'
+  workflow_dispatch:   # also allow manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write      # needed to git push back to the repo
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch stock data
+        run: python scripts/fetch_stocks.py
+
+      - name: Commit & push data files
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git add data/
+          # Only commit if something changed
+          git diff --staged --quiet && echo "No changes." || \
+            git commit -m "data: update stock OHLCV $(date -u +%Y-%m-%d)" && git push
