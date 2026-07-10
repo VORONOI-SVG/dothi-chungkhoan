@@ -335,23 +335,34 @@ document.addEventListener('DOMContentLoaded', async () => {
    TICKER LIST  – TCBS public API
    ══════════════════════════════════════════════════════════ */
 async function fetchTickerList() {
-  // TCBS: returns all listed stocks
-  const url = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/ticker?locale=vi&page=0&size=2000';
-  const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error('TCBS list failed');
-  const json = await res.json();
-  const rows = json?.data || [];
-  if (rows.length < 50) throw new Error('Too few tickers');
+  const BASE = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/ticker?locale=vi&page=0&size=2000';
+  const urls = [
+    BASE,
+    `https://corsproxy.io/?${encodeURIComponent(BASE)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(BASE)}`,
+  ];
 
-  STOCKS = rows.map(r => {
-    const ex = normEx(r.exchange || r.comGroupCode || '');
-    return ex ? [r.ticker, r.organName || r.shortName || r.ticker, ex] : null;
-  }).filter(Boolean);
+  for (const url of urls) {
+    try {
+      const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const rows = json?.data || [];
+      if (rows.length < 50) continue;
 
-  buildMap();
-  updateCount(`${STOCKS.length} mã`, true);
-  document.getElementById('empty-hint').textContent =
-    `Hỗ trợ ${STOCKS.length}+ mã HOSE · HNX · UPCOM`;
+      STOCKS = rows.map(r => {
+        const ex = normEx(r.exchange || r.comGroupCode || '');
+        return ex ? [r.ticker, r.organName || r.shortName || r.ticker, ex] : null;
+      }).filter(Boolean);
+
+      buildMap();
+      updateCount(`${STOCKS.length} mã`, true);
+      document.getElementById('empty-hint').textContent =
+        `Hỗ trợ ${STOCKS.length}+ mã HOSE · HNX · UPCOM`;
+      return; // success
+    } catch { /* try next */ }
+  }
+  throw new Error('All ticker sources failed');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -548,70 +559,118 @@ function initCharts() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   LOAD CHART DATA – TCBS API
+   LOAD CHART DATA – multi-source with CORS fallbacks
+   Priority: TCBS direct → Yahoo Finance → CORS proxy
    ══════════════════════════════════════════════════════════ */
 async function loadChartData() {
   if (!curTicker) return;
-
   showState('loading');
 
-  try {
-    const now  = Math.floor(Date.now()/1000);
-    const from = rangeDays > 0
-      ? now - rangeDays*86400
-      : Math.floor(new Date('2000-01-01').getTime()/1000);
+  const now  = Math.floor(Date.now()/1000);
+  const from = rangeDays > 0
+    ? now - rangeDays * 86400
+    : Math.floor(new Date('2000-01-01').getTime()/1000);
 
-    const url = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
-      `?ticker=${encodeURIComponent(curTicker)}&type=stock&resolution=${resolution}` +
-      `&from=${from}&to=${now}`;
+  const yInterval = resolution==='W' ? '1wk' : resolution==='M' ? '1mo' : '1d';
+  // Yahoo Finance uses .VN for all Vietnamese stocks (HOSE/HNX/UPCOM)
+  const yahooTicker = `${curTicker}.VN`;
 
-    const res  = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+  const TCBS_URL = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
+    `?ticker=${encodeURIComponent(curTicker)}&type=stock&resolution=${resolution}` +
+    `&from=${from}&to=${now}`;
 
-    const rows = json?.data || json?.stockPriceList || [];
-    if (!rows.length) throw new Error('Không có dữ liệu cho mã này.');
+  const YAHOO_URL = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}` +
+    `?period1=${from}&period2=${now}&interval=${yInterval}&includePrePost=false`;
 
-    // Normalise
-    const candles = rows.map(r => {
-      const t = dateToTime(r.tradingDate || r.date);
-      return t ? {
-        time:  t,
-        open:  +(r.open  || r.priceOpen),
-        high:  +(r.high  || r.priceHigh),
-        low:   +(r.low   || r.priceLow),
-        close: +(r.close || r.priceClose),
-        volume:+(r.volume|| r.dealVolume || 0),
-      } : null;
-    }).filter(Boolean).sort((a,b)=>a.time-b.time);
+  const YAHOO2_URL = `https://query2.finance.yahoo.com/v8/finance/chart/${yahooTicker}` +
+    `?period1=${from}&period2=${now}&interval=${yInterval}&includePrePost=false`;
 
-    // Deduplicate by time
-    const seen = new Set();
-    const uniq = candles.filter(c => {
-      if (seen.has(c.time)) return false;
-      seen.add(c.time); return true;
-    });
+  const PROXY1 = `https://corsproxy.io/?${encodeURIComponent(TCBS_URL)}`;
+  const PROXY2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS_URL)}`;
 
-    if (!uniq.length) throw new Error('Dữ liệu trống sau khi xử lý.');
+  const attempts = [
+    { url: TCBS_URL,   parse: parseTCBS,  label: 'TCBS'     },
+    { url: YAHOO_URL,  parse: parseYahoo, label: 'Yahoo'    },
+    { url: YAHOO2_URL, parse: parseYahoo, label: 'Yahoo2'   },
+    { url: PROXY1,     parse: parseTCBS,  label: 'corsproxy'},
+    { url: PROXY2,     parse: parseTCBS,  label: 'allorigins'},
+  ];
 
-    const volData = uniq.map(c => ({
-      time:c.time, value:c.volume,
-      color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)'
-    }));
+  let lastErr = null;
+  for (const { url, parse, label } of attempts) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) { lastErr = `${label}: HTTP ${res.status}`; continue; }
+      const json = await res.json();
+      const candles = parse(json);
+      if (!candles || candles.length < 2) { lastErr = `${label}: dữ liệu trống`; continue; }
 
-    candleSeries.setData(uniq);
-    volSeries.setData(volData);
+      const volData = candles.map(c => ({
+        time: c.time, value: c.volume,
+        color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)'
+      }));
 
-    // MA lines
-    renderMA(uniq);
-
-    mainChart.timeScale().fitContent();
-    showState('chart');
-    document.getElementById('ohlc').style.display = 'flex';
-
-  } catch (err) {
-    showState('error', err.message || 'Không tải được dữ liệu.');
+      candleSeries.setData(candles);
+      volSeries.setData(volData);
+      renderMA(candles);
+      mainChart.timeScale().fitContent();
+      showState('chart');
+      document.getElementById('ohlc').style.display = 'flex';
+      return; // success
+    } catch (e) {
+      lastErr = e.message;
+    }
   }
+
+  showState('error', `Không tải được dữ liệu cho mã ${curTicker}. Kiểm tra kết nối và thử lại.`);
+}
+
+/* ── Data parsers ────────────────────────────────────── */
+function parseTCBS(json) {
+  const rows = json?.data || json?.stockPriceList || [];
+  if (!rows.length) return null;
+  const candles = rows.map(r => {
+    const t = dateToTime(r.tradingDate || r.date);
+    if (!t) return null;
+    return {
+      time:   t,
+      open:  +(r.open  || r.priceOpen  || 0),
+      high:  +(r.high  || r.priceHigh  || 0),
+      low:   +(r.low   || r.priceLow   || 0),
+      close: +(r.close || r.priceClose || 0),
+      volume:+(r.volume|| r.dealVolume || 0),
+    };
+  }).filter(Boolean).sort((a,b)=>a.time-b.time);
+  return dedup(candles);
+}
+
+function parseYahoo(json) {
+  const result = json?.chart?.result?.[0];
+  if (!result) return null;
+  const ts    = result.timestamp || [];
+  const quote = result.indicators?.quote?.[0] || {};
+  const { open=[], high=[], low=[], close=[], volume=[] } = quote;
+  if (!ts.length) return null;
+
+  const candles = ts.map((t, i) => {
+    const o=open[i], h=high[i], l=low[i], c=close[i];
+    if (o==null||h==null||l==null||c==null) return null;
+    // Yahoo uses Unix seconds already; normalise to midnight
+    const d = new Date(t*1000);
+    const noon = Math.floor(new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    ).getTime()/1000);
+    return { time:noon, open:+o, high:+h, low:+l, close:+c, volume:+(volume[i]||0) };
+  }).filter(Boolean).sort((a,b)=>a.time-b.time);
+  return dedup(candles);
+}
+
+function dedup(arr) {
+  const seen = new Set(), out = [];
+  for (const c of arr) {
+    if (!seen.has(c.time)) { seen.add(c.time); out.push(c); }
+  }
+  return out.length ? out : null;
 }
 
 function dateToTime(s) {
