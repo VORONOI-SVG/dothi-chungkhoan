@@ -29,6 +29,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name  "github-actions[bot]"
           git add data/
-          # Only commit if something changed
-          git diff --staged --quiet && echo "No changes." || \
-            git commit -m "data: update stock OHLCV $(date -u +%Y-%m-%d)" && git push
+          
+          # Kiểm tra nếu không có thay đổi thì bỏ qua, nếu có thì commit và đồng bộ rồi push
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "data: update stock OHLCV $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main  # Tự động gộp code mới nhất trên GitHub để tránh lỗi fetch first
+            git push origin main
+          fi
