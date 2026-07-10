@@ -97,10 +97,7 @@ STOCKS = [
 
 # ── SSI iBoard API ────────────────────────────────────────────────────────────
 # Sửa lại chính xác đoạn này từ dòng 99 đến 102 thành:
-SSI_URL = (
-    "https://iboardquery.ssi.com.vn/v1/history/chart"
-    "?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}"
-)
+SSI_URL = "https://iboardquery.ssi.com.vn/v1/history/chart?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json",
@@ -124,6 +121,7 @@ def fetch_ticker(ticker: str, from_ts: int, to_ts: int) -> list:
         return []
         
     timestamps = data["t"]
+   # Sửa lại đoạn này (từ dòng 124 đến 128):
     opens = data["o"]
     highs = data["h"]
     lows = data["l"]
