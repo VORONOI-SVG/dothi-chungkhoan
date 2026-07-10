@@ -1,92 +1,74 @@
-#!/usr/bin/env python3
-"""
-Fetch Vietnamese stock OHLCV data from SSI iBoard API and save as JSON files.
-Run by GitHub Actions daily after market close, or manually.
-
-Usage:
-    python scripts/fetch_stocks.py
-
-Output: data/{TICKER}.json for each stock
-"""
-
-import json
 import os
+import json
 import time
-import urllib.request
-import urllib.error
-from datetime import datetime, timezone
+import requests
 
-# ── Config ────────────────────────────────────────────────────────────────────
-DATA_DIR   = "data"
-RESOLUTION = "D"           # D = daily
-YEARS_BACK = 10            # keep 10 years of history
-SLEEP_SEC  = 0.2           # politeness delay between requests
-TIMEOUT    = 15
+# Cấu hình chung
+TIMEOUT = 15
+SLEEP_SEC = 0.3
+RESOLUTION = "D"
 
-# ── Full ticker list (HOSE / HNX / UPCOM) ────────────────────────────────────
+# Danh sách các mã cổ phiếu (HOSE, HNX, UPCOM)
 STOCKS = [
     # HOSE
-    ("ACB","ACB","HOSE"),("AGR","Agribank Sec","HOSE"),("ANV","Nam Việt","HOSE"),
-    ("BCG","Bamboo Capital","HOSE"),("BCM","Becamex","HOSE"),("BID","BIDV","HOSE"),
-    ("BMP","Bình Minh Nhựa","HOSE"),("BSR","Lọc Hóa dầu Bình Sơn","HOSE"),
-    ("BVH","Bảo Việt","HOSE"),("CII","CII","HOSE"),("CMG","CMC","HOSE"),
-    ("CTD","Coteccons","HOSE"),("CTG","VietinBank","HOSE"),("DCM","Đạm Cà Mau","HOSE"),
-    ("DGC","Hóa chất Đức Giang","HOSE"),("DGW","Digiworld","HOSE"),
-    ("DPM","Đạm Phú Mỹ","HOSE"),("DRC","Cao su Đà Nẵng","HOSE"),
-    ("EIB","Eximbank","HOSE"),("EVF","EVNFC","HOSE"),("FPT","FPT","HOSE"),
-    ("FRT","FPT Retail","HOSE"),("GAS","PV Gas","HOSE"),("GEX","Gelex","HOSE"),
-    ("GMD","Gemadept","HOSE"),("HAH","Hải An","HOSE"),("HAX","Haxaco","HOSE"),
-    ("HCM","HSC","HOSE"),("HDC","HDC","HOSE"),("HDG","Hà Đô","HOSE"),
-    ("HDB","HDBank","HOSE"),("HGM","Cao su Hà Giang","HOSE"),
-    ("HPG","Hòa Phát","HOSE"),("HT1","Xi măng Hà Tiên 1","HOSE"),
-    ("HVN","Vietnam Airlines","HOSE"),("IMP","Imexpharm","HOSE"),
-    ("IPA","IPA","HOSE"),("KBC","Kinh Bắc","HOSE"),("KDC","Kido","HOSE"),
-    ("KDH","Khang Điền","HOSE"),("KOS","Kosy","HOSE"),("LPB","LienViet Post Bank","HOSE"),
-    ("MBB","MB Bank","HOSE"),("MCM","Mía đường Cao Bằng","HOSE"),
-    ("MHC","MHC","HOSE"),("MSB","MSB","HOSE"),("MSN","Masan","HOSE"),
-    ("MWG","Thế Giới Di Động","HOSE"),("NKG","Thép Nam Kim","HOSE"),
-    ("NLG","Nam Long","HOSE"),("NVL","Novaland","HOSE"),("OCB","OCB","HOSE"),
-    ("OCP","OCP","HOSE"),("PDR","Phát Đạt","HOSE"),("PHR","Cao su Phước Hòa","HOSE"),
-    ("PLX","Petrolimex","HOSE"),("PNJ","PNJ","HOSE"),("POW","PV Power","HOSE"),
-    ("PPC","Nhiệt điện Phả Lại","HOSE"),("PTB","Phú Tài","HOSE"),
-    ("PVD","PV Drilling","HOSE"),("PVT","PV Trans","HOSE"),("REE","REE","HOSE"),
-    ("SAB","Sabeco","HOSE"),("SBT","SBT","HOSE"),("SCR","Đất Xanh","HOSE"),
-    ("SCS","Dịch vụ Hàng không Tân Sơn Nhất","HOSE"),("SHB","SHB","HOSE"),
-    ("SIP","SIP","HOSE"),("SKG","Superdong","HOSE"),("SRC","Cao su Sao Vàng","HOSE"),
-    ("SSB","SeABank","HOSE"),("SSI","SSI","HOSE"),("STB","Sacombank","HOSE"),
-    ("SVC","Sài Gòn Cargo","HOSE"),("TCB","Techcombank","HOSE"),
-    ("TCH","Hoàng Huy","HOSE"),("TDM","Nước Thủ Dầu Một","HOSE"),
-    ("TIP","Khu CN Tín Nghĩa","HOSE"),("TLH","Thép Tiến Lên","HOSE"),
-    ("TPB","TPBank","HOSE"),("UDC","Urban Dev","HOSE"),("VCB","Vietcombank","HOSE"),
-    ("VCI","Viet Capital Sec","HOSE"),("VDS","Rồng Việt Sec","HOSE"),
-    ("VGC","Viglacera","HOSE"),("VGI","Viettel Global","HOSE"),
-    ("VHC","Vĩnh Hoàn","HOSE"),("VHM","Vinhomes","HOSE"),("VIB","VIB","HOSE"),
-    ("VIC","Vingroup","HOSE"),("VIX","VIX Sec","HOSE"),("VJC","Vietjet","HOSE"),
-    ("VND","VNDirect Sec","HOSE"),("VNM","Vinamilk","HOSE"),("VOS","Vosco","HOSE"),
-    ("VPB","VPBank","HOSE"),("VPI","Văn Phú Invest","HOSE"),("VRE","Vincom Retail","HOSE"),
-    ("VSC","Container VN","HOSE"),("VSH","Vĩnh Sơn–Sông Hinh","HOSE"),
-    ("VTP","Viettel Post","HOSE"),("YEG","Yeah1 Group","HOSE"),
+    ("AAA","An Phát Bioplastics","HOSE"),("ACB","Á Châu","HOSE"),("ADG","Clever Group","HOSE"),("AGG","An Gia","HOSE"),
+    ("AGR","Agribank Securities","HOSE"),("ANV","Nam Việt","HOSE"),("APC","Chiếu xạ An Phú"),("ASM","Sao Mai","HOSE"),
+    ("ASP","Dầu khí An Pha","HOSE"),("AST","Taseco Airs","HOSE"),("BCE","Xây dựng Bình Dương","HOSE"),("BCG","Bamboo Capital","HOSE"),
+    ("BCM","Becamex","HOSE"),("BFC","Phân bón Bình Điền","HOSE"),("BHN","Habeco","HOSE"),("BIC","Bảo hiểm BIDV","HOSE"),
+    ("BID","BIDV","HOSE"),("BMC","Khoáng sản Bình Định","HOSE"),("BMI","Bảo Minh","HOSE"),("BMP","Nhựa Bình Minh","HOSE"),
+    ("BRC","Cao su Bến Thành","HOSE"),("BSI","BSC Securities","HOSE"),("BSR","Lọc hóa dầu Bình Sơn","HOSE"),("BTP","Nhiệt điện Bà Rịa","HOSE"),
+    ("BWE","Biwase","HOSE"),("C32","Đầu tư Xây dựng 3-2","HOSE"),("C47","Xây dựng 47","HOSE"),("CAV","Cadivi","HOSE"),
+    ("CCI","Đầu tư Phát triển Củ Chi","HOSE"),("CCL","Dầu khí Cửu Long","HOSE"),("CDC","Chương Dương","HOSE"),("CEE","Xây dựng hạ tầng CII","HOSE"),
+    ("CHM","Chợ Lớn M&E","HOSE"),("CIG","COMA 18","HOSE"),("CII","Hạ tầng TP.HCM","HOSE"),("CKG","Xây dựng Kiên Giang","HOSE"),
+    ("CLC","Thuốc lá Cát Lợi","HOSE"),("CLL","Cảng Cát Lái","HOSE"),("CMG","Công nghệ CMC","HOSE"),("CMP","Cảng Chân Mây","HOSE"),
+    ("CMV","Thương nghiệp Cà Mau","HOSE"),("CNG","CNG Việt Nam","HOSE"),("COM","Vật tư Xăng dầu","HOSE"),("CRE","Cen Land","HOSE"),
+    ("CSM","Cao su Miền Nam","HOSE"),("CSV","Hóa chất Cơ bản miền Nam","HOSE"),("CTD","Coteccons","HOSE"),("CTF","City Auto","HOSE"),
+    ("CTG","VietinBank","HOSE"),("CTI","Cường Thuận IDICO","HOSE"),("CTR","Công trình Viettel","HOSE"),("CTS","VietinBank Securities","HOSE"),
+    ("CVT","CMC Tiles","HOSE"),("D2D","Phát triển Đô thị công nghiệp số 2","HOSE"),("DAG","Nhựa Đông Á","HOSE"),("DAH","Đông Á Hotel","HOSE"),
+    ("DAT","Đầu tư Du lịch Phát triển Thủy sản","HOSE"),("DBC","Dabaco","HOSE"),("DBD","Dược - Trang thiết bị Y tế Bình Định","HOSE"),
+    ("DBT","Dược phẩm Bến Tre","HOSE"),("DC4","DIC số 4","HOSE"),("DCL","Dược phẩm Cửu Long","HOSE"),("DCM","Phân bón Dầu khí Cà Mau","HOSE"),
+    ("DGC","Hóa chất Đức Giang","HOSE"),("DGW","Digiworld","HOSE"),("DHA","Hóa An","HOSE"),("DHC","Đông Hải Bến Tre","HOSE"),
+    ("DHG","Dược Hậu Giang","HOSE"),("DHM","Thương mại và Khai thác Khoáng sản Dương Hiếu","HOSE"),("DIG","DIC Corp","HOSE"),
+    ("DLG","Đức Long Gia Lai","HOSE"),("DMC","Dược phẩm Domesco","HOSE"),("DPG","Đạt Phương","HOSE"),("DPM","Phân bón Hóa chất Dầu khí","HOSE"),
+    ("DPR","Cao su Đồng Phú","HOSE"),("DQC","Bóng đèn Điện Quang","HOSE"),("DRC","Cao su Đà Nẵng","HOSE"),("DTD","Đầu tư Phát triển Thành Đạt","HOSE"),
+    ("DTL","Đại Thiên Lộc","HOSE"),("DTT","Thương mại Thành Tài","HOSE"),("DVP","Cảng Đình Vũ","HOSE"),("DXG","Đất Xanh Group","HOSE"),
+    ("EIB","Eximbank","HOSE"),("ELC","Công nghệ Elcom","HOSE"),("EMC","Cơ điện Thủ Đức","HOSE"),("EVE","Everpia","HOSE"),
+    ("EVG","Tập đoàn Everland","HOSE"),("EVF","Tài chính Điện lực","HOSE"),("FCM","Khoáng sản Fecon","HOSE"),("FCN","Fecon","HOSE"),
+    ("FDC","Ngoại thương Ngoại doanh HCM","HOSE"),("FIR","Địa ốc First Real","HOSE"),("FIT","Tập đoàn F.I.T","HOSE"),("FLC","Tập đoàn FLC","HOSE"),
+    ("FMC","Thực phẩm Sao Ta","HOSE"),("FTS","FPT Securities","HOSE"),("FPT","Tập đoàn FPT","HOSE"),("FRT","FPT Retail","HOSE"),
+    ("GAS","PV Gas","HOSE"),("GDT","Gỗ Đức Thành","HOSE"),("GEG","Điện Gia Lai","HOSE"),("GEX","Tập đoàn GELEX","HOSE"),
+    ("GIL","Sản xuất Kinh doanh Xuất nhập khẩu Bình Thạnh","HOSE"),("GMC","Garmex Sài Gòn","HOSE"),("GMD","Gemasubt","HOSE"),
+    ("GMH","Minh Hưng Quảng Trị","HOSE"),("GSP","Vận tải Dầu khí Quảng Ngãi","HOSE"),("GTA","Gỗ Thuận An","HOSE"),
+    ("GVR","Tập đoàn Công nghiệp Cao su Việt Nam","HOSE"),("HAG","Hoàng Anh Gia Lai","HOSE"),("HAH","Vận tải và Xếp dỡ Hải An","HOSE"),
+    ("HAM","Vật tư và Xây dựng Giao thông","HOSE"),("HAN","Xây dựng Hà Nội","HOSE"),("HAP","Tập đoàn Hapaco","HOSE"),
+    ("HAR","Bất động sản An Dương Thảo Điền","HOSE"),("HAS","Haseco","HOSE"),("HAX","Ô tô Hàng Xanh","HOSE"),("HBC","Xây dựng Hòa Bình","HOSE"),
+    ("HCD","Đầu tư Sản xuất và Thương mại HCD","HOSE"),("HCM","HSC Securities","HOSE"),("HDB","HDBank","HOSE"),("HDC","Phát triển Nhà Bà Rịa - Vũng Tàu","HOSE"),
+    ("HDG","Tập đoàn Hà Đô","HOSE"),("HHP","Giấy Hải Phòng","HOSE"),("HHS","Hoàng Huy Đầu tư Dịch vụ","HOSE"),("HHV","Đầu tư Hạ tầng Giao thông Đèo Cả","HOSE"),
+    ("HID","Halcom Việt Nam","HOSE"),("HII","An Tiến Industries","HOSE"),("HMC","Kim khí TP.HCM","HOSE"),("HNG","HAGL Agrico","HOSE"),
+    ("Hố","Bất động sản Hồ","HOSE"),("HOT","Du lịch Dịch vụ Hội An","HOSE"),("HPG","Tập đoàn Hòa Phát","HOSE"),("HPX","Hải Phát Investment","HOSE"),
+    ("HQC","Địa ốc Hoàng Quân","HOSE"),("HRC","Cao su Hòa Bình","HOSE"),("HSG","Tập đoàn Hoa Sen","HOSE"),("HSL","Đầu tư Phát triển Thực phẩm Sao Vàng","HOSE"),
+    ("HT1","Xi măng Hà Tiên 1","HOSE"),("HT9","Xây lắp Thành An 96","HOSE"),("HTG","May Hòa Thọ","HOSE"),("HTI","Đầu tư Phát triển Hạ tầng IDICO","HOSE"),
+    ("HTL","Kỹ thuật và Ô tô Trường Long","HOSE"),("HTN","Hưng Thịnh Incons","HOSE"),("HTV","Vận tải Hà Tiên","HOSE"),("HU1","HUD1","HOSE"),
+    ("HU3","HUD3","HOSE"),("HUB","Xây lắp Thừa Thiên Huế","HOSE"),("HU4","HUD4","HOSE"),("HUT","Tập đoàn Tasco","HOSE"),
+    ("HVH","Đầu tư và Công nghệ HVC","HOSE"),("HVN","Vietnam Airlines","HOSE"),("IBC","Apax Holdings","HOSE"),("IDI","Đầu tư và Phát triển Đa Quốc Gia","HOSE"),
+    ("IDJ","Đầu tư Chợ Lớn","HOSE"),("IJC","Phát triển Hạ tầng Becamex IJC","HOSE"),("ILB","Cảng ICD Tân Cảng Long Bình","HOSE"),
+    ("IMP","Dược phẩm Imexpharm","HOSE"),("ITA","Tân Tạo","HOSE"),("ITC","Đầu tư và Kinh doanh Nhà","HOSE"),("ITD","Công nghệ Tiên Phong","HOSE"),
+    ("KBC","Đô thị Kinh Bắc","HOSE"),("KDC","Tập đoàn KIDO","HOSE"),("KDH","Nhà Khang Điền","HOSE"),("KHG","Kải Hoàn Land","HOSE"),
+    ("KHP","Điện lực Khánh Hòa","HOSE"),("KMR","Mirae","HOSE"),("KOS","KOSY","HOSE"),("KPF","Đầu tư Tài chính KPF","HOSE"),
+    ("KSB","Khoáng sản và Xây dựng Bình Dương","HOSE"),("L10","LILAMA 10","HOSE"),("L14","Licogi 14","HOSE"),("L18","Licogi 18","HOSE"),
     # HNX
-    ("ACE","ACE Life","HNX"),("APS","AP Securities","HNX"),("BBS","Vicem Bút Sơn","HNX"),
-    ("BCC","Xi măng Bỉm Sơn","HNX"),("BSI","BIDV Securities","HNX"),
-    ("BVS","Bảo Việt Sec","HNX"),("CDN","Cảng Đà Nẵng","HNX"),
-    ("DBC","Dabaco","HNX"),("HAI","Nông dược HAI","HNX"),("HAN","Hà Nội Sec","HNX"),
-    ("HBS","HBS Sec","HNX"),("HHC","Bánh kẹo Hải Hà","HNX"),
-    ("HPT","HPT IT Services","HNX"),("HUT","Tasco","HNX"),("IDC","IDICO","HNX"),
-    ("LAS","LASCO","HNX"),("MBS","MB Sec","HNX"),("MIC","Bảo hiểm Quân đội","HNX"),
-    ("NTP","Nhựa Tiền Phong","HNX"),("NVB","NCB","HNX"),("ONE","Truyền thông ONE","HNX"),
     ("PHP","Cảng Hải Phòng","HNX"),("PME","Pymepharco","HNX"),("PVC","PV Coating","HNX"),
     ("PVI","PVI Holdings","HNX"),("PVS","PV Technical","HNX"),
     ("SHS","SHS Sec","HNX"),("SLS","Mía đường Sơn La","HNX"),
     ("TBC","Thủy điện Thác Bà","HNX"),("TDN","Thép Đà Nẵng","HNX"),
-    ("TMT","ÔTô TMT","HNX"),("TNG","TNG Invest","HNX"),("TVB","Than Vàng Danh","HNX"),
+    ("TMT","Ô tô TMT","HNX"),("TNG","TNG Invest","HNX"),("TVB","Than Vàng Danh","HNX"),
     ("VCC","Vicostone","HNX"),("VCG","Vinaconex","HNX"),("VGS","Thép VGS","HNX"),
     ("VNA","Vinalines","HNX"),("VNR","Tái BH VN","HNX"),("VTC","VTC Media","HNX"),
     # UPCOM
     ("ACV","ACV","UPCOM"),("BAB","Bắc Á Bank","UPCOM"),("BVB","Bản Việt Bank","UPCOM"),
     ("CTF","City Auto","UPCOM"),("KLB","Kiên Long Bank","UPCOM"),
     ("MCH","Masan Consumer","UPCOM"),("MSR","Masan Resources","UPCOM"),
-    ("NAB","Nam A Bank","UPCOM"),("NSC","Giống cây trồng VN","UPCOM"),
+    ("NAB","Nam Á Bank","UPCOM"),("NSC","Giống cây trồng VN","UPCOM"),
     ("NT2","NT2","UPCOM"),("OIL","PVOIL","UPCOM"),("RAL","Điện Quang","UPCOM"),
     ("SGB","Saigonbank","UPCOM"),("SNZ","Sonadezi","UPCOM"),
     ("TLG","Thiên Long","UPCOM"),("TRA","Traphaco","UPCOM"),
@@ -95,9 +77,9 @@ STOCKS = [
     ("VPS","VPS Sec","UPCOM"),("VTB","Vietbank","UPCOM"),("WSS","WSS Sec","UPCOM"),
 ]
 
-# ── SSI iBoard API ────────────────────────────────────────────────────────────
-# Sửa lại chính xác đoạn này từ dòng 99 đến 102 thành:
+# --- SSI iBoard API --------------------------------------------------------
 SSI_URL = "https://iboardquery.ssi.com.vn/v1/history/chart?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}"
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json",
@@ -105,9 +87,15 @@ HEADERS = {
 }
 
 def fetch_json(url: str) -> dict:
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-        return json.loads(resp.read().decode())
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        if response.status_code == 200:
+            return response.json()
+        print(f" -> Lỗi HTTP: {response.status_code}")
+        return {}
+    except Exception as e:
+        print(f" -> Lỗi kết nối mạng: {e}")
+        return {}
 
 def fetch_ticker(ticker: str, from_ts: int, to_ts: int) -> list:
     # Resolution cho SSI: 1D thay vì D
@@ -121,68 +109,72 @@ def fetch_ticker(ticker: str, from_ts: int, to_ts: int) -> list:
         return []
         
     timestamps = data["t"]
-   # Sửa lại đoạn này (từ dòng 124 đến 128):
     opens = data["o"]
     highs = data["h"]
     lows = data["l"]
     closes = data["c"]
     volumes = data["v"]
     
-    result = []
+    candles = []
     for i in range(len(timestamps)):
-        result.append([
-            int(timestamps[i]),
+        # Chuyển đổi timestamp giây sang ngày định dạng YYYY-MM-DD
+        t_sec = timestamps[i]
+        date_str = time.strftime('%Y-%m-%d', time.localtime(t_sec))
+        
+        candles.append([
+            date_str,
             float(opens[i]),
             float(highs[i]),
             float(lows[i]),
             float(closes[i]),
             int(volumes[i])
         ])
-    return result
+    return candles
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    os.makedirs(DATA_DIR, exist_ok=True)
-
-    now     = int(datetime.now(timezone.utc).timestamp())
-    from_ts = now - YEARS_BACK * 366 * 86400
-
-    updated = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    ok, fail = 0, 0
-
-    for ticker, name, exchange in STOCKS:
-        path = os.path.join(DATA_DIR, f"{ticker}.json")
-        try:
-            candles = fetch_ticker(ticker, from_ts, now)
-            if not candles:
-                raise ValueError("empty or invalid response from API")
+    os.makedirs("data", exist_ok=True)
+    
+    # Tính khoảng thời gian: cào dữ liệu trong 1 năm qua
+    now_ts = int(time.time())
+    one_year_ago_ts = now_ts - (365 * 24 * 60 * 60)
+    
+    success_count = 0
+    manifest = {}
+    
+    print(f"Bắt đầu tải dữ liệu từ API SSI từ {time.strftime('%Y-%m-%d', time.localtime(one_year_ago_ts))} đến {time.strftime('%Y-%m-%d', time.localtime(now_ts))}...")
+    
+    for idx, item in enumerate(STOCKS, 1):
+        ticker = item[0]
+        name = item[1] if len(item) > 1 else ""
+        exchange = item[2] if len(item) > 2 else ""
+        
+        print(f"[{idx}/{len(STOCKS)}] Đang tải {ticker}...", end="", flush=True)
+        
+        candles = fetch_ticker(ticker, one_year_ago_ts, now_ts)
+        
+        if candles:
+            file_path = f"data/{ticker}.json"
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(candles, f, ensure_ascii=False)
             
-            payload = {
-                "ticker":      ticker,
-                "name":        name,
-                "exchange":    exchange,
-                "updated":     updated,
-                "resolution":  RESOLUTION,
-                "candles":     candles,   # [[ts, o, h, l, c, v], ...]
+            manifest[ticker] = {
+                "name": name,
+                "exchange": exchange,
+                "last_updated": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                "candles_count": len(candles)
             }
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(payload, f, separators=(",", ":"))
-            print(f"  ✓  {ticker:6s}  {len(candles):4d} bars")
-            ok += 1
-        except Exception as e:
-            print(f"  ✗  {ticker:6s}  {e}")
-            fail += 1
+            success_count += 1
+            print(f" OK ({len(candles)} nến)")
+        else:
+            print(" Thất bại (Không có dữ liệu hoặc lỗi)")
+            
         time.sleep(SLEEP_SEC)
-
-    # Write manifest so index.html knows which tickers have local data
-    manifest = {
-        "updated": updated,
-        "tickers": [t for t, _, _ in STOCKS],
-    }
-    with open(os.path.join(DATA_DIR, "manifest.json"), "w", encoding="utf-8") as f:
-        json.dump(manifest, f)
-
-    print(f"\nDone: {ok} ok, {fail} failed.")
+        
+    # Ghi file manifest tổng hợp
+    with open("data/manifest.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+        
+    print(f" Hoàn thành: {success_count}/{len(STOCKS)} mã thành công.")
 
 if __name__ == "__main__":
     main()
