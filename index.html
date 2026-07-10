@@ -336,10 +336,14 @@ document.addEventListener('DOMContentLoaded', async () => {
    ══════════════════════════════════════════════════════════ */
 async function fetchTickerList() {
   const BASE = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/ticker?locale=vi&page=0&size=2000';
+  // corsproxy.io: raw URL after "?" (NOT encoded)
+  // allorigins, codetabs: URL encoded in query param
   const urls = [
     BASE,
-    `https://corsproxy.io/?${encodeURIComponent(BASE)}`,
+    `https://corsproxy.io/?${BASE}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(BASE)}`,
+    `https://thingproxy.freeboard.io/fetch/${BASE}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BASE)}`,
   ];
 
   for (const url of urls) {
@@ -559,8 +563,7 @@ function initCharts() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   FETCH HELPER – uses AbortController (not AbortSignal.timeout)
-   for maximum browser compatibility
+   FETCH HELPER – AbortController-based timeout (cross-browser)
    ══════════════════════════════════════════════════════════ */
 function fetchWithTimeout(url, ms) {
   const ctrl = new AbortController();
@@ -570,14 +573,31 @@ function fetchWithTimeout(url, ms) {
     .catch(e => { clearTimeout(tid); throw e; });
 }
 
+/* ── Try one URL, return parsed candles or null ──────── */
+async function trySource(url, parseFn, label, timeoutMs) {
+  try {
+    const res = await fetchWithTimeout(url, timeoutMs);
+    if (!res.ok) { console.warn(`[VNChart] ${label} HTTP ${res.status}`); return null; }
+    const json = await res.json();
+    const candles = parseFn(json);
+    if (candles && candles.length >= 2) {
+      console.info(`[VNChart] ✓ ${label}`);
+      return candles;
+    }
+    console.warn(`[VNChart] ${label} no candles`);
+    return null;
+  } catch (e) {
+    console.warn(`[VNChart] ${label} error:`, e.message);
+    return null;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════
-   LOAD CHART DATA – multi-source with CORS fallbacks
-   Source priority:
-     1. Entrade X (KB Securities) – CORS open, TradingView format
-     2. SSI iBoard                – CORS open, TradingView format
-     3. TCBS direct               – might work on some networks
-     4. TCBS via corsproxy.io     – CORS proxy
-     5. TCBS via allorigins.win   – CORS proxy
+   LOAD CHART DATA
+   Strategy:
+     Phase 1 – race Entrade X vs SSI iBoard (both CORS-open)
+     Phase 2 – try TCBS direct
+     Phase 3 – try multiple CORS proxies (correct URL format)
    ══════════════════════════════════════════════════════════ */
 async function loadChartData() {
   if (!curTicker) return;
@@ -588,71 +608,65 @@ async function loadChartData() {
     ? now - rangeDays * 86400
     : Math.floor(new Date('2000-01-01').getTime() / 1000);
 
-  // Each provider uses its own resolution naming convention
-  const tcbsRes    = resolution; // D / W / M  (TCBS native)
-  const entradeRes = resolution === 'W' ? '1W' : resolution === 'M' ? '1M' : '1D'; // Entrade
-  const ssiRes     = resolution === 'W' ? 'W'  : resolution === 'M' ? 'M'  : 'D';  // SSI
+  /* Each provider names resolutions differently */
+  const rD = resolution;                                                // D/W/M (TCBS)
+  const rE = resolution === 'W' ? '1W' : resolution === 'M' ? '1M' : '1D'; // Entrade
 
-  // ── Source URLs ───────────────────────────────────────
-  // 1. KB Securities / Entrade X (CORS-open, TradingView-compatible format)
+  const t = encodeURIComponent(curTicker);
+
+  /* ── Direct CORS-open sources ──────────────────────── */
   const ENTRADE = `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock` +
-    `?from=${from}&to=${now}&symbol=${encodeURIComponent(curTicker)}&resolution=${entradeRes}`;
+    `?from=${from}&to=${now}&symbol=${t}&resolution=${rE}`;
 
-  // 2. SSI iBoard (CORS-open)
   const SSI = `https://iboard-query.ssi.com.vn/v2/stock-price/his-price` +
-    `?symbol=${encodeURIComponent(curTicker)}&resolution=${ssiRes}&from=${from}&to=${now}`;
+    `?symbol=${t}&resolution=${rD}&from=${from}&to=${now}`;
 
-  // 3. TCBS direct
   const TCBS = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
-    `?ticker=${encodeURIComponent(curTicker)}&type=stock&resolution=${tcbsRes}` +
-    `&from=${from}&to=${now}`;
+    `?ticker=${t}&type=stock&resolution=${rD}&from=${from}&to=${now}`;
 
-  // 4-5. CORS proxies wrapping TCBS
-  const PROXY_CORS  = `https://corsproxy.io/?${encodeURIComponent(TCBS)}`;
-  const PROXY_ALLOR = `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS)}`;
+  /* ── CORS proxy targets (wrapping TCBS) ─────────────
+     IMPORTANT: corsproxy.io expects the raw URL after "?", NOT encoded.
+     allorigins expects encoded URL in the "url=" param.
+     thingproxy expects the raw URL appended after "/fetch/"             */
+  const PROXY1 = `https://corsproxy.io/?${TCBS}`;
+  const PROXY2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS)}`;
+  const PROXY3 = `https://thingproxy.freeboard.io/fetch/${TCBS}`;
+  const PROXY4 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(TCBS)}`;
 
-  const attempts = [
-    { url: ENTRADE,    parse: parseTVFormat, label: 'Entrade'    },
-    { url: SSI,        parse: parseTVFormat, label: 'SSI'        },
-    { url: TCBS,       parse: parseTCBS,     label: 'TCBS'       },
-    { url: PROXY_CORS, parse: parseTCBS,     label: 'corsproxy'  },
-    { url: PROXY_ALLOR,parse: parseTCBS,     label: 'allorigins' },
-  ];
+  /* ── Phase 1: race Entrade vs SSI (8 s each) ─────── */
+  let candles = await Promise.any([
+    trySource(ENTRADE, parseTVFormat, 'Entrade', 8000),
+    trySource(SSI,     parseTVFormat, 'SSI',     8000),
+  ].map(p => p.then(c => c ?? Promise.reject('no data')))).catch(() => null);
 
-  const errors = [];
-  for (const { url, parse, label } of attempts) {
-    try {
-      const res  = await fetchWithTimeout(url, 12000);
-      if (!res.ok) { errors.push(`${label}: HTTP ${res.status}`); continue; }
-      const json = await res.json();
-      const candles = parse(json);
-      if (!candles || candles.length < 2) { errors.push(`${label}: no data`); continue; }
+  /* ── Phase 2: TCBS direct ───────────────────────── */
+  if (!candles) candles = await trySource(TCBS, parseTCBS, 'TCBS', 10000);
 
-      const volData = candles.map(c => ({
-        time:  c.time,
-        value: c.volume,
-        color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
-      }));
+  /* ── Phase 3: CORS proxies (sequential) ─────────── */
+  if (!candles) candles = await trySource(PROXY1, parseTCBS, 'corsproxy.io', 10000);
+  if (!candles) candles = await trySource(PROXY2, parseTCBS, 'allorigins',   10000);
+  if (!candles) candles = await trySource(PROXY3, parseTCBS, 'thingproxy',   10000);
+  if (!candles) candles = await trySource(PROXY4, parseTCBS, 'codetabs',     10000);
 
-      candleSeries.setData(candles);
-      volSeries.setData(volData);
-      renderMA(candles);
-      mainChart.timeScale().fitContent();
-      showState('chart');
-      document.getElementById('ohlc').style.display = 'flex';
-      console.log(`[VNChart] Data loaded from ${label}`);
-      return; // ✓ success
-    } catch (e) {
-      errors.push(`${label}: ${e.message}`);
-    }
+  if (!candles) {
+    showState('error',
+      `Không tải được dữ liệu cho mã "${curTicker}".\n` +
+      `Kiểm tra Console (F12) để xem chi tiết nguồn nào bị lỗi.`
+    );
+    return;
   }
 
-  // All sources failed
-  console.error('[VNChart] All sources failed:', errors);
-  showState('error',
-    `Không tải được dữ liệu cho "${curTicker}".\n` +
-    `Nguồn đã thử: ${errors.join(' | ')}`
-  );
+  const volData = candles.map(c => ({
+    time:  c.time,
+    value: c.volume,
+    color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
+  }));
+  candleSeries.setData(candles);
+  volSeries.setData(volData);
+  renderMA(candles);
+  mainChart.timeScale().fitContent();
+  showState('chart');
+  document.getElementById('ohlc').style.display = 'flex';
 }
 
 /* ── Parsers ─────────────────────────────────────────── */
