@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (DỮ LIỆU THẬT 100% CORS-FREE)</title>
+    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (DỮ LIỆU THẬT 100%)</title>
     <style>
         body { 
             margin: 0; 
@@ -99,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Phiên bản CDN Công khai - Tối ưu hóa tương thích 100% môi trường Web Hosting và GitHub Pages</p>
+            <p>Đồng bộ dữ liệu nến THẬT 100% từ đồ thị thị trường</p>
         </div>
         
         <div class="search-container">
@@ -112,85 +112,70 @@
         <svg id="main-svg"></svg>
         <div id="tooltip" class="chart-tooltip"></div>
     </div>
-    <div id="status-bar">Hệ thống đang sẵn sàng...</div>
+    <div id="status-bar">Đang kết nối...</div>
 
     <script>
         let globalData = [];
         let renderSubset = [];
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
-        // HÀM MÔ PHỎNG DỮ LIỆU CHUẨN AN TOÀN (NẾU MẠNG INTERNET CỦA CLIENT BỊ CHẶN TOÀN BỘ ENDPOINT CHỨNG KHOÁN)
-        function generateSecureData(ticker) {
-            let data = [];
-            let basePrice = ticker === "BSI" ? 52 : 35;
-            let today = new Date();
-            for(let i = 90; i >= 0; i--) {
-                let d = new Date();
-                d.setDate(today.getDate() - i);
-                if(d.getDay() === 0 || d.getDay() === 6) continue;
-                
-                let change = (Math.random() - 0.47) * (basePrice * 0.035);
-                let open = basePrice;
-                let close = basePrice + change;
-                let high = Math.max(open, close) + Math.random() * (basePrice * 0.015);
-                let low = Math.min(open, close) - Math.random() * (basePrice * 0.015);
-                basePrice = close;
-
-                let trueRange = high - low;
-                let body = close - open;
-                let vPlus = Math.min(Math.max(50 + (body > 0 ? (body / open) * 550 : 0) + (trueRange / open) * 110, 15), 85);
-                let vMinus = Math.min(Math.max(50 + (body < 0 ? (Math.abs(body) / open) * 550 : 0) + (trueRange / open) * 110, 15), 85);
-                let arsiVal = Math.min(Math.max(50 + (body / open) * 650, 15), 85);
-
-                data.push({
-                    time: d.toISOString().split('T')[0],
-                    open: open, high: high, low: low, close: close,
-                    vPlus: vPlus, vMinus: vMinus, arsi: arsiVal
-                });
-            }
-            return data;
-        }
-
-        // KẾT NỐI QUA KHÔNG GIAN ĐỊA CHỈ KHÔNG CHẶN CORS (SỬ DỤNG LIÊN KẾT LIÊN ĐOÀN CỦA ĐỐI TÁC CUNG CẤP DỮ LIỆU)
+        // GỌI API CHỮNG KHOÁN TCBS CÓ SẴN CORS HOÀN TOÀN CHO WEB HOSTING
         async function fetchStockData(ticker) {
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang đồng bộ nến thời gian thực mã ${cleanTicker}...`;
+            statusBar.innerText = `Đang đồng bộ nến THẬT mã ${cleanTicker} từ thị trường...`;
             
-            // Sử dụng một proxy công khai cực mạnh khác chuyên hỗ trợ CORS bypass: cors-anywhere thay thế nếu finfo bị siết chặt
-            const targetUrl = `https://services.entrade.com.vn/chart-api/v2/ohlc/history?resolution=1D&symbol=${cleanTicker}&from=${Math.floor(Date.now()/1000)-12000000}&to=${Math.floor(Date.now()/1000)}`;
-            const fallbackCorsUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            // API lịch sử giá ngày của TCBS - Không chặn CORS, trả về dữ liệu thật 100%
+            const apiUrl = `https://apipubcks.tcbs.com.vn/api/v1/stock/bars-long-term?ticker=${cleanTicker}&type=stock&resolution=D&countBack=100`;
             
             try {
-                const response = await fetch(fallbackCorsUrl);
-                if (!response.ok) throw new Error("CORS Proxy từ chối");
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("Không thể kết nối đến máy chủ dữ liệu");
                 
                 const resData = await response.json();
-                if (!resData || !resData.t || resData.t.length === 0) throw new Error("Dữ liệu rỗng");
+                if (!resData || !resData.data || resData.data.length === 0) throw new Error("Không tìm thấy mã chứng khoán này");
                 
+                // TCBS trả về mảng sắp xếp từ cũ đến mới, thích hợp để vẽ từ trái qua phải
+                let rawItems = resData.data;
                 let marketData = [];
-                for (let i = 0; i < resData.t.length; i++) {
-                    let dateObj = new Date(resData.t[i] * 1000);
-                    let open = resData.o[i], high = resData.h[i], low = resData.l[i], close = resData.c[i];
-                    let trueRange = high - low, body = close - open;
+                
+                for (let i = 0; i < rawItems.length; i++) {
+                    let item = rawItems[i];
                     
-                    let vPlus = Math.min(Math.max(50 + (body > 0 ? (body / open) * 500 : 0) + (trueRange / open) * 100, 10), 90);
-                    let vMinus = Math.min(Math.max(50 + (body < 0 ? (Math.abs(body) / open) * 500 : 0) + (trueRange / open) * 100, 10), 90);
-                    let arsiVal = Math.min(Math.max(50 + (body / open) * 600, 10), 90);
+                    // TCBS trả về giá gốc (cần chia cho 1000 để ra giá chuẩn tương thích hiển thị thông thường như 4x, 5x)
+                    let open = item.open / 1000;
+                    let high = item.high / 1000;
+                    let low = item.low / 1000;
+                    let close = item.close / 1000;
+                    let strDate = item.tradingDate.split('T')[0]; // Định dạng YYYY-MM-DD
+                    
+                    // --- KHU VỰC TÍNH TOÁN CHỈ BÁO KỸ THUẬT KT2 ---
+                    let trueRange = high - low;
+                    let body = close - open;
+                    
+                    let vPlus = 50 + (body > 0 ? (body / open) * 500 : 0) + (trueRange / open) * 100;
+                    let vMinus = 50 + (body < 0 ? (Math.abs(body) / open) * 500 : 0) + (trueRange / open) * 100;
+                    let arsiVal = 50 + (body / open) * 600;
+                    
+                    vPlus = Math.min(Math.max(vPlus, 10), 90);
+                    vMinus = Math.min(Math.max(vMinus, 10), 90);
+                    arsiVal = Math.min(Math.max(arsiVal, 10), 90);
                     
                     marketData.push({
-                        time: dateObj.toISOString().split('T')[0], open, high, low, close, vPlus, vMinus, arsi: arsiVal
+                        time: strDate, open, high, low, close, vPlus, vMinus, arsi: arsiVal
                     });
                 }
-                statusBar.innerText = `Đã đồng bộ thành công dữ liệu trực tuyến mã ${cleanTicker}!`;
+                
+                statusBar.style.color = "#26a69a";
+                statusBar.innerText = `Kết nối trực tuyến thành công: Đã đồng bộ nến thật mã ${cleanTicker}!`;
                 return marketData;
                 
-            } catch (e) {
-                console.log("Sử dụng cơ chế dữ liệu an toàn nội bộ.");
-                statusBar.style.color = "#ffb74d";
-                statusBar.innerText = `Đang hiển thị luồng dữ liệu tối ưu cho mã ${cleanTicker} (CORS Safe Mode).`;
-                return generateSecureData(cleanTicker);
+            } catch (error) {
+                console.error("Lỗi dòng dữ liệu:", error);
+                statusBar.style.color = "#ef5350";
+                statusBar.innerText = `Lỗi: ${error.message}. Vui lòng kiểm tra lại mã hoặc đường truyền mạng!`;
+                return [];
             }
         }
 
@@ -227,7 +212,7 @@
             mainHTML += `</g>`;
 
             mainHTML += `
-                <text x="${padding.left + 10}" y="${padding.top + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">BIỂU ĐỒ NẾN GIÁ</text>
+                <text x="${padding.left + 10}" y="${padding.top + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">BIỂU ĐỒ NẾN GIÁ THỰC TẾ</text>
                 <text x="${padding.left + 10}" y="${bottomChartTop + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">HỆ THỐNG SÓNG KT2 OSCILLATOR</text>
             `;
 
