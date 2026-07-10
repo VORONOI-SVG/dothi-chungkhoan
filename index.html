@@ -150,6 +150,32 @@
     .status-ticker { font-weight: 700; color: var(--text); font-size: 12px; }
     .status-right { margin-left: auto; }
 
+    /* ── Chart toolbar (exchange switcher) ──────────────── */
+    #chart-toolbar {
+      display: none; align-items: center; gap: 10px;
+      padding: 6px 18px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0; font-size: 12px;
+    }
+    #chart-toolbar.visible { display: flex; }
+    .ct-symbol { font-weight: 700; color: var(--text); font-size: 13px; }
+    .ct-name   { color: var(--muted); }
+    .ct-sep    { color: var(--border); margin: 0 2px; }
+    .ct-hint   { color: var(--muted); font-size: 11px; }
+    .ex-switch { display: flex; gap: 4px; align-items: center; margin-left: 6px; }
+    .ex-switch-label { color: var(--muted); font-size: 11px; }
+    .ex-btn {
+      padding: 3px 10px; border-radius: 5px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: all .15s;
+    }
+    .ex-btn:hover { border-color: var(--muted); color: var(--text); }
+    .ex-btn.active { color: #000; border-color: transparent; }
+    .ex-btn[data-ex="HOSE"].active  { background: var(--accent); }
+    .ex-btn[data-ex="HNX"].active   { background: #3498db; }
+    .ex-btn[data-ex="UPCOM"].active { background: #e67e22; }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -187,6 +213,21 @@
 
     <div class="watchlist" id="quicklist"></div>
   </header>
+
+  <!-- ── Exchange switcher toolbar ─────────────────────── -->
+  <div id="chart-toolbar">
+    <span class="ct-symbol" id="ct-symbol"></span>
+    <span class="ct-sep">·</span>
+    <span class="ct-name" id="ct-name"></span>
+    <span class="ct-sep">·</span>
+    <div class="ex-switch">
+      <span class="ex-switch-label">Sàn:</span>
+      <button class="ex-btn" data-ex="HOSE">HOSE</button>
+      <button class="ex-btn" data-ex="HNX">HNX</button>
+      <button class="ex-btn" data-ex="UPCOM">UPCOM</button>
+    </div>
+    <span class="ct-hint">← Nếu biểu đồ sai, thử đổi sàn</span>
+  </div>
 
   <div class="chart-container">
     <div id="tv-chart-container"></div>
@@ -544,6 +585,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   buildQuickList();
   setupSearch();
   setupExTabs();
+  setupChartToolbar();
   updateCount("Đang tải...", false);
 
   try {
@@ -807,39 +849,71 @@ function tryLoadTicker(t) {
 /* ════════════════════════════════════════════════════════
    CHART – TradingView Advanced Widget
    ════════════════════════════════════════════════════════ */
-function loadTicker(ticker) {
+let currentTicker   = null;
+let currentExchange = null;
+
+function loadTicker(ticker, forceExchange) {
   ticker = ticker.toUpperCase().trim();
   if (!ticker) return;
 
   const info = STOCK_MAP[ticker];
   let exchange;
-  if (info) {
+  if (forceExchange) {
+    exchange = forceExchange;
+  } else if (info) {
     exchange = info.exchange;
   } else if (currentExFilter !== "ALL") {
     exchange = currentExFilter;
   } else {
     exchange = "HOSE";
   }
+
+  currentTicker   = ticker;
+  currentExchange = exchange;
+
   const tvSymbol = `${exchange}:${ticker}`;
 
   // Update pills
   document.querySelectorAll(".pill").forEach(p =>
     p.classList.toggle("active", p.dataset.ticker === ticker));
 
-  // Status bar (no innerHTML – XSS-safe)
+  // Status bar (XSS-safe DOM)
   const statusEl = document.getElementById("status-info");
   statusEl.textContent = "";
   const tickerSpan = document.createElement("span");
   tickerSpan.className = "status-ticker"; tickerSpan.textContent = ticker;
   statusEl.appendChild(tickerSpan);
-  if (info) {
-    statusEl.appendChild(document.createTextNode(` · ${info.name} · ${info.exchange}`));
-  } else {
-    statusEl.appendChild(document.createTextNode(` · ${exchange}`));
-  }
+  const nameText = info ? ` · ${info.name}` : "";
+  statusEl.appendChild(document.createTextNode(`${nameText} · ${exchange}`));
+
+  // Chart toolbar
+  updateChartToolbar(ticker, info, exchange);
 
   document.getElementById("empty-state").style.display = "none";
   loadTVWidget(tvSymbol);
+}
+
+/* ─── Chart toolbar ──────────────────────────────────── */
+function updateChartToolbar(ticker, info, activeExchange) {
+  const toolbar = document.getElementById("chart-toolbar");
+  toolbar.classList.add("visible");
+
+  document.getElementById("ct-symbol").textContent = ticker;
+  document.getElementById("ct-name").textContent   = info ? info.name : "";
+
+  // Update active exchange button
+  toolbar.querySelectorAll(".ex-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.ex === activeExchange);
+  });
+}
+
+function setupChartToolbar() {
+  document.querySelectorAll(".ex-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!currentTicker) return;
+      loadTicker(currentTicker, btn.dataset.ex);
+    });
+  });
 }
 
 function loadTVWidget(symbol) {
