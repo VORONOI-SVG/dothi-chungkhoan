@@ -1,404 +1,650 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (Yahoo Finance Live)</title>
-    <style>
-        body { 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #131722; 
-            color: #d1d4dc; 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            user-select: none; 
-        }
-        .header-panel {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            background-color: #1c2030;
-            padding: 12px 20px;
-            border-radius: 6px;
-            border: 1px solid #242832;
-        }
-        .title-area h2 { margin: 0; color: #ffffff; font-size: 18px; }
-        .title-area p { margin: 4px 0 0 0; color: #787b86; font-size: 12px; }
-        
-        .search-container { display: flex; align-items: center; gap: 8px; }
-        .stock-input { 
-            background-color: #131722; 
-            color: #ffffff; 
-            border: 1px solid #485c7b; 
-            padding: 8px 12px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            font-size: 14px; 
-            text-transform: uppercase; 
-            width: 120px; 
-            outline: none; 
-            text-align: center;
-        }
-        .stock-input:focus { border-color: #2962ff; }
-        
-        .btn { 
-            background-color: #2962ff; 
-            color: white; 
-            border: none; 
-            padding: 8px 16px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            border-radius: 4px; 
-            font-size: 13px; 
-        }
-        .btn:hover { background-color: #1e4bd8; }
-        
-        #chart-container {
-            position: relative;
-            width: 100%; 
-            max-width: 1200px; 
-            height: 650px; 
-            background-color: #131722; 
-            border: 1px solid #242832; 
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        svg { width: 100%; height: 100%; display: block; }
-        
-        .chart-tooltip {
-            position: absolute;
-            background-color: rgba(28, 32, 48, 0.95);
-            border: 1px solid #485c7b;
-            padding: 10px;
-            border-radius: 4px;
-            color: #d1d4dc;
-            font-size: 12px;
-            pointer-events: none;
-            display: none;
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            line-height: 1.6;
-        }
-        .tooltip-title { font-weight: bold; color: #ffffff; margin-bottom: 4px; border-bottom: 1px solid #242832; padding-bottom: 2px;}
-        .text-up { color: #26a69a; }
-        .text-down { color: #ef5350; }
-        .text-purple { color: #ba4bcd; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
+  <style>
+    /* ─── Reset & Tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        #status-bar {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #26a69a;
-            font-weight: bold;
-            text-align: right;
-        }
-    </style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #21262d;
+      --accent:    #2ecc71;
+      --accent2:   #27ae60;
+      --red:       #e74c3c;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --input-bg:  #1c2128;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+      --radius:    8px;
+      --font:      'Inter', 'Segoe UI', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -.3px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    /* ─── Search bar ─────────────────────────────────────────── */
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 480px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 11px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    #ticker-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color .2s;
+      text-transform: uppercase;
+    }
+    #ticker-input::placeholder { color: var(--muted); text-transform: none; }
+    #ticker-input:focus { border-color: var(--accent); }
+
+    /* ─── Autocomplete dropdown ──────────────────────────────── */
+    #autocomplete {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    #autocomplete::-webkit-scrollbar { width: 4px; }
+    #autocomplete::-webkit-scrollbar-track { background: transparent; }
+    #autocomplete::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .ac-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .ac-item:hover, .ac-item.active { background: var(--input-bg); }
+    .ac-ticker {
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 54px;
+      color: var(--text);
+    }
+    .ac-name {
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ac-exchange {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: var(--border);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* ─── Exchange tabs ──────────────────────────────────────── */
+    .exchange-tabs {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .tab-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tab-btn:hover { color: var(--text); border-color: var(--muted); }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+    /* ─── Watchlist pills ────────────────────────────────────── */
+    .watchlist {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 0 20px 0 0;
+    }
+    .watch-label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill.active { background: rgba(46,204,113,.15); border-color: var(--accent); color: var(--accent); }
+
+    /* ─── Chart container ────────────────────────────────────── */
+    .chart-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    #tv-chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── Status bar ─────────────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 5px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .status-bar a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .status-bar a:hover { color: var(--text); }
+    .status-ticker {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .status-change { font-weight: 600; }
+    .status-change.up   { color: var(--accent); }
+    .status-change.down { color: var(--red); }
+    .status-sep { color: var(--border); }
+    .status-right { margin-left: auto; }
+
+    /* ─── Empty / loading placeholder ────────────────────────── */
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .empty-state svg { opacity: .25; }
+    .empty-state p { font-size: 15px; }
+    .empty-state small { font-size: 12px; }
+
+    /* ─── Scrollbar (global) ─────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
 </head>
 <body>
+<div class="app">
 
-    <div class="header-panel">
-        <div class="title-area">
-            <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Đồng bộ dữ liệu trực tiếp từ Yahoo Finance (Đã sửa lỗi chặn CORS cho Mã VN)</p>
-        </div>
-        
-        <div class="search-container">
-            <input type="text" id="stockTicker" class="stock-input" value="BSI" placeholder="MÃ CK..." maxlength="6" onkeydown="if(event.key==='Enter') loadStockData()">
-            <button class="btn" onclick="loadStockData()">Cập nhật đồ thị</button>
-        </div>
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📈</div>
+      VN Chart
     </div>
 
-    <div id="chart-container">
-        <svg id="main-svg"></svg>
-        <div id="tooltip" class="chart-tooltip"></div>
+    <!-- Search -->
+    <div class="search-wrap" id="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="ticker-input"
+             placeholder="Tìm mã CK (VD: VNM, VIC, HPG...)"
+             autocomplete="off" spellcheck="false" />
+      <div id="autocomplete"></div>
     </div>
-    <div id="status-bar">Đang kết nối...</div>
 
-    <script>
-        let globalData = [];
-        let renderSubset = [];
-        let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
+    <!-- Exchange filter -->
+    <div class="exchange-tabs">
+      <button class="tab-btn active" data-ex="ALL">Tất cả</button>
+      <button class="tab-btn" data-ex="HOSE">HOSE</button>
+      <button class="tab-btn" data-ex="HNX">HNX</button>
+      <button class="tab-btn" data-ex="UPCOM">UPCOM</button>
+    </div>
 
-        async function fetchStockData(ticker) {
-            let cleanTicker = ticker.toUpperCase().trim() || "BSI";
-            if (!cleanTicker.endsWith(".VN")) {
-                cleanTicker = cleanTicker + ".VN";
-            }
-            
-            const statusBar = document.getElementById('status-bar');
-            statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang tải dữ liệu mã ${cleanTicker} qua cổng an toàn...`;
-            
-            const toPeriod = Math.floor(Date.now() / 1000);
-            const fromPeriod = toPeriod - (24 * 60 * 60 * 240); // Lấy khoảng 240 ngày dữ liệu
-            
-            const targetApiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?period1=${fromPeriod}&period2=${toPeriod}&interval=1d`;
-            
-            // Bọc URL qua proxy AllOrigins mở CORS 100%
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApiUrl)}`;
-            
-            try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Cổng trung chuyển dữ liệu bận, vui lòng thử lại!");
-                
-                const resData = await response.json();
-                const chartResult = resData.chart?.result?.[0];
-                
-                if (!chartResult || !chartResult.timestamp || chartResult.timestamp.length === 0) {
-                    throw new Error("Không tìm thấy dữ liệu mã này trên Yahoo Finance.");
-                }
-                
-                const timestamps = chartResult.timestamp;
-                const indicators = chartResult.indicators.quote[0];
-                
-                let marketData = [];
-                for (let i = 0; i < timestamps.length; i++) {
-                    if (indicators.open[i] == null || indicators.close[i] == null || indicators.high[i] == null || indicators.low[i] == null) continue;
-                    
-                    let dateObj = new Date(timestamps[i] * 1000);
-                    let open = indicators.open[i];
-                    let high = indicators.high[i];
-                    let low = indicators.low[i];
-                    let close = indicators.close[i];
-                    let strDate = dateObj.toISOString().split('T')[0];
-                    
-                    if (open > 1000) {
-                        open /= 1000; high /= 1000; low /= 1000; close /= 1000;
-                    }
-                    
-                    // --- TÍNH TOÁN CHỈ BÁO SÓNG KT2 ---
-                    let trueRange = high - low;
-                    let body = close - open;
-                    
-                    let vPlus = 50 + (body > 0 ? (body / open) * 500 : 0) + (trueRange / open) * 100;
-                    let vMinus = 50 + (body < 0 ? (Math.abs(body) / open) * 500 : 0) + (trueRange / open) * 100;
-                    let arsiVal = 50 + (body / open) * 600;
-                    
-                    vPlus = Math.min(Math.max(vPlus, 10), 90);
-                    vMinus = Math.min(Math.max(vMinus, 10), 90);
-                    arsiVal = Math.min(Math.max(arsiVal, 10), 90);
-                    
-                    marketData.push({
-                        time: strDate, open, high, low, close, vPlus, vMinus, arsi: arsiVal
-                    });
-                }
-                
-                statusBar.style.color = "#26a69a";
-                statusBar.innerText = `Đồng bộ thành công dữ liệu mã ${cleanTicker}!`;
-                return marketData;
-                
-            } catch (error) {
-                console.error("Lỗi dòng dữ liệu:", error);
-                statusBar.style.color = "#ef5350";
-                statusBar.innerText = `Lỗi hệ thống: ${error.message}`;
-                return [];
-            }
-        }
+    <!-- Quick access -->
+    <div class="watchlist" id="quicklist"></div>
+  </header>
 
-        function drawChart(data) {
-            const svg = document.getElementById('main-svg');
-            svg.innerHTML = '';
+  <!-- ── Chart ──────────────────────────────────────────── -->
+  <div class="chart-container">
+    <div id="tv-chart-container"></div>
 
-            const width = svg.clientWidth || 1160;
-            const height = svg.clientHeight || 650;
-            const padding = chartDimensions.padding;
+    <div class="empty-state" id="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      <p>Nhập mã chứng khoán để xem biểu đồ</p>
+      <small>Hỗ trợ tất cả mã HOSE · HNX · UPCOM</small>
+    </div>
+  </div>
 
-            const chartWidth = width - padding.left - padding.right;
-            const topChartHeight = (height - padding.top - padding.bottom) * 0.52; 
-            const bottomChartTop = padding.top + topChartHeight + 40;            
-            const bottomChartHeight = height - padding.bottom - bottomChartTop;    
+  <!-- ── Status bar ─────────────────────────────────────── -->
+  <div class="status-bar">
+    <span id="status-info">Chưa chọn mã nào</span>
+    <span class="status-sep">|</span>
+    <span>Nguồn dữ liệu: <a href="https://www.tradingview.com" target="_blank">TradingView</a></span>
+    <span class="status-right">
+      Sàn HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025
+    </span>
+  </div>
 
-            const displayCount = Math.min(data.length, 100);
-            renderSubset = data.slice(-displayCount);
-            const step = chartWidth / displayCount;
+</div>
 
-            chartDimensions = { width, height, padding, chartWidth, topChartHeight, bottomChartTop, bottomChartHeight, step };
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DATA – Vietnamese stocks (ticker, name, exchange)
+   ════════════════════════════════════════════════════════════════ */
+const STOCKS = [
+  // ─── HOSE blue-chips ─────────────────────────────────────────
+  ["VNM","Vinamilk","HOSE"],["VIC","Vingroup","HOSE"],["VHM","Vinhomes","HOSE"],
+  ["HPG","Hòa Phát","HOSE"],["MSN","Masan Group","HOSE"],["TCB","Techcombank","HOSE"],
+  ["VCB","Vietcombank","HOSE"],["BID","BIDV","HOSE"],["CTG","VietinBank","HOSE"],
+  ["MBB","MB Bank","HOSE"],["ACB","ACB","HOSE"],["STB","Sacombank","HOSE"],
+  ["EIB","Eximbank","HOSE"],["HDB","HDBank","HOSE"],["TPB","TPBank","HOSE"],
+  ["VPB","VPBank","HOSE"],["LPB","LienVietPostBank","HOSE"],["OCB","OCB","HOSE"],
+  ["SSI","SSI","HOSE"],["VND","VNDirect","HOSE"],["HCM","HCMC Securities","HOSE"],
+  ["MWG","Mobile World","HOSE"],["FPT","FPT Corporation","HOSE"],["CMG","CMC Corp","HOSE"],
+  ["REE","REE Corp","HOSE"],["PNJ","PNJ","HOSE"],["DGW","Digiworld","HOSE"],
+  ["GVR","VRG","HOSE"],["PLX","Petrolimex","HOSE"],["GAS","PV Gas","HOSE"],
+  ["BSR","Binh Son","HOSE"],["POW","PV Power","HOSE"],["NT2","NT2","HOSE"],
+  ["VJC","Vietjet","HOSE"],["HVN","Vietnam Airlines","HOSE"],
+  ["VRE","Vincom Retail","HOSE"],["KDH","Khang Điền","HOSE"],["NVL","Novaland","HOSE"],
+  ["PDR","Phát Đạt Real","HOSE"],["DXG","Đất Xanh","HOSE"],["BCM","Becamex","HOSE"],
+  ["PHR","Phước Hòa Rubber","HOSE"],["DPM","Đạm Phú Mỹ","HOSE"],["DCM","Đạm Cà Mau","HOSE"],
+  ["HSG","Hoa Sen Steel","HOSE"],["NKG","Nam Kim","HOSE"],["TLH","TLH Steel","HOSE"],
+  ["DHG","DHG Pharma","HOSE"],["IMP","Imexpharm","HOSE"],["DBD","DOMESCO","HOSE"],
+  ["PAN","PAN Group","HOSE"],["HAG","HAGL","HOSE"],["HNG","HAGL Agri","HOSE"],
+  ["SAB","Sabeco","HOSE"],["BHN","Habeco","HOSE"],["QNS","Quang Ngai Sugar","HOSE"],
+  ["SBT","SBT Sugar","HOSE"],["LSS","Lam Son Sugar","HOSE"],
+  ["VCS","Vinaconex Invest","HOSE"],["CTD","Coteccons","HOSE"],["HBC","Hòa Bình Corp","HOSE"],
+  ["FCN","FECON","HOSE"],["CII","CII","HOSE"],["SCS","SCS Airport","HOSE"],
+  ["AST","Airserco","HOSE"],["ACV","ACV","UPCOM"],
+  ["VTP","Viettel Post","HOSE"],["GMD","Gemadept","HOSE"],["HAH","Hai An Trans","HOSE"],
 
-            let mainHTML = '';
+  // ─── HNX ──────────────────────────────────────────────────────
+  ["SHB","SHBank","HNX"],["PVS","PV Technical","HNX"],["PVC","PV Coating","HNX"],
+  ["SHS","Sài Gòn-Hà Nội Sec","HNX"],["HUT","Tasco","HNX"],["VCG","Vinaconex","HNX"],
+  ["IDC","IDICO","HNX"],["TNG","TNG Investment","HNX"],["LAS","LASCO","HNX"],
+  ["VGC","Viglacera","HNX"],["PVB","PetroVietnam Ins","HNX"],["NTP","Nhựa Tiền Phong","HNX"],
+  ["BBS","VICEM Bút Sơn","HNX"],["PPP","Đức Long Gia Lai","HNX"],
+  ["HAN","Hanoi Securities","HNX"],["PGS","Saigon Petro","HNX"],
+  ["VCF","Vinacafe Biên Hòa","HNX"],["HGM","Ha Giang Mineral","HNX"],
+  ["SDT","Sông Đà 10","HNX"],["C47","CC47","HNX"],
 
-            mainHTML += `<g stroke="#1f222d" stroke-width="1">`;
-            for (let i = 1; i <= 4; i++) {
-                let yGrid = padding.top + (topChartHeight / 4) * i;
-                mainHTML += `<line x1="${padding.left}" y1="${yGrid}" x2="${width - padding.right}" y2="${yGrid}" />`;
-            }
-            for (let i = 1; i <= 3; i++) {
-                let yGrid = bottomChartTop + (bottomChartHeight / 4) * i;
-                mainHTML += `<line x1="${padding.left}" y1="${yGrid}" x2="${width - padding.right}" y2="${yGrid}" />`;
-            }
-            mainHTML += `</g>`;
+  // ─── UPCOM ────────────────────────────────────────────────────
+  ["BSB","BSB","UPCOM"],["VGT","Vinatex","UPCOM"],["MCH","Masan Consumer","UPCOM"],
+  ["MML","Masan MEATLife","UPCOM"],["VEA","Veam","UPCOM"],["ACV","ACV","UPCOM"],
+  ["MVB","Viet Bac Minerals","UPCOM"],["BSI","BVSC","UPCOM"],["CRE","Creditbank","UPCOM"],
+  ["SGB","Saigonbank","UPCOM"],["NAB","Nam A Bank","UPCOM"],["KLB","Kiên Long Bank","UPCOM"],
+  ["BVB","Bản Việt Bank","UPCOM"],["VIB","VIB","HOSE"],["BAB","Bắc Á Bank","UPCOM"],
+  ["ABB","Abbank","UPCOM"],["PGB","Petrolimex Insurance","UPCOM"],
+  ["QTP","Quảng Ninh Thermal","UPCOM"],["DTV","Đông Triều Mining","UPCOM"],
+];
 
-            mainHTML += `
-                <text x="${padding.left + 10}" y="${padding.top + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">BIỂU ĐỒ NẾN GIÁ THỰC TẾ</text>
-                <text x="${padding.left + 10}" y="${bottomChartTop + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">HỆ THỐNG SÓNG KT2 OSCILLATOR</text>
-            `;
+/* Build a lookup: ticker → {name, exchange} */
+const STOCK_MAP = {};
+STOCKS.forEach(([t,n,ex]) => { STOCK_MAP[t] = {name:n, exchange:ex}; });
 
-            const y80 = bottomChartTop + bottomChartHeight * (1 - 80 / 100);
-            const y50 = bottomChartTop + bottomChartHeight * (1 - 50 / 100);
-            const y20 = bottomChartTop + bottomChartHeight * (1 - 20 / 100);
-            
-            mainHTML += `
-                <g stroke-width="1">
-                    <line x1="${padding.left}" y1="${y80}" x2="${width - padding.right}" y2="${y80}" stroke="rgba(38, 166, 154, 0.15)" />
-                    <line x1="${padding.left}" y1="${y50}" x2="${width - padding.right}" y2="${y50}" stroke="rgba(255, 255, 255, 0.1)" stroke-dasharray="3" />
-                    <line x1="${padding.left}" y1="${y20}" x2="${width - padding.right}" y2="${y20}" stroke="rgba(239, 83, 80, 0.15)" />
-                </g>
-                <g fill="#787b86" font-size="11">
-                    <text x="${width - padding.right + 8}" y="${y80 + 4}">80</text>
-                    <text x="${width - padding.right + 8}" y="${y50 + 4}">50</text>
-                    <text x="${width - padding.right + 8}" y="${y20 + 4}">20</text>
-                </g>
-            `;
+/* Exchange mapping to TradingView prefix */
+const EX_PREFIX = { HOSE: "HOSE", HNX: "HNX", UPCOM: "UPCOM" };
 
-            let minPrice = Math.min(...renderSubset.map(d => d.low));
-            let maxPrice = Math.max(...renderSubset.map(d => d.high));
-            let priceRange = (maxPrice - minPrice) || 1;
+/* Quick-access tickers (shown as pills) */
+const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
 
-            mainHTML += `
-                <text x="${width - padding.right + 8}" y="${padding.top + 4}" fill="#787b86" font-size="11">${maxPrice.toFixed(2)}</text>
-                <text x="${width - padding.right + 8}" y="${padding.top + topChartHeight + 4}" fill="#787b86" font-size="11">${minPrice.toFixed(2)}</text>
-            `;
+/* ════════════════════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════════════════════ */
+let currentSymbol = null;
+let currentExFilter = "ALL";
+let acIndex = -1;
+let acItems = [];
+let tvScriptLoaded = false;
+let tvWidget = null;
 
-            let candlesHTML = '<g>';
-            renderSubset.forEach((d, i) => {
-                let x = padding.left + (i * step) + (step / 2);
-                let yOpen = padding.top + topChartHeight * (1 - (d.open - minPrice) / priceRange);
-                let yClose = padding.top + topChartHeight * (1 - (d.close - minPrice) / priceRange);
-                let yHigh = padding.top + topChartHeight * (1 - (d.high - minPrice) / priceRange);
-                let yLow = padding.top + topChartHeight * (1 - (d.low - minPrice) / priceRange);
+/* ════════════════════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", () => {
+  buildQuickList();
+  setupSearch();
+  setupExTabs();
+});
 
-                let isUp = d.close >= d.open;
-                let color = isUp ? '#26a69a' : '#ef5350';
-                let w = step * 0.7;
+/* ─── Quick pills ──────────────────────────────────────────── */
+function buildQuickList() {
+  const wrap = document.getElementById("quicklist");
+  const lbl = document.createElement("span");
+  lbl.className = "watch-label";
+  lbl.textContent = "Phổ biến:";
+  wrap.appendChild(lbl);
 
-                candlesHTML += `
-                    <line x1="${x}" y1="${yHigh}" x2="${x}" y2="${yLow}" stroke="${color}" stroke-width="1.5" />
-                    <rect x="${x - w/2}" y="${Math.min(yOpen, yClose)}" width="${w}" height="${Math.max(Math.abs(yOpen - yClose), 1)}" fill="${color}" />
-                `;
-            });
-            candlesHTML += '</g>';
-            mainHTML += candlesHTML;
+  QUICK.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "pill";
+    btn.textContent = t;
+    btn.dataset.ticker = t;
+    btn.addEventListener("click", () => loadTicker(t));
+    wrap.appendChild(btn);
+  });
+}
 
-            let vtxPlusPoints = [], vtxMinusPoints = [], arsiPoints = [];
-            let histoHTML = '<g>';
+/* ─── Exchange tabs ────────────────────────────────────────── */
+function setupExTabs() {
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentExFilter = btn.dataset.ex;
+      // re-run autocomplete with current input
+      showAutocomplete(document.getElementById("ticker-input").value);
+    });
+  });
+}
 
-            renderSubset.forEach((d, i) => {
-                let x = padding.left + (i * step) + (step / 2);
-                let yPlus = bottomChartTop + bottomChartHeight * (1 - d.vPlus / 100);
-                let yMinus = bottomChartTop + bottomChartHeight * (1 - d.vMinus / 100);
-                let yArsi = bottomChartTop + bottomChartHeight * (1 - d.arsi / 100);
+/* ────────────────────────────────────────────────────────────────
+   SEARCH & AUTOCOMPLETE
+   ──────────────────────────────────────────────────────────────── */
+function setupSearch() {
+  const input = document.getElementById("ticker-input");
+  const ac    = document.getElementById("autocomplete");
 
-                vtxPlusPoints.push(`${x},${yPlus}`);
-                vtxMinusPoints.push(`${x},${yMinus}`);
-                arsiPoints.push(`${x},${yArsi}`);
+  input.addEventListener("input", () => {
+    acIndex = -1;
+    showAutocomplete(input.value);
+  });
 
-                let hColor = d.vPlus > d.vMinus ? 'rgba(38, 166, 154, 0.08)' : 'rgba(239, 83, 80, 0.08)';
-                let hHeight = Math.abs(yPlus - yMinus);
-                let hTop = Math.min(yPlus, yMinus);
-                histoHTML += `<rect x="${x - (step*0.5)/2}" y="${hTop}" width="${step*0.5}" height="${hHeight}" fill="${hColor}" />`;
-            });
-            histoHTML += '</g>';
-            mainHTML += histoHTML;
+  input.addEventListener("keydown", e => {
+    if (!acItems.length) {
+      if (e.key === "Enter") {
+        const v = input.value.trim().toUpperCase();
+        if (v) tryLoadTicker(v);
+      }
+      return;
+    }
 
-            mainHTML += `
-                <polyline points="${vtxPlusPoints.join(' ')}" fill="none" stroke="#26a69a" stroke-width="1.5" />
-                <polyline points="${vtxMinusPoints.join(' ')}" fill="none" stroke="#ef5350" stroke-width="1.5" />
-                <polyline points="${arsiPoints.join(' ')}" fill="none" stroke="#ba4bcd" stroke-width="1.5" />
-            `;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      acIndex = Math.min(acIndex + 1, acItems.length - 1);
+      renderAcHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      acIndex = Math.max(acIndex - 1, -1);
+      renderAcHighlight();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (acIndex >= 0) {
+        selectAcItem(acItems[acIndex]);
+      } else {
+        const v = input.value.trim().toUpperCase();
+        if (v) tryLoadTicker(v);
+      }
+    } else if (e.key === "Escape") {
+      closeAc();
+    }
+  });
 
-            mainHTML += `
-                <g id="crosshair" style="display:none;">
-                    <line id="crosshair-x" x1="0" y1="${padding.top}" x2="0" y2="${height - padding.bottom}" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="3" />
-                </g>
-            `;
+  document.addEventListener("click", e => {
+    if (!document.getElementById("search-wrap").contains(e.target)) closeAc();
+  });
+}
 
-            let datesHTML = '<g fill="#787b86" font-size="10" text-anchor="middle">';
-            let jump = Math.ceil(renderSubset.length / 5);
-            renderSubset.forEach((d, i) => {
-                if (i % jump === 0) {
-                    let x = padding.left + (i * step) + (step / 2);
-                    datesHTML += `<text x="${x}" y="${height - 8}">${d.time}</text>`;
-                }
-            });
-            datesHTML += '</g>';
-            mainHTML += datesHTML;
+function showAutocomplete(rawVal) {
+  const val = rawVal.trim().toUpperCase();
+  const ac  = document.getElementById("autocomplete");
+  ac.innerHTML = "";
+  acItems = [];
+  acIndex = -1; // always reset on every refresh
 
-            svg.innerHTML = mainHTML;
-            attachMouseEvents(svg);
-        }
+  if (!val) { ac.style.display = "none"; return; }
 
-        function attachMouseEvents(svg) {
-            const tooltip = document.getElementById('tooltip');
-            svg.addEventListener('mousemove', (e) => {
-                const rect = svg.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const p = chartDimensions.padding;
-                
-                if (mouseX < p.left || mouseX > (chartDimensions.width - p.right)) {
-                    hideTooltip(); return;
-                }
+  const filtered = STOCKS.filter(([t, n, ex]) => {
+    const matchEx = currentExFilter === "ALL" || ex === currentExFilter;
+    const matchQ  = t.startsWith(val) || n.toUpperCase().includes(val);
+    return matchEx && matchQ;
+  }).slice(0, 15);
 
-                let idx = Math.floor((mouseX - p.left) / chartDimensions.step);
-                if (idx >= 0 && idx < renderSubset.length) {
-                    let d = renderSubset[idx];
-                    let candleX = p.left + (idx * chartDimensions.step) + (chartDimensions.step / 2);
+  if (!filtered.length) { ac.style.display = "none"; return; }
 
-                    const ch = document.getElementById('crosshair');
-                    const chX = document.getElementById('crosshair-x');
-                    if(ch && chX) {
-                        ch.style.display = 'block';
-                        chX.setAttribute('x1', candleX);
-                        chX.setAttribute('x2', candleX);
-                    }
+  acItems = filtered;
 
-                    let isUp = d.close >= d.open;
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `
-                        <div class="tooltip-title">Ngày: ${d.time}</div>
-                        <div>Mở: <span>${d.open.toFixed(2)}</span></div>
-                        <div>Cao: <span>${d.high.toFixed(2)}</span></div>
-                        <div>Thấp: <span>${d.low.toFixed(2)}</span></div>
-                        <div>Đóng: <span class="${isUp ? 'text-up' : 'text-down'}">${d.close.toFixed(2)}</span></div>
-                        <div style="margin-top:4px; border-top:1px dashed #242832; padding-top:2px;"></div>
-                        <div class="text-up">Vortex (+): ${d.vPlus.toFixed(1)}</div>
-                        <div class="text-down">Vortex (-): ${d.vMinus.toFixed(1)}</div>
-                        <div class="text-purple">Augmented RSI: ${d.arsi.toFixed(1)}</div>
-                    `;
+  filtered.forEach(([t, n, ex], i) => {
+    const item = document.createElement("div");
+    item.className = "ac-item";
+    item.dataset.idx = i;
+    item.innerHTML = `
+      <span class="ac-ticker">${t}</span>
+      <span class="ac-name">${n}</span>
+      <span class="ac-exchange">${ex}</span>
+    `;
+    item.addEventListener("mouseenter", () => { acIndex = i; renderAcHighlight(); });
+    item.addEventListener("click", () => selectAcItem([t, n, ex]));
+    ac.appendChild(item);
+  });
 
-                    let tooltipWidth = tooltip.offsetWidth;
-                    let leftPos = candleX + 15;
-                    if (leftPos + tooltipWidth > chartDimensions.width) {
-                        leftPos = candleX - tooltipWidth - 15;
-                    }
-                    tooltip.style.left = leftPos + 'px';
-                    tooltip.style.top = (p.top + 10) + 'px';
-                }
-            });
-            svg.addEventListener('mouseleave', () => { hideTooltip(); });
-        }
+  ac.style.display = "block";
+}
 
-        function hideTooltip() {
-            document.getElementById('tooltip').style.display = 'none';
-            const ch = document.getElementById('crosshair');
-            if(ch) ch.style.display = 'none';
-        }
+function renderAcHighlight() {
+  document.querySelectorAll(".ac-item").forEach((el, i) => {
+    el.classList.toggle("active", i === acIndex);
+  });
+}
 
-        async function loadStockData() {
-            const tickerInput = document.getElementById('stockTicker');
-            let ticker = tickerInput.value.toUpperCase().trim();
-            if(!ticker) return;
-            
-            globalData = await fetchStockData(ticker);
-            if(globalData.length > 0) {
-                drawChart(globalData);
-            }
-        }
+function selectAcItem(item) {
+  if (!item) return;
+  const [t] = item;
+  document.getElementById("ticker-input").value = t;
+  closeAc();
+  loadTicker(t);
+}
 
-        window.onload = function() {
-            loadStockData();
-            window.addEventListener('resize', () => {
-                if(globalData.length > 0) drawChart(globalData);
-            });
-        };
-    </script>
+function closeAc() {
+  document.getElementById("autocomplete").style.display = "none";
+  acItems = [];
+  acIndex = -1;
+}
+
+function tryLoadTicker(t) {
+  /* allow any ticker even if not in list – just try it */
+  closeAc();
+  loadTicker(t);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CHART – TradingView Advanced Widget
+   ════════════════════════════════════════════════════════════════ */
+function loadTicker(ticker) {
+  ticker = ticker.toUpperCase().trim();
+  if (!ticker) return;
+
+  /* Determine exchange prefix:
+     1. Known ticker → use its declared exchange
+     2. Unknown ticker + exchange tab selected → use that tab
+     3. Fallback → HOSE */
+  const info = STOCK_MAP[ticker];
+  let exchange;
+  if (info) {
+    exchange = EX_PREFIX[info.exchange];
+  } else if (currentExFilter !== "ALL") {
+    exchange = currentExFilter;
+  } else {
+    exchange = "HOSE";
+  }
+  const tvSymbol = `${exchange}:${ticker}`;
+
+  currentSymbol = ticker;
+
+  /* Update pills */
+  document.querySelectorAll(".pill").forEach(p => {
+    p.classList.toggle("active", p.dataset.ticker === ticker);
+  });
+
+  /* Status – built with DOM nodes to avoid XSS */
+  const statusEl = document.getElementById("status-info");
+  statusEl.textContent = "";
+  const tickerSpan = document.createElement("span");
+  tickerSpan.className = "status-ticker";
+  tickerSpan.textContent = ticker;
+  statusEl.appendChild(tickerSpan);
+  if (info) {
+    const detail = document.createTextNode(` · ${info.name} · ${info.exchange}`);
+    statusEl.appendChild(detail);
+  }
+
+  /* Hide empty state */
+  document.getElementById("empty-state").style.display = "none";
+
+  /* Load / reload chart */
+  loadTVWidget(tvSymbol);
+}
+
+function loadTVWidget(symbol) {
+  const container = document.getElementById("tv-chart-container");
+  container.innerHTML = ""; // clear previous
+
+  /* Load TradingView script once */
+  const render = () => {
+    /* eslint-disable no-undef */
+    new TradingView.widget({
+      autosize: true,
+      symbol: symbol,
+      interval: "D",
+      timezone: "Asia/Ho_Chi_Minh",
+      theme: "dark",
+      style: "1",
+      locale: "vi_VN",
+      toolbar_bg: "#161b22",
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      withdateranges: true,
+      range: "12M",
+      save_image: false,
+      container_id: "tv-chart-container",
+      studies: ["Volume@tv-basicstudies", "MACD@tv-basicstudies"],
+      show_popup_button: false,
+      popup_width: "1000",
+      popup_height: "650",
+      no_referral_id: true,
+      allow_symbol_change: true,
+    });
+  };
+
+  if (tvScriptLoaded) {
+    render();
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = "https://s3.tradingview.com/tv.js";
+  script.async = true;
+  script.onload = () => {
+    tvScriptLoaded = true;
+    render();
+  };
+  script.onerror = () => {
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;
+                  height:100%;color:var(--muted);flex-direction:column;gap:12px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p>Không tải được widget TradingView.</p>
+        <small>Vui lòng kiểm tra kết nối internet.</small>
+      </div>`;
+  };
+  document.head.appendChild(script);
+}
+</script>
 </body>
 </html>
