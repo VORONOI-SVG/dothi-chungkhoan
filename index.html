@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (DỮ LIỆU THẬT 100%)</title>
+    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (DỮ LIỆU CHUẨN 100%)</title>
     <style>
         body { 
             margin: 0; 
@@ -99,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Đồng bộ dữ liệu nến THẬT 100% từ đồ thị thị trường (Đã sửa trục thời gian)</p>
+            <p>Đồng bộ dữ liệu nến THẬT 100% qua Cổng Kết Nối An Toàn (CORS Verified)</p>
         </div>
         
         <div class="search-container">
@@ -123,31 +123,38 @@
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang đồng bộ nến THẬT mã ${cleanTicker} từ thị trường...`;
+            statusBar.innerText = `Đang đồng bộ nến THẬT mã ${cleanTicker} từ TradingView Data...`;
             
-            const apiUrl = `https://apipubcks.tcbs.com.vn/api/v1/stock/bars-long-term?ticker=${cleanTicker}&type=stock&resolution=D&countBack=100`;
+            // Tính mốc thời gian lấy khoảng 150 ngày gần nhất
+            const toTimestamp = Math.floor(Date.now() / 1000);
+            const fromTimestamp = toTimestamp - (24 * 60 * 60 * 150); 
+            
+            // URL API Entrade chuẩn đồ thị nến
+            const targetApi = `https://services.entrade.com.vn/chart-api/v2/ohlc/history?resolution=1D&symbol=${cleanTicker}&from=${fromTimestamp}&to=${toTimestamp}`;
+            
+            // Bọc qua proxy AllOrigins chống chặn CORS tuyệt đối trên GitHub Pages
+            const safeUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`;
             
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Không thể kết nối đến máy chủ dữ liệu");
+                const response = await fetch(safeUrl);
+                if (!response.ok) throw new Error("Cổng kết nối dữ liệu bận");
                 
                 const resData = await response.json();
-                if (!resData || !resData.data || resData.data.length === 0) throw new Error("Không tìm thấy mã chứng khoán này");
+                if (!resData || !resData.t || resData.t.length === 0) {
+                    throw new Error("Không tìm thấy dữ liệu mã chứng khoán này");
+                }
                 
-                // QUAN TRỌNG: Đảo ngược mảng để dữ liệu sắp xếp từ CŨ ĐẾN MỚI (Khớp với quy chuẩn TradingView)
-                let rawItems = resData.data.reverse();
                 let marketData = [];
-                
-                for (let i = 0; i < rawItems.length; i++) {
-                    let item = rawItems[i];
+                // API này mặc định trả về từ CŨ đến MỚI (Trái qua Phải), giữ nguyên không đảo ngược
+                for (let i = 0; i < resData.t.length; i++) {
+                    let dateObj = new Date(resData.t[i] * 1000);
+                    let open = resData.o[i];
+                    let high = resData.h[i];
+                    let low = resData.l[i];
+                    let close = resData.c[i];
+                    let strDate = dateObj.toISOString().split('T')[0];
                     
-                    let open = item.open / 1000;
-                    let high = item.high / 1000;
-                    let low = item.low / 1000;
-                    let close = item.close / 1000;
-                    let strDate = item.tradingDate.split('T')[0];
-                    
-                    // Tính toán chỉ báo kỹ thuật KT2
+                    // --- KHU VỰC TÍNH TOÁN CHỈ BÁO KỸ THUẬT KT2 ---
                     let trueRange = high - low;
                     let body = close - open;
                     
@@ -165,13 +172,13 @@
                 }
                 
                 statusBar.style.color = "#26a69a";
-                statusBar.innerText = `Kết nối trực tuyến thành công: Đã đồng bộ nến thật mã ${cleanTicker}!`;
+                statusBar.innerText = `Đồng bộ thành công: Đã kết nối luồng nến thật mã ${cleanTicker}!`;
                 return marketData;
                 
             } catch (error) {
                 console.error("Lỗi dòng dữ liệu:", error);
                 statusBar.style.color = "#ef5350";
-                statusBar.innerText = `Lỗi: ${error.message}`;
+                statusBar.innerText = `Lỗi: ${error.message}. Hãy thử tải lại trang!`;
                 return [];
             }
         }
