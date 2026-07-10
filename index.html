@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (CORS Cleared)</title>
+    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (Yahoo Finance Live)</title>
     <style>
         body { 
             margin: 0; 
@@ -36,7 +36,7 @@
             font-weight: bold; 
             font-size: 14px; 
             text-transform: uppercase; 
-            width: 140px; 
+            width: 120px; 
             outline: none; 
             text-align: center;
         }
@@ -99,11 +99,11 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Sử dụng cổng dữ liệu mở không chặn CORS (Thử nghiệm: BTCUSDT, ETHUSDT...)</p>
+            <p>Đồng bộ dữ liệu trực tiếp từ Yahoo Finance (CORS Approved cho GitHub Pages)</p>
         </div>
         
         <div class="search-container">
-            <input type="text" id="stockTicker" class="stock-input" value="BTCUSDT" placeholder="MÃ COIN..." maxlength="15" onkeydown="if(event.key==='Enter') loadStockData()">
+            <input type="text" id="stockTicker" class="stock-input" value="BSI" placeholder="MÃ CK..." maxlength="6" onkeydown="if(event.key==='Enter') loadStockData()">
             <button class="btn" onclick="loadStockData()">Cập nhật đồ thị</button>
         </div>
     </div>
@@ -120,34 +120,54 @@
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
         async function fetchStockData(ticker) {
-            let cleanTicker = ticker.toUpperCase().trim() || "BTCUSDT";
+            let cleanTicker = ticker.toUpperCase().trim() || "BSI";
+            // Yahoo Finance yêu cầu hậu tố .VN đối với cổ phiếu Việt Nam
+            if (!cleanTicker.endsWith(".VN")) {
+                cleanTicker = cleanTicker + ".VN";
+            }
+            
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang kết nối luồng dữ liệu mở mã ${cleanTicker}...`;
+            statusBar.innerText = `Đang tải dữ liệu mã ${cleanTicker} từ Yahoo Finance...`;
             
-            // Sử dụng API Klines công khai của Binance, hỗ trợ CORS hoàn toàn cho mọi trang web bên thứ ba
-            const apiUrl = `https://api.binance.com/api/v3/klines?symbol=${cleanTicker}&interval=1d&limit=100`;
+            const toPeriod = Math.floor(Date.now() / 1000);
+            const fromPeriod = toPeriod - (24 * 60 * 60 * 240); // Lấy khoảng 240 ngày dữ liệu
+            
+            // Sử dụng API Chart công khai của Yahoo Finance (hỗ trợ CORS đầy đủ)
+            const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?period1=${fromPeriod}&period2=${toPeriod}&interval=1d`;
             
             try {
                 const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Cổng dữ liệu phản hồi lỗi hoặc sai mã");
+                if (!response.ok) throw new Error("Không thể kết nối đến Yahoo Finance");
                 
                 const resData = await response.json();
-                if (!Array.isArray(resData) || resData.length === 0) {
-                    throw new Error("Không có dữ liệu hiển thị");
+                const chartResult = resData.chart?.result?.[0];
+                
+                if (!chartResult || !chartResult.timestamp || chartResult.timestamp.length === 0) {
+                    throw new Error("Không tìm thấy dữ liệu hoặc sai định dạng mã (Thêm .VN nếu cần)");
                 }
                 
+                const timestamps = chartResult.timestamp;
+                const indicators = chartResult.indicators.quote[0];
+                
                 let marketData = [];
-                for (let i = 0; i < resData.length; i++) {
-                    let item = resData[i];
-                    let dateObj = new Date(item[0]);
-                    let open = parseFloat(item[1]);
-                    let high = parseFloat(item[2]);
-                    let low = parseFloat(item[3]);
-                    let close = parseFloat(item[4]);
+                for (let i = 0; i < timestamps.length; i++) {
+                    // Bỏ qua nếu ngày đó bị thiếu dữ liệu giá (ngày lễ/cuối tuần bị rỗng)
+                    if (indicators.open[i] == null || indicators.close[i] == null) continue;
+                    
+                    let dateObj = new Date(timestamps[i] * 1000);
+                    let open = indicators.open[i];
+                    let high = indicators.high[i];
+                    let low = indicators.low[i];
+                    let close = indicators.close[i];
                     let strDate = dateObj.toISOString().split('T')[0];
                     
-                    // --- KHU VỰC TÍNH TOÁN KT2 OSCILLATOR ---
+                    // Do Yahoo Finance trả giá gốc (VD: 54000 thay vì 54.0), chia cho 1000 để hiển thị dạng chuẩn điểm số VN
+                    if (open > 1000) {
+                        open /= 1000; high /= 1000; low /= 1000; close /= 1000;
+                    }
+                    
+                    // --- TÍNH TOÁN CHỈ BÁO SÓNG KT2 ---
                     let trueRange = high - low;
                     let body = close - open;
                     
@@ -165,13 +185,13 @@
                 }
                 
                 statusBar.style.color = "#26a69a";
-                statusBar.innerText = `Kết nối thành công! Đã xử lý xong đồ thị mã ${cleanTicker}.`;
+                statusBar.innerText = `Đồng bộ thành công dữ liệu Yahoo Finance cho mã ${cleanTicker}!`;
                 return marketData;
                 
             } catch (error) {
                 console.error("Lỗi dòng dữ liệu:", error);
                 statusBar.style.color = "#ef5350";
-                statusBar.innerText = `Lỗi: ${error.message}. Hãy kiểm tra lại tên mã chính xác!`;
+                statusBar.innerText = `Lỗi hệ thống: ${error.message}`;
                 return [];
             }
         }
@@ -189,8 +209,8 @@
             const bottomChartTop = padding.top + topChartHeight + 40;            
             const bottomChartHeight = height - padding.bottom - bottomChartTop;    
 
-            const displayCount = data.length;
-            renderSubset = data;
+            const displayCount = Math.min(data.length, 100);
+            renderSubset = data.slice(-displayCount);
             const step = chartWidth / displayCount;
 
             chartDimensions = { width, height, padding, chartWidth, topChartHeight, bottomChartTop, bottomChartHeight, step };
