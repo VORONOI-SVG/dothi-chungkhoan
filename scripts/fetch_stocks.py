@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Fetch Vietnamese stock OHLCV data from TCBS API and save as JSON files.
+Fetch Vietnamese stock OHLCV data from SSI iBoard API and save as JSON files.
 Run by GitHub Actions daily after market close, or manually.
 
 Usage:
-    pip install requests
     python scripts/fetch_stocks.py
 
 Output: data/{TICKER}.json for each stock
@@ -21,11 +20,10 @@ from datetime import datetime, timezone
 DATA_DIR   = "data"
 RESOLUTION = "D"           # D = daily
 YEARS_BACK = 10            # keep 10 years of history
-SLEEP_SEC  = 0.3           # politeness delay between requests
+SLEEP_SEC  = 0.2           # politeness delay between requests
 TIMEOUT    = 15
 
 # ── Full ticker list (HOSE / HNX / UPCOM) ────────────────────────────────────
-# These are the 200+ most actively traded stocks. Edit freely.
 STOCKS = [
     # HOSE
     ("ACB","ACB","HOSE"),("AGR","Agribank Sec","HOSE"),("ANV","Nam Việt","HOSE"),
@@ -97,14 +95,16 @@ STOCKS = [
     ("VPS","VPS Sec","UPCOM"),("VTB","Vietbank","UPCOM"),("WSS","WSS Sec","UPCOM"),
 ]
 
-# ── API ───────────────────────────────────────────────────────────────────────
-TCBS_URL = (
-    "https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price"
-    "?ticker={ticker}&type=stock&resolution={resolution}&from={from_ts}&to={to_ts}"
-)
+# ── SSI iBoard API ────────────────────────────────────────────────────────────
+SSI_URL = (
+    "https://iboardquery.ssi.com.vn/ those/history/chart"
+    "?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}"
+).replace(" those", "") # Tránh lỗi format chuỗi của SSI
+
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; VNChartDataFetcher/1.0)",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json",
+    "Referer": "https://iboard.ssi.com.vn/",
 }
 
 def fetch_json(url: str) -> dict:
@@ -113,36 +113,40 @@ def fetch_json(url: str) -> dict:
         return json.loads(resp.read().decode())
 
 def fetch_ticker(ticker: str, from_ts: int, to_ts: int) -> list:
-    url = TCBS_URL.format(
-        ticker=ticker, resolution=RESOLUTION,
-        from_ts=from_ts, to_ts=to_ts
-    )
+    # Resolution cho SSI: 1D thay vì D
+    res = "1D" if RESOLUTION == "D" else RESOLUTION
+    url = SSI_URL.format(ticker=ticker, resolution=res, from_ts=from_ts, to_ts=to_ts)
+    
     data = fetch_json(url)
-    rows = data.get("data") or data.get("stockPriceList") or []
+    
+    # Check cấu trúc UDF tiêu chuẩn (t, o, h, l, c, v)
+    if data.get("s") != "ok" or "t" not in data:
+        return []
+        
+    timestamps = data["t"]
+    opens = data["o"]
+    highs = data["h"]
+    lows = data["l"]
+    closes = data["c"]
+    volumes = data["v"]
+    
     result = []
-    for r in rows:
-        date_str = r.get("tradingDate") or r.get("date") or ""
-        if not date_str:
-            continue
-        ymd = str(date_str)[:10]
-        ts = int(datetime.strptime(ymd, "%Y-%m-%d")
-                 .replace(tzinfo=timezone.utc).timestamp())
+    for i in range(len(timestamps)):
         result.append([
-            ts,
-            float(r.get("open")  or r.get("priceOpen")  or 0),
-            float(r.get("high")  or r.get("priceHigh")  or 0),
-            float(r.get("low")   or r.get("priceLow")   or 0),
-            float(r.get("close") or r.get("priceClose") or 0),
-            int(r.get("volume")  or r.get("dealVolume") or 0),
+            int(timestamps[i]),
+            float(opens[i]),
+            float(highs[i]),
+            float(lows[i]),
+            float(closes[i]),
+            int(volumes[i])
         ])
-    result.sort(key=lambda x: x[0])
     return result
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    now    = int(datetime.now(timezone.utc).timestamp())
+    now     = int(datetime.now(timezone.utc).timestamp())
     from_ts = now - YEARS_BACK * 366 * 86400
 
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -153,7 +157,8 @@ def main():
         try:
             candles = fetch_ticker(ticker, from_ts, now)
             if not candles:
-                raise ValueError("empty response")
+                raise ValueError("empty or invalid response from API")
+            
             payload = {
                 "ticker":      ticker,
                 "name":        name,
@@ -176,7 +181,7 @@ def main():
         "updated": updated,
         "tickers": [t for t, _, _ in STOCKS],
     }
-    with open(os.path.join(DATA_DIR, "manifest.json"), "w") as f:
+    with open(os.path.join(DATA_DIR, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f)
 
     print(f"\nDone: {ok} ok, {fail} failed.")
