@@ -99,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Đồng bộ dữ liệu nến THẬT 100% từ đồ thị thị trường</p>
+            <p>Đồng bộ dữ liệu nến THẬT 100% từ đồ thị thị trường (Đã sửa trục thời gian)</p>
         </div>
         
         <div class="search-container">
@@ -119,14 +119,12 @@
         let renderSubset = [];
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
-        // GỌI API CHỮNG KHOÁN TCBS CÓ SẴN CORS HOÀN TOÀN CHO WEB HOSTING
         async function fetchStockData(ticker) {
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
             statusBar.innerText = `Đang đồng bộ nến THẬT mã ${cleanTicker} từ thị trường...`;
             
-            // API lịch sử giá ngày của TCBS - Không chặn CORS, trả về dữ liệu thật 100%
             const apiUrl = `https://apipubcks.tcbs.com.vn/api/v1/stock/bars-long-term?ticker=${cleanTicker}&type=stock&resolution=D&countBack=100`;
             
             try {
@@ -136,21 +134,20 @@
                 const resData = await response.json();
                 if (!resData || !resData.data || resData.data.length === 0) throw new Error("Không tìm thấy mã chứng khoán này");
                 
-                // TCBS trả về mảng sắp xếp từ cũ đến mới, thích hợp để vẽ từ trái qua phải
-                let rawItems = resData.data;
+                // QUAN TRỌNG: Đảo ngược mảng để dữ liệu sắp xếp từ CŨ ĐẾN MỚI (Khớp với quy chuẩn TradingView)
+                let rawItems = resData.data.reverse();
                 let marketData = [];
                 
                 for (let i = 0; i < rawItems.length; i++) {
                     let item = rawItems[i];
                     
-                    // TCBS trả về giá gốc (cần chia cho 1000 để ra giá chuẩn tương thích hiển thị thông thường như 4x, 5x)
                     let open = item.open / 1000;
                     let high = item.high / 1000;
                     let low = item.low / 1000;
                     let close = item.close / 1000;
-                    let strDate = item.tradingDate.split('T')[0]; // Định dạng YYYY-MM-DD
+                    let strDate = item.tradingDate.split('T')[0];
                     
-                    // --- KHU VỰC TÍNH TOÁN CHỈ BÁO KỸ THUẬT KT2 ---
+                    // Tính toán chỉ báo kỹ thuật KT2
                     let trueRange = high - low;
                     let body = close - open;
                     
@@ -174,7 +171,7 @@
             } catch (error) {
                 console.error("Lỗi dòng dữ liệu:", error);
                 statusBar.style.color = "#ef5350";
-                statusBar.innerText = `Lỗi: ${error.message}. Vui lòng kiểm tra lại mã hoặc đường truyền mạng!`;
+                statusBar.innerText = `Lỗi: ${error.message}`;
                 return [];
             }
         }
