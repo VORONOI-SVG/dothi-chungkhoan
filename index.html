@@ -5,253 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
   <style>
-    /* ─── Reset & Tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --border:    #21262d;
-      --accent:    #2ecc71;
-      --accent2:   #27ae60;
-      --red:       #e74c3c;
-      --text:      #e6edf3;
-      --muted:     #8b949e;
-      --input-bg:  #1c2128;
-      --shadow:    0 4px 24px rgba(0,0,0,.45);
-      --radius:    8px;
-      --font:      'Inter', 'Segoe UI', system-ui, sans-serif;
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #21262d;
+      --accent:   #2ecc71;
+      --red:      #e74c3c;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --input-bg: #1c2128;
+      --shadow:   0 4px 24px rgba(0,0,0,.5);
+      --radius:   8px;
+      --font:     'Inter','Segoe UI',system-ui,sans-serif;
     }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 14px;
-      line-height: 1.5;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+                 font-family: var(--font); font-size: 14px; line-height: 1.5; }
 
-    /* ─── Layout ─────────────────────────────────────────────── */
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* ─── Header ─────────────────────────────────────────────── */
+    /* ── Header ─────────────────────────────────────────── */
     header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 10px 20px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 18px; background: var(--surface);
+      border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 17px;
-      letter-spacing: -.3px;
-      color: var(--text);
-      white-space: nowrap;
-    }
-    .logo-icon {
-      width: 28px; height: 28px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 700;
+            font-size: 17px; letter-spacing: -.3px; white-space: nowrap; }
+    .logo-icon { width: 28px; height: 28px; background: var(--accent);
+                 border-radius: 6px; display: flex; align-items: center;
+                 justify-content: center; font-size: 15px; }
 
-    /* ─── Search bar ─────────────────────────────────────────── */
-    .search-wrap {
-      position: relative;
-      flex: 1;
-      max-width: 480px;
-    }
-    .search-wrap svg {
-      position: absolute;
-      left: 11px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      pointer-events: none;
-    }
+    /* ── Search ──────────────────────────────────────────── */
+    .search-wrap { position: relative; flex: 1; max-width: 500px; }
+    .search-icon { position: absolute; left: 11px; top: 50%;
+                   transform: translateY(-50%); color: var(--muted);
+                   pointer-events: none; }
+
     #ticker-input {
-      width: 100%;
-      padding: 8px 12px 8px 36px;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 14px;
-      font-family: var(--font);
-      outline: none;
-      transition: border-color .2s;
-      text-transform: uppercase;
+      width: 100%; padding: 8px 36px 8px 36px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-size: 14px; font-family: var(--font); outline: none;
+      transition: border-color .2s; text-transform: uppercase;
     }
     #ticker-input::placeholder { color: var(--muted); text-transform: none; }
     #ticker-input:focus { border-color: var(--accent); }
 
-    /* ─── Autocomplete dropdown ──────────────────────────────── */
+    #clear-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      display: none; padding: 2px; line-height: 1;
+    }
+    #clear-btn:hover { color: var(--text); }
+
+    /* ── Autocomplete ───────────────────────────────────── */
     #autocomplete {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0; right: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      max-height: 260px;
-      overflow-y: auto;
-      z-index: 100;
-      box-shadow: var(--shadow);
-      display: none;
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); max-height: 300px; overflow-y: auto;
+      z-index: 200; box-shadow: var(--shadow); display: none;
     }
     #autocomplete::-webkit-scrollbar { width: 4px; }
-    #autocomplete::-webkit-scrollbar-track { background: transparent; }
     #autocomplete::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    .ac-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      cursor: pointer;
-      transition: background .15s;
-    }
+    .ac-item { display: flex; align-items: center; gap: 10px;
+               padding: 8px 14px; cursor: pointer; transition: background .12s; }
     .ac-item:hover, .ac-item.active { background: var(--input-bg); }
-    .ac-ticker {
-      font-weight: 600;
-      font-size: 13px;
-      min-width: 54px;
-      color: var(--text);
-    }
-    .ac-name {
-      color: var(--muted);
-      font-size: 12px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .ac-exchange {
-      margin-left: auto;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 5px;
-      border-radius: 4px;
-      background: var(--border);
-      color: var(--muted);
-      flex-shrink: 0;
-    }
+    .ac-ticker { font-weight: 700; font-size: 13px; min-width: 60px; color: var(--text); }
+    .ac-name   { color: var(--muted); font-size: 12px; overflow: hidden;
+                 text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .ac-ex     { margin-left: auto; font-size: 10px; font-weight: 700;
+                 padding: 2px 6px; border-radius: 4px;
+                 background: var(--border); color: var(--muted); flex-shrink: 0; }
+    .ac-ex.hose  { background: rgba(46,204,113,.15); color: var(--accent); }
+    .ac-ex.hnx   { background: rgba(52,152,219,.15); color: #3498db; }
+    .ac-ex.upcom { background: rgba(230,126,34,.15); color: #e67e22; }
 
-    /* ─── Exchange tabs ──────────────────────────────────────── */
-    .exchange-tabs {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
+    .ac-header { padding: 6px 14px 4px; font-size: 10px; font-weight: 700;
+                 color: var(--muted); text-transform: uppercase;
+                 letter-spacing: .8px; border-bottom: 1px solid var(--border); }
+
+    /* ── Exchange tabs ───────────────────────────────────── */
+    .exchange-tabs { display: flex; gap: 4px; align-items: center; }
     .tab-btn {
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 12px;
+      font-weight: 600; cursor: pointer; transition: all .15s;
     }
     .tab-btn:hover { color: var(--text); border-color: var(--muted); }
     .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
 
-    /* ─── Watchlist pills ────────────────────────────────────── */
-    .watchlist {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-      padding: 0 20px 0 0;
-    }
-    .watch-label {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
+    /* ── Quick pills ─────────────────────────────────────── */
+    .watchlist { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .watch-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
     .pill {
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s;
+      padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 12px;
+      font-weight: 600; cursor: pointer; transition: all .15s;
     }
-    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill:hover  { border-color: var(--accent); color: var(--accent); }
     .pill.active { background: rgba(46,204,113,.15); border-color: var(--accent); color: var(--accent); }
 
-    /* ─── Chart container ────────────────────────────────────── */
-    .chart-container {
-      flex: 1;
-      min-height: 0;
-      position: relative;
+    /* ── Stock count badge ───────────────────────────────── */
+    #stock-count {
+      font-size: 11px; color: var(--muted); white-space: nowrap;
+      padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border);
     }
+    #stock-count.loaded { border-color: rgba(46,204,113,.3); color: var(--accent); }
 
-    #tv-chart-container {
-      width: 100%;
-      height: 100%;
-    }
+    /* ── Chart ───────────────────────────────────────────── */
+    .chart-container { flex: 1; min-height: 0; position: relative; }
+    #tv-chart-container { width: 100%; height: 100%; }
 
-    /* ─── Status bar ─────────────────────────────────────────── */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 5px 20px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    .status-bar a {
-      color: var(--muted);
-      text-decoration: none;
-    }
-    .status-bar a:hover { color: var(--text); }
-    .status-ticker {
-      font-weight: 700;
-      color: var(--text);
-      font-size: 12px;
-    }
-    .status-change { font-weight: 600; }
-    .status-change.up   { color: var(--accent); }
-    .status-change.down { color: var(--red); }
-    .status-sep { color: var(--border); }
-    .status-right { margin-left: auto; }
-
-    /* ─── Empty / loading placeholder ────────────────────────── */
+    /* ── Empty state ─────────────────────────────────────── */
     .empty-state {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: var(--muted);
-      pointer-events: none;
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      color: var(--muted); pointer-events: none;
     }
-    .empty-state svg { opacity: .25; }
-    .empty-state p { font-size: 15px; }
+    .empty-state svg { opacity: .2; }
+    .empty-state p   { font-size: 16px; }
     .empty-state small { font-size: 12px; }
 
-    /* ─── Scrollbar (global) ─────────────────────────────────── */
+    /* ── Spinner ─────────────────────────────────────────── */
+    .spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ──────────────────────────────────────── */
+    .status-bar {
+      display: flex; align-items: center; gap: 12px; padding: 5px 18px;
+      background: var(--surface); border-top: 1px solid var(--border);
+      flex-shrink: 0; font-size: 11px; color: var(--muted); flex-wrap: wrap;
+    }
+    .status-bar a { color: var(--muted); text-decoration: none; }
+    .status-bar a:hover { color: var(--text); }
+    .status-ticker { font-weight: 700; color: var(--text); font-size: 12px; }
+    .status-right { margin-left: auto; }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -260,26 +158,24 @@
 <body>
 <div class="app">
 
-  <!-- ── Header ─────────────────────────────────────────── -->
   <header>
     <div class="logo">
       <div class="logo-icon">📈</div>
       VN Chart
     </div>
 
-    <!-- Search -->
     <div class="search-wrap" id="search-wrap">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
       </svg>
       <input type="text" id="ticker-input"
-             placeholder="Tìm mã CK (VD: VNM, VIC, HPG...)"
+             placeholder="Tìm mã CK hoặc tên công ty..."
              autocomplete="off" spellcheck="false" />
+      <button id="clear-btn" title="Xóa">✕</button>
       <div id="autocomplete"></div>
     </div>
 
-    <!-- Exchange filter -->
     <div class="exchange-tabs">
       <button class="tab-btn active" data-ex="ALL">Tất cả</button>
       <button class="tab-btn" data-ex="HOSE">HOSE</button>
@@ -287,168 +183,517 @@
       <button class="tab-btn" data-ex="UPCOM">UPCOM</button>
     </div>
 
-    <!-- Quick access -->
+    <span id="stock-count">Đang tải...</span>
+
     <div class="watchlist" id="quicklist"></div>
   </header>
 
-  <!-- ── Chart ──────────────────────────────────────────── -->
   <div class="chart-container">
     <div id="tv-chart-container"></div>
-
     <div class="empty-state" id="empty-state">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="1">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
       <p>Nhập mã chứng khoán để xem biểu đồ</p>
-      <small>Hỗ trợ tất cả mã HOSE · HNX · UPCOM</small>
+      <small id="empty-hint">Đang tải danh sách mã...</small>
     </div>
   </div>
 
-  <!-- ── Status bar ─────────────────────────────────────── -->
   <div class="status-bar">
     <span id="status-info">Chưa chọn mã nào</span>
-    <span class="status-sep">|</span>
-    <span>Nguồn dữ liệu: <a href="https://www.tradingview.com" target="_blank">TradingView</a></span>
-    <span class="status-right">
-      Sàn HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025
-    </span>
+    <span>|</span>
+    <span>Dữ liệu: <a href="https://www.tradingview.com" target="_blank">TradingView</a></span>
+    <span class="status-right">HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025</span>
   </div>
-
 </div>
 
 <script>
-/* ════════════════════════════════════════════════════════════════
-   DATA – Vietnamese stocks (ticker, name, exchange)
-   ════════════════════════════════════════════════════════════════ */
-const STOCKS = [
-  // ─── HOSE blue-chips ─────────────────────────────────────────
-  ["VNM","Vinamilk","HOSE"],["VIC","Vingroup","HOSE"],["VHM","Vinhomes","HOSE"],
-  ["HPG","Hòa Phát","HOSE"],["MSN","Masan Group","HOSE"],["TCB","Techcombank","HOSE"],
-  ["VCB","Vietcombank","HOSE"],["BID","BIDV","HOSE"],["CTG","VietinBank","HOSE"],
-  ["MBB","MB Bank","HOSE"],["ACB","ACB","HOSE"],["STB","Sacombank","HOSE"],
-  ["EIB","Eximbank","HOSE"],["HDB","HDBank","HOSE"],["TPB","TPBank","HOSE"],
-  ["VPB","VPBank","HOSE"],["LPB","LienVietPostBank","HOSE"],["OCB","OCB","HOSE"],
-  ["SSI","SSI","HOSE"],["VND","VNDirect","HOSE"],["HCM","HCMC Securities","HOSE"],
-  ["MWG","Mobile World","HOSE"],["FPT","FPT Corporation","HOSE"],["CMG","CMC Corp","HOSE"],
-  ["REE","REE Corp","HOSE"],["PNJ","PNJ","HOSE"],["DGW","Digiworld","HOSE"],
-  ["GVR","VRG","HOSE"],["PLX","Petrolimex","HOSE"],["GAS","PV Gas","HOSE"],
-  ["BSR","Binh Son","HOSE"],["POW","PV Power","HOSE"],["NT2","NT2","HOSE"],
-  ["VJC","Vietjet","HOSE"],["HVN","Vietnam Airlines","HOSE"],
-  ["VRE","Vincom Retail","HOSE"],["KDH","Khang Điền","HOSE"],["NVL","Novaland","HOSE"],
-  ["PDR","Phát Đạt Real","HOSE"],["DXG","Đất Xanh","HOSE"],["BCM","Becamex","HOSE"],
-  ["PHR","Phước Hòa Rubber","HOSE"],["DPM","Đạm Phú Mỹ","HOSE"],["DCM","Đạm Cà Mau","HOSE"],
-  ["HSG","Hoa Sen Steel","HOSE"],["NKG","Nam Kim","HOSE"],["TLH","TLH Steel","HOSE"],
-  ["DHG","DHG Pharma","HOSE"],["IMP","Imexpharm","HOSE"],["DBD","DOMESCO","HOSE"],
-  ["PAN","PAN Group","HOSE"],["HAG","HAGL","HOSE"],["HNG","HAGL Agri","HOSE"],
-  ["SAB","Sabeco","HOSE"],["BHN","Habeco","HOSE"],["QNS","Quang Ngai Sugar","HOSE"],
-  ["SBT","SBT Sugar","HOSE"],["LSS","Lam Son Sugar","HOSE"],
-  ["VCS","Vinaconex Invest","HOSE"],["CTD","Coteccons","HOSE"],["HBC","Hòa Bình Corp","HOSE"],
-  ["FCN","FECON","HOSE"],["CII","CII","HOSE"],["SCS","SCS Airport","HOSE"],
-  ["AST","Airserco","HOSE"],["ACV","ACV","UPCOM"],
-  ["VTP","Viettel Post","HOSE"],["GMD","Gemadept","HOSE"],["HAH","Hai An Trans","HOSE"],
-
-  // ─── HNX ──────────────────────────────────────────────────────
-  ["SHB","SHBank","HNX"],["PVS","PV Technical","HNX"],["PVC","PV Coating","HNX"],
-  ["SHS","Sài Gòn-Hà Nội Sec","HNX"],["HUT","Tasco","HNX"],["VCG","Vinaconex","HNX"],
-  ["IDC","IDICO","HNX"],["TNG","TNG Investment","HNX"],["LAS","LASCO","HNX"],
-  ["VGC","Viglacera","HNX"],["PVB","PetroVietnam Ins","HNX"],["NTP","Nhựa Tiền Phong","HNX"],
-  ["BBS","VICEM Bút Sơn","HNX"],["PPP","Đức Long Gia Lai","HNX"],
-  ["HAN","Hanoi Securities","HNX"],["PGS","Saigon Petro","HNX"],
-  ["VCF","Vinacafe Biên Hòa","HNX"],["HGM","Ha Giang Mineral","HNX"],
-  ["SDT","Sông Đà 10","HNX"],["C47","CC47","HNX"],
-
-  // ─── UPCOM ────────────────────────────────────────────────────
-  ["BSB","BSB","UPCOM"],["VGT","Vinatex","UPCOM"],["MCH","Masan Consumer","UPCOM"],
-  ["MML","Masan MEATLife","UPCOM"],["VEA","Veam","UPCOM"],["ACV","ACV","UPCOM"],
-  ["MVB","Viet Bac Minerals","UPCOM"],["BSI","BVSC","UPCOM"],["CRE","Creditbank","UPCOM"],
-  ["SGB","Saigonbank","UPCOM"],["NAB","Nam A Bank","UPCOM"],["KLB","Kiên Long Bank","UPCOM"],
-  ["BVB","Bản Việt Bank","UPCOM"],["VIB","VIB","HOSE"],["BAB","Bắc Á Bank","UPCOM"],
-  ["ABB","Abbank","UPCOM"],["PGB","Petrolimex Insurance","UPCOM"],
-  ["QTP","Quảng Ninh Thermal","UPCOM"],["DTV","Đông Triều Mining","UPCOM"],
+/* ════════════════════════════════════════════════════════
+   FALLBACK LIST – top ~400 liquid stocks across all exchanges
+   (used only if API fetch fails)
+   ════════════════════════════════════════════════════════ */
+const FALLBACK = [
+  // HOSE – vốn hóa lớn & phổ biến
+  ["AAA","An Phát Holdings","HOSE"],["AAM","Mekong Fisheries","HOSE"],["ABT","Bến Tre Aquaproduct","HOSE"],
+  ["ACB","ACB","HOSE"],["AGG","An Gia Investment","HOSE"],["AGM","An Giang Import-Export","HOSE"],
+  ["AGR","Agribank Sec","HOSE"],["ALP","An Lộc Phát","HOSE"],["ANV","Nam Viet Corp","HOSE"],
+  ["ASM","Sao Mai Group","HOSE"],["AST","Airserco","HOSE"],["BBC","Bibica","HOSE"],
+  ["BCG","Bamboo Capital","HOSE"],["BCM","Becamex IDC","HOSE"],["BFC","Binh Dien Fertilizer","HOSE"],
+  ["BHN","Habeco","HOSE"],["BIC","BIDV Insurance","HOSE"],["BID","BIDV","HOSE"],
+  ["BMI","Bảo Minh Insurance","HOSE"],["BMP","Binh Minh Plastics","HOSE"],["BRC","Binh Thanh Rubber","HOSE"],
+  ["BSR","Binh Son Refinery","HOSE"],["BVH","Bảo Việt","HOSE"],["C32","C32 Building","HOSE"],
+  ["C47","CC47","HOSE"],["CAV","Cadivi","HOSE"],["CCL","C.E.O. Group","HOSE"],
+  ["CEO","C.E.O. Group","HOSE"],["CII","CII","HOSE"],["CJC","Cơ Kim Khí HCM","HOSE"],
+  ["CLC","Cát Lợi Tobacco","HOSE"],["CLL","Cát Lái Port","HOSE"],["CMG","CMC Corp","HOSE"],
+  ["CMX","Camimex Group","HOSE"],["COM","Petec Trading","HOSE"],["CRE","Creditbank","HOSE"],
+  ["CSM","Casumina","HOSE"],["CTD","Coteccons","HOSE"],["CTG","VietinBank","HOSE"],
+  ["CTP","Cát Tường Group","HOSE"],["D2D","D2D Corp","HOSE"],["DAH","Đại Á Hotel","HOSE"],
+  ["DAT","Đạt Phương","HOSE"],["DBD","Domesco","HOSE"],["DCM","Đạm Cà Mau","HOSE"],
+  ["DGC","DGC","HOSE"],["DGW","Digiworld","HOSE"],["DHC","Đông Hải Bến Tre","HOSE"],
+  ["DHG","DHG Pharma","HOSE"],["DHM","Tasco","HOSE"],["DIG","DIC Corp","HOSE"],
+  ["DL1","Đầu tư Long An","HOSE"],["DLG","Đức Long Gia Lai","HOSE"],["DMC","Domesco Consumer","HOSE"],
+  ["DNP","Đồng Nai Port","HOSE"],["DPM","Đạm Phú Mỹ","HOSE"],["DPR","Đồng Phú Rubber","HOSE"],
+  ["DRC","DRC Rubber","HOSE"],["DRH","DRH Holdings","HOSE"],["DSN","Đồng Xanh Corp","HOSE"],
+  ["DTL","Đại Thiên Lộc","HOSE"],["DXG","Đất Xanh","HOSE"],["DXS","Đất Xanh Services","HOSE"],
+  ["E1VFVN30","VN30 ETF","HOSE"],["EIB","Eximbank","HOSE"],["ELC","Elcom Corp","HOSE"],
+  ["EMC","Electricmec","HOSE"],["EVE","Everpia","HOSE"],["EVF","EVN Finance","HOSE"],
+  ["EVS","Everland","HOSE"],["FCN","FECON","HOSE"],["FDC","Forestar Land","HOSE"],
+  ["FIR","First Real","HOSE"],["FLC","FLC Group","HOSE"],["FMC","Fimex VN","HOSE"],
+  ["FPT","FPT Corp","HOSE"],["FRT","FPT Retail","HOSE"],["FTS","FTS Securities","HOSE"],
+  ["GAB","Gạo An Bình","HOSE"],["GAS","PV Gas","HOSE"],["GDT","Gỗ Đức Thành","HOSE"],
+  ["GEG","Gia Lai Electricity","HOSE"],["GEX","Gelex Group","HOSE"],["GHC","Gia Lai Hydro","HOSE"],
+  ["GIL","Bình Thạnh Garment","HOSE"],["GLT","Gloves Corp","HOSE"],["GMD","Gemadept","HOSE"],
+  ["GTA","Gỗ Trường Thành","HOSE"],["GTN","GTN Foods","HOSE"],["GVR","VRG","HOSE"],
+  ["HAG","HAGL","HOSE"],["HAH","Hải An Transport","HOSE"],["HAP","Hapaco","HOSE"],
+  ["HBC","Hòa Bình Corp","HOSE"],["HCM","HCMC Securities","HOSE"],["HDB","HDBank","HOSE"],
+  ["HDC","Hà Đô Corp","HOSE"],["HDG","Hà Đô Group","HOSE"],["HGM","Ha Giang Mineral","HOSE"],
+  ["HHV","HHV","HOSE"],["HID","Halcom VN","HOSE"],["HII","An Hưng Tường","HOSE"],
+  ["HMC","Kim Khí HCM","HOSE"],["HNG","HAGL Agri","HOSE"],["HPG","Hòa Phát","HOSE"],
+  ["HPX","Hưng Phát Xanh","HOSE"],["HQC","Hoang Quan Corp","HOSE"],["HSG","Hoa Sen Steel","HOSE"],
+  ["HT1","Hà Tiên 1","HOSE"],["HTI","HTI","HOSE"],["HTN","Hưng Thịnh Land","HOSE"],
+  ["HTV","Hải Tiến Logistics","HOSE"],["HUT","Tasco","HOSE"],["HVN","Vietnam Airlines","HOSE"],
+  ["IBC","Invest BIDV","HOSE"],["IDI","Integrated Dairy","HOSE"],["IDP","IDP","HOSE"],
+  ["IJC","Phát triển Đô thị","HOSE"],["IMP","Imexpharm","HOSE"],["ITA","Tân Tạo Group","HOSE"],
+  ["ITC","Invest ITC","HOSE"],["ITD","ITD","HOSE"],["IVS","Invest Vina","HOSE"],
+  ["KBC","Kinh Bắc Urban","HOSE"],["KDC","Kido Group","HOSE"],["KDH","Khang Điền","HOSE"],
+  ["KHG","Khải Hoàn Land","HOSE"],["KHP","Khánh Hòa Power","HOSE"],["KMR","Mirae","HOSE"],
+  ["KOS","KOS Group","HOSE"],["LAF","Long An Food","HOSE"],["LBM","Khoáng sản Lào Cai","HOSE"],
+  ["LCG","LICOGI 16","HOSE"],["LDG","LDG Investment","HOSE"],["LEC","BĐS Điện lực Miền Nam","HOSE"],
+  ["LHG","Long Hậu Corp","HOSE"],["LIX","Lix Detergent","HOSE"],["LPB","LienVietPostBank","HOSE"],
+  ["LSS","Lam Son Sugar","HOSE"],["MBB","MB Bank","HOSE"],["MCH","Masan Consumer","HOSE"],
+  ["MCP","In & Bao bì","HOSE"],["MDG","Minh Đức","HOSE"],["MHC","MHC","HOSE"],
+  ["MSN","Masan Group","HOSE"],["MST","Masan Technology","HOSE"],["MWG","Mobile World","HOSE"],
+  ["NAF","Nafoods","HOSE"],["NBB","Năm Bảy Bảy","HOSE"],["NCT","Nội Bài Cargo","HOSE"],
+  ["NHA","Nha Trang Real","HOSE"],["NHH","Nhựa Hà Nội","HOSE"],["NKG","Nam Kim Steel","HOSE"],
+  ["NLG","Nam Long","HOSE"],["NNC","Núi Nhỏ Stone","HOSE"],["NTL","Nhà Thủ Đức","HOSE"],
+  ["NVL","Novaland","HOSE"],["NVT","Bất động sản NVT","HOSE"],["OCB","OCB","HOSE"],
+  ["OGC","Ocean Group","HOSE"],["ORS","ORS","HOSE"],["PAC","Pin Ắc quy Miền Nam","HOSE"],
+  ["PAN","PAN Group","HOSE"],["PDN","Đồng Nai Port","HOSE"],["PDR","Phát Đạt Real","HOSE"],
+  ["PET","Petrovietnam General","HOSE"],["PGC","Gas PGC","HOSE"],["PGD","Gas Đồng Nai","HOSE"],
+  ["PHR","Phước Hòa Rubber","HOSE"],["PIT","Pitco","HOSE"],["PLX","Petrolimex","HOSE"],
+  ["PMG","Petro Miền Trung","HOSE"],["PNJ","PNJ","HOSE"],["POW","PV Power","HOSE"],
+  ["PPC","Phả Lại Power","HOSE"],["PTB","Phú Tài","HOSE"],["PTC","Pacific Cross","HOSE"],
+  ["PTL","Petrolimex Land","HOSE"],["PVD","PV Drilling","HOSE"],["PVT","PVTrans","HOSE"],
+  ["QCG","Quốc Cường Gia Lai","HOSE"],["QNS","Quảng Ngãi Sugar","HOSE"],["RCL","Rivercliff","HOSE"],
+  ["REE","REE Corp","HOSE"],["ROS","FLC Faros","HOSE"],["SAB","Sabeco","HOSE"],
+  ["SAF","SAFICO","HOSE"],["SAM","Cáp & Vật liệu Viễn thông","HOSE"],["SAV","Savipharm","HOSE"],
+  ["SBT","SBT Sugar","HOSE"],["SBV","Siam Brothers","HOSE"],["SCS","SCS Airport","HOSE"],
+  ["SGN","Saigon Ground Services","HOSE"],["SGR","Saigon Real","HOSE"],["SHB","SHBank","HOSE"],
+  ["SHI","Sài Gòn–Hà Nội Int","HOSE"],["SHP","Sơn La Hydro","HOSE"],["SII","Saigon Infrastructure","HOSE"],
+  ["SJS","Sudico","HOSE"],["SKG","Saigon Kinetics","HOSE"],["SMA","Seraphin","HOSE"],
+  ["SMB","Bia Sài Gòn Miền Trung","HOSE"],["SMC","SMC Steel","HOSE"],["SPM","SPM Corp","HOSE"],
+  ["SRC","Cao su Sao Vàng","HOSE"],["SRF","Searefico","HOSE"],["SSB","SeABank","HOSE"],
+  ["SSI","SSI","HOSE"],["ST8","Siêu Thanh","HOSE"],["STB","Sacombank","HOSE"],
+  ["STG","Steraplast","HOSE"],["SVC","Saigon Vehicle","HOSE"],["SVD","Sông Đà Invest","HOSE"],
+  ["SVT","Sông Việt Tech","HOSE"],["SZC","Sonadezi Châu Đức","HOSE"],["SZL","Sonadezi Long Thành","HOSE"],
+  ["TAC","Tuong An Veg Oil","HOSE"],["TCB","Techcombank","HOSE"],["TCH","Toàn Cầu Holdings","HOSE"],
+  ["TCI","T&T Capital","HOSE"],["TCL","Cáp Điện Thịnh Phát","HOSE"],["TDM","Bình Dương Water","HOSE"],
+  ["TDW","TDW Water","HOSE"],["TEG","Trường Thành Energy","HOSE"],["THD","Thaiholdings","HOSE"],
+  ["TIG","Tigrila","HOSE"],["TIP","Tân Cảng Infra","HOSE"],["TIX","Tân Bình Mfg Park","HOSE"],
+  ["TLD","Trường Long","HOSE"],["TLH","TLH Steel","HOSE"],["TLT","Tâm Long","HOSE"],
+  ["TMC","Thương mại Kỹ thuật","HOSE"],["TMP","Thác Mơ Hydro","HOSE"],["TMS","Transimex","HOSE"],
+  ["TNA","Thiên Nam Trading","HOSE"],["TNI","TNI Holdings","HOSE"],["TNT","Tân Thanh Container","HOSE"],
+  ["TPB","TPBank","HOSE"],["TPC","Nhựa Tân Đại Hưng","HOSE"],["TSC","Agri TSC","HOSE"],
+  ["TTF","Trường Thành Wood","HOSE"],["TTP","Bao bì Tân Tiến","HOSE"],["TVC","Tây Vực Cable","HOSE"],
+  ["TVS","Thiên Việt Sec","HOSE"],["TVT","Vinatrans","HOSE"],["UDC","Urban Dev Corp","HOSE"],
+  ["UIC","Urban Invest","HOSE"],["VAF","Khử trùng Việt Nam","HOSE"],["VCB","Vietcombank","HOSE"],
+  ["VCF","Vinacafe Biên Hòa","HOSE"],["VCI","Viet Capital Sec","HOSE"],["VCT","Vinaconex Trans","HOSE"],
+  ["VDS","Rồng Việt Sec","HOSE"],["VGC","Viglacera","HOSE"],["VGI","Viettel Global","HOSE"],
+  ["VHC","Vĩnh Hoàn","HOSE"],["VHM","Vinhomes","HOSE"],["VIB","VIB","HOSE"],
+  ["VIC","Vingroup","HOSE"],["VIX","VIX Sec","HOSE"],["VJC","Vietjet","HOSE"],
+  ["VKC","VKC Cable","HOSE"],["VMC","Vật liệu Xây dựng","HOSE"],["VND","VNDirect Sec","HOSE"],
+  ["VNE","Vinaenergy","HOSE"],["VNM","Vinamilk","HOSE"],["VNS","Ánh Dương Việt Nam","HOSE"],
+  ["VOS","Vosco","HOSE"],["VPB","VPBank","HOSE"],["VPD","Power Dev VN","HOSE"],
+  ["VPG","Phân phối Quốc tế","HOSE"],["VPI","Văn Phú Invest","HOSE"],["VPK","Bao bì Xăng dầu","HOSE"],
+  ["VRC","Bất động sản VRC","HOSE"],["VRE","Vincom Retail","HOSE"],["VSC","Cảng Container VN","HOSE"],
+  ["VSH","Vĩnh Sơn Sông Hinh","HOSE"],["VTO","Viteco","HOSE"],["VTP","Viettel Post","HOSE"],
+  ["YEG","Yeah1 Group","HOSE"],
+  // HNX
+  ["ACE","ACE Life","HNX"],["ACM","Khoáng Apatit","HNX"],["ALT","Văn hóa Tây Hồ","HNX"],
+  ["AME","Alpha AME","HNX"],["AMV","Phát triển Phụ gia","HNX"],["API","Empire City","HNX"],
+  ["APS","Châu Á Thái Bình Dương","HNX"],["BAX","Bạch Tuyết Corp","HNX"],["BBS","VICEM Bút Sơn","HNX"],
+  ["BCC","Xi măng Bỉm Sơn","HNX"],["BCF","Thuỷ sản Cần Thơ","HNX"],["BDB","BĐS Bình Dương","HNX"],
+  ["BHC","Bình Hưng Corp","HNX"],["BII","Tư vấn Quản lý","HNX"],["BKC","Khoáng sản Bắc Kạn","HNX"],
+  ["BKG","Đầu tư Bắc Kinh","HNX"],["BNA","Xi măng Bắc Ninh","HNX"],["BST","Sơn La Invest","HNX"],
+  ["BVS","Bảo Việt Sec","HNX"],["C92","C92","HNX"],["CAB","Cấp nước An Giang","HNX"],
+  ["CAN","Đồ hộp Hạ Long","HNX"],["CDN","Cảng Đà Nẵng","HNX"],["CID","Đầu tư & PT CN","HNX"],
+  ["CJC","Cơ Kim Khí Hà Nội","HNX"],["CLH","Xi măng La Hiên","HNX"],["CPC","Cáp Nhựa Vĩnh Khánh","HNX"],
+  ["CSC","Tư vấn XD&CN","HNX"],["CT3","Đầu tư XD CT3","HNX"],["CTB","Cable Việt Bắc","HNX"],
+  ["CTX","Đầu tư CT&T","HNX"],["CVT","CMC","HNX"],["D11","Địa ốc 11","HNX"],
+  ["DAD","Đà Nẵng Airport","HNX"],["DBC","Tập đoàn Dabaco","HNX"],["DCS","Dịch vụ CN Sài Gòn","HNX"],
+  ["DDG","Đại Dương Green","HNX"],["DGC","DGC (HNX)","HNX"],["DHP","Điện Cơ Hải Phòng","HNX"],
+  ["DL1","Đầu Tư Phát Triển","HNX"],["DNM","Dệt May Nam Định","HNX"],["DNY","Dược Hà Tây","HNX"],
+  ["DPC","Nhựa Đà Nẵng","HNX"],["DST","Địa ốc Đà Lạt","HNX"],["DTD","Đầu Tư Địa Ốc","HNX"],
+  ["DTK","Đức Thành Khánh","HNX"],["DTT","Đức Thành Thư","HNX"],["DVN","Dược Vietnam","HNX"],
+  ["ECI","Vật tư Điện","HNX"],["FCM","Khoáng sản Fecon","HNX"],["FID","FID","HNX"],
+  ["GDW","Cấp thoát nước Gò Dầu","HNX"],["GHA","Gốm sứ Hải Phòng","HNX"],["GLW","Thiết bị Điện Việt Nam","HNX"],
+  ["GMX","Gạch Ngói Đất Sét","HNX"],["GVT","Xây dựng GVT","HNX"],["H11","Địa ốc H11","HNX"],
+  ["HAI","Nông dược HAI","HNX"],["HAN","Hanoi Sec","HNX"],["HAT","Hân Xây Dựng","HNX"],
+  ["HBE","Môi trường HBE","HNX"],["HBS","HBS Sec","HNX"],["HCC","Bê tông Hòa Cầm","HNX"],
+  ["HCT","Hải Âu","HNX"],["HDD","Xây dựng Hà Nội","HNX"],["HHC","Bánh kẹo Hải Hà","HNX"],
+  ["HIS","HIS","HNX"],["HJS","Xây lắp & Vật liệu Đ","HNX"],["HKB","Hà Kiều","HNX"],
+  ["HLC","Tổng hợp Hà Nội","HNX"],["HLD","Xây dựng Hà Nội","HNX"],["HMH","Hải Minh","HNX"],
+  ["HNF","Thực phẩm Hà Nội","HNX"],["HPB","Giao thông Hà Nội","HNX"],["HPT","Dịch vụ CNTT HPT","HNX"],
+  ["HRB","Cao su Hà Nội","HNX"],["HST","Hệ thống Siêu thị","HNX"],["HTC","Bình Thạnh","HNX"],
+  ["HTP","In Sách giáo khoa","HNX"],["HUT","Tasco HNX","HNX"],["HVT","Hóa chất Việt Trì","HNX"],
+  ["ICG","Xây dựng ICG","HNX"],["IDC","IDICO","HNX"],["IDJ","IDJ","HNX"],
+  ["INC","Xây dựng Công nghiệp","HNX"],["INN","In&Sách","HNX"],["IVB","Indochina Bank","HNX"],
+  ["KLF","KILF Land","HNX"],["KMT","Kim khí Miền Trung","HNX"],["KSD","Xây dựng KSD","HNX"],
+  ["L14","L14","HNX"],["L35","L35","HNX"],["L43","L43","HNX"],["L44","L44","HNX"],
+  ["L61","L61","HNX"],["LAS","LASCO","HNX"],["LBC","Long Biên Corp","HNX"],
+  ["LBE","Long Biên Env","HNX"],["LCD","Lắp máy & Xây dựng","HNX"],["LCS","Xây dựng Lào Cai","HNX"],
+  ["LIG","Licogi 13","HNX"],["LM3","Lâm nghiệp 3","HNX"],["LM7","Lâm nghiệp 7","HNX"],
+  ["LO5","Lắp máy 5","HNX"],["LTC","Điện lực Lào Cai","HNX"],["LUT","Đầu tư Chương Dương","HNX"],
+  ["MAC","Hóa chất MAC","HNX"],["MAS","Transimex MAS","HNX"],["MAX","Maxvalue","HNX"],
+  ["MBS","MB Sec","HNX"],["MCC","Kho vận Miền Nam","HNX"],["MCO","MCO","HNX"],
+  ["MDB","Cầu Bến Thủy","HNX"],["MDC","Xây dựng Đường","HNX"],["MEC","Cơ điện Mec","HNX"],
+  ["MEL","Điện lực Miền Đông","HNX"],["MHL","Phát triển Miền Núi","HNX"],["MIC","Bảo hiểm Quân đội","HNX"],
+  ["MIM","MABIV","HNX"],["MKP","Hóa Dược Mekophar","HNX"],["MMC","Khoáng sản MMC","HNX"],
+  ["MST","MST","HNX"],["NAG","Agri Nghệ An","HNX"],["NBC","Gạch Ngói Nhị Hiệp","HNX"],
+  ["NBP","Nhiệt điện Ninh Bình","HNX"],["NCG","Nam Cường","HNX"],["NDN","Đà Nẵng Investment","HNX"],
+  ["NEF","Năng lượng Môi trường","HNX"],["NET","Hóa chất Đức Giang","HNX"],["NFC","Phân bón & HC Cần Thơ","HNX"],
+  ["NGC","Gỗ Công nghiệp Quảng Trị","HNX"],["NGT","Gốm sứ Đất Việt","HNX"],["NHC","Nhà Hà Nội","HNX"],
+  ["NHP","Sản xuất XNK Nhựa","HNX"],["NHT","Nha Trang Textile","HNX"],["NLC","Kho vận NLC","HNX"],
+  ["NME","Quản lý NM&TB","HNX"],["NMP","Nhựa Miền Phúc","HNX"],["NPS","Nhựa Đà Nẵng","HNX"],
+  ["NSH","Nhà ở Xã hội","HNX"],["NTP","Nhựa Tiền Phong","HNX"],["NVB","NCB","HNX"],
+  ["OCH","Ocean Hospitality","HNX"],["ONE","Truyền thông ONE","HNX"],["ORS","ORS HNX","HNX"],
+  ["PAP","Đầu tư PAP","HNX"],["PCE","Vicem PCE","HNX"],["PCG","Gas Tiền Giang","HNX"],
+  ["PCI","Phân bón Cà Mau","HNX"],["PCN","Sứ Cây Bút","HNX"],["PDB","Vina Pharma","HNX"],
+  ["PDC","Du lịch Dầu khí","HNX"],["PFL","Phú Thành Nông Sản","HNX"],["PGD","Gas Đà Nẵng","HNX"],
+  ["PGS","Kinh doanh Khí","HNX"],["PHC","Xây dựng Phục Hưng","HNX"],["PHP","Cảng Hải Phòng","HNX"],
+  ["PJC","Thương mại Dầu khí","HNX"],["PKH","Hải Phòng Invest","HNX"],["PLO","Bao bì Dầu thực vật","HNX"],
+  ["PMB","Xây lắp PM&B","HNX"],["PMC","Dược phẩm PMC","HNX"],["PME","Dược Pymepharco","HNX"],
+  ["PMP","Bao bì Miền Nam","HNX"],["PNT","Cấp thoát nước PN","HNX"],["POT","Thiết bị Bưu điện","HNX"],
+  ["PPP","Đức Long Gia Lai HNX","HNX"],["PPS","Điện nhẹ Viễn thông","HNX"],["PRC","Portcoast","HNX"],
+  ["PRE","Tái bảo hiểm PV","HNX"],["PSC","Dịch vụ Vận tải","HNX"],["PSE","Điện Dầu khí HNX","HNX"],
+  ["PSI","Dầu khí PSI","HNX"],["PTC","PTC HNX","HNX"],["PTS","Dịch vụ Kỹ thuật","HNX"],
+  ["PVC","PV Coating","HNX"],["PVE","PV Eng","HNX"],["PVG","PV Gas HNX","HNX"],
+  ["PVI","PVI Holdings","HNX"],["PVL","BĐS Dầu khí","HNX"],["PVR","Dịch vụ Du lịch DK","HNX"],
+  ["PVS","PV Technical Services","HNX"],["PVX","PetroVN Xây lắp","HNX"],["QBS","Sách Giáo dục","HNX"],
+  ["QHD","Đầu tư QHD","HNX"],["QNC","Xi măng Quảng Ninh","HNX"],["QST","QST","HNX"],
+  ["QTC","Năng lượng QTC","HNX"],["S55","S55","HNX"],["S96","S96","HNX"],
+  ["SAP","An Tiến Industries","HNX"],["SBA","Stone Bay","HNX"],["SDC","KD Nhà Sông Đà","HNX"],
+  ["SDG","Dịch vụ SD","HNX"],["SDT","Sông Đà 10","HNX"],["SDU","SD Urban","HNX"],
+  ["SGC","Xuất nhập khẩu Sa Giang","HNX"],["SHB","SHBank HNX","HNX"],["SHS","SHS Sec","HNX"],
+  ["SIC","Đầu tư SIC","HNX"],["SJ1","Nông nghiệp SJ1","HNX"],["SKS","Kinh doanh SK","HNX"],
+  ["SLS","Mía đường Sơn La","HNX"],["SNG","Thăng Long Invest","HNX"],["SPI","Đầu tư SPI","HNX"],
+  ["SQ1","Đầu tư Sóc Sơn","HNX"],["SRA","SRA","HNX"],["STC","Sao Thái Dương","HNX"],
+  ["STT","Dịch vụ STT","HNX"],["SVC","Dịch vụ Tổng hợp SG","HNX"],["SWC","Cấp thoát nước SW","HNX"],
+  ["SXB","Xi măng Sông Gianh","HNX"],["TAG","Thủy điện An Giang","HNX"],["TAS","Nông nghiệp TAS","HNX"],
+  ["TAW","Agri Tây Ninh","HNX"],["TBC","Thủy điện Thác Bà","HNX"],["TC6","Thép 6","HNX"],
+  ["TDN","Thép Đà Nẵng","HNX"],["TEL","Hóa chất Miền Nam","HNX"],["TH1","Điện Tây Hồ","HNX"],
+  ["THB","Bia Thanh Hóa","HNX"],["THT","Thủy điện Sê San","HNX"],["TIG","TIG HNX","HNX"],
+  ["TJC","Đá Trang Anh","HNX"],["TKC","Thương mại Kỳ Hà","HNX"],["TLC","Dược Hà Tây","HNX"],
+  ["TLT","Xây dựng Tô Lịch","HNX"],["TMB","Xây dựng Tây Nam","HNX"],["TMS","Transimex HNX","HNX"],
+  ["TMT","ÔTô TMT","HNX"],["TNA","TNA HNX","HNX"],["TND","TN Dịch vụ","HNX"],
+  ["TNG","TNG Investment","HNX"],["TNP","Thương nghiệp","HNX"],["TNT","TNT HNX","HNX"],
+  ["TOT","Tổng hợp Thủy lợi","HNX"],["TPC","Nhựa TPC","HNX"],["TPS","Tràng An Invest","HNX"],
+  ["TQW","Tây Quảng Dịch vụ","HNX"],["TSB","Ắc quy Tia Sáng","HNX"],["TSJ","Du lịch TSJ","HNX"],
+  ["TTC","TTC HNX","HNX"],["TTZ","Khoáng sản TTZ","HNX"],["TVC","Tỉnh Lộ HNX","HNX"],
+  ["TVD","Than Vàng Danh","HNX"],["TVN","Thép Việt","HNX"],["TVP","Nhựa Tân Việt","HNX"],
+  ["TXM","VICEM TX","HNX"],["UMC","UMC","HNX"],["V11","Xây dựng V11","HNX"],
+  ["V12","Xây dựng V12","HNX"],["V15","V15","HNX"],["V21","V21","HNX"],
+  ["VBC","Nhựa-Bao bì Vinai","HNX"],["VBH","VBH","HNX"],["VCC","Vicostone","HNX"],
+  ["VCG","Vinaconex","HNX"],["VDL","Thực phẩm Lâm Đồng","HNX"],["VE1","Điện Tư Nghĩa","HNX"],
+  ["VE2","Xây lắp VE2","HNX"],["VE3","Xây lắp VE3","HNX"],["VE4","Xây lắp VE4","HNX"],
+  ["VE8","Xây lắp VE8","HNX"],["VE9","Xây lắp VE9","HNX"],["VGS","Thép VGS","HNX"],
+  ["VHL","Viglacera Hạ Long","HNX"],["VID","Đầu tư Phát triển VN","HNX"],["VIT","Vĩnh Tường","HNX"],
+  ["VLA","Cho thuê máy bay VLA","HNX"],["VMG","Công nghệ VMG","HNX"],["VMI","Máy & Thiết bị","HNX"],
+  ["VMS","Môi trường Đô thị","HNX"],["VNA","Vinalines","HNX"],["VNR","Tái bảo hiểm VN","HNX"],
+  ["VNT","Cảng Việt Nam","HNX"],["VPH","VPH","HNX"],["VSE","Ứng dụng Công nghệ","HNX"],
+  ["VSG","Xây dựng VSG","HNX"],["VSI","Đầu tư & XD VSI","HNX"],["VTC","Truyền thông VTC","HNX"],
+  ["VTS","Vitecs","HNX"],["VTV","Phân bón VTV","HNX"],["VXB","Vật liệu XD VXB","HNX"],
+  ["WAT","Cấp thoát nước WAT","HNX"],["WCS","Bến xe Miền Tây","HNX"],
+  // UPCOM – phổ biến nhất
+  ["ABI","An Bình Insurance","UPCOM"],["ACV","ACV","UPCOM"],["BAB","Bắc Á Bank","UPCOM"],
+  ["BAF","BA F","UPCOM"],["BCV","Bắc Cạn","UPCOM"],["BVB","Bản Việt Bank","UPCOM"],
+  ["CAG","Cảng An Giang","UPCOM"],["CBI","CBI","UPCOM"],["CCM","Xi măng Cần Thơ","UPCOM"],
+  ["CDO","Chế độ Phát","UPCOM"],["CEG","Cơ điện Gelex","UPCOM"],["CLB","Lọc hóa dầu Bình Sơn","UPCOM"],
+  ["CMI","CMISTONE VN","UPCOM"],["CNG","CNG Vietnam","UPCOM"],["CTF","City Auto","UPCOM"],
+  ["DAF","Dược Việt Nam","UPCOM"],["DBC","Dabaco UPCOM","UPCOM"],["DBW","Cấp nước DB","UPCOM"],
+  ["DCR","Xi măng Đại Việt","UPCOM"],["DGM","Khoáng sản Địa chất","UPCOM"],["DHA","Hóa An","UPCOM"],
+  ["DHM","Xi măng Hữu Nghị","UPCOM"],["DID","DID","UPCOM"],["DLM","Dịch vụ Lâm nghiệp","UPCOM"],
+  ["DPG","Đức Phát","UPCOM"],["DPS","Đầu tư DPS","UPCOM"],["DQC","Đại Quang Minh","UPCOM"],
+  ["DSE","Thiết bị DS","UPCOM"],["DWS","Cấp nước Đà Nẵng","UPCOM"],["EBS","Sách thiết bị","UPCOM"],
+  ["EVG","Everland UPCOM","UPCOM"],["FID","FID UPCOM","UPCOM"],["FIE","FIE","UPCOM"],
+  ["GAS","PV Gas UPCOM","UPCOM"],["GEG","Gia Lai Elect","UPCOM"],["GIC","GIC","UPCOM"],
+  ["GLT","Gloves UPCOM","UPCOM"],["HAB","Hà Giang","UPCOM"],["HCB","Hòa Cường Bắc","UPCOM"],
+  ["HCH","Hóa chất Hà Nội","UPCOM"],["HEC","Xây dựng Thủy điện","UPCOM"],["HFS","Dịch vụ FS","UPCOM"],
+  ["HHN","Xây lắp Hà Nội","UPCOM"],["HKB","Hà Kiều UPCOM","UPCOM"],["HKT","HKT","UPCOM"],
+  ["HLD","Hà Nội Land","UPCOM"],["HNI","HNI","UPCOM"],["HOM","Xi măng HOM","UPCOM"],
+  ["HOT","Dịch vụ Du lịch","UPCOM"],["HPC","Điện Hải Phòng","UPCOM"],["HPS","Dịch vụ HPS","UPCOM"],
+  ["HSV","HaSaVi","UPCOM"],["HTB","Thủy điện Hòa Bình","UPCOM"],["HTC","HTC UPCOM","UPCOM"],
+  ["HU1","Xây dựng HU1","UPCOM"],["HU3","Xây dựng HU3","UPCOM"],["HVA","HVA","UPCOM"],
+  ["IHK","International Hospital","UPCOM"],["ILA","ILA","UPCOM"],["IME","IME VN","UPCOM"],
+  ["IMP","Imexpharm UPCOM","UPCOM"],["ITA","Tân Tạo UPCOM","UPCOM"],
+  ["JVC","Nhật Việt JVC","UPCOM"],["KAC","Khánh An","UPCOM"],["KBC","Kinh Bắc UPCOM","UPCOM"],
+  ["KDM","Khoáng sản KDM","UPCOM"],["KLB","Kiên Long Bank","UPCOM"],["KMR","Mirae UPCOM","UPCOM"],
+  ["KPF","Khai Phong Finance","UPCOM"],["KSB","Khoáng sản & XD BM","UPCOM"],["KSF","KSF","UPCOM"],
+  ["KTT","KTT","UPCOM"],["L18","Licogi 18","UPCOM"],["LAB","Hóa chất LAB","UPCOM"],
+  ["LAS","LASCO UPCOM","UPCOM"],["LBE","UPCOM LBE","UPCOM"],["LDP","Dược Lâm Đồng","UPCOM"],
+  ["LHC","Thủy điện LHC","UPCOM"],["LIG","Licogi 13 UPCOM","UPCOM"],["LMH","LMH","UPCOM"],
+  ["LNH","Thủy điện Lào Nguyên","UPCOM"],["LSE","Lắp máy Điện nước","UPCOM"],
+  ["MCM","Mỹ Châu","UPCOM"],["MCH","Masan Consumer UPCOM","UPCOM"],["MIM","MABIV UPCOM","UPCOM"],
+  ["MKV","Thuốc thú y MKV","UPCOM"],["MLB","Vật liệu và Khoáng sản","UPCOM"],
+  ["MML","Masan MEATLife","UPCOM"],["MSR","Masan Resources","UPCOM"],
+  ["NAB","Nam A Bank","UPCOM"],["NAF","Nafoods UPCOM","UPCOM"],["NBE","North Bio","UPCOM"],
+  ["NBC","Gạch Nhị Hiệp UPCOM","UPCOM"],["NBW","Cấp nước Nhơn Bình","UPCOM"],
+  ["NCT","Nội Bài Cargo UPCOM","UPCOM"],["NDN","ND Invest UPCOM","UPCOM"],["NED","Năng lượng Điện","UPCOM"],
+  ["NFC","Phân bón NFC UPCOM","UPCOM"],["NGO","Dịch vụ NGO","UPCOM"],["NHH","Nhựa HN UPCOM","UPCOM"],
+  ["NIB","NIB","UPCOM"],["NIS","NIS","UPCOM"],["NJC","NJC","UPCOM"],
+  ["NKC","Nông nghiệp NK","UPCOM"],["NLG","Nam Long UPCOM","UPCOM"],["NMR","NMR","UPCOM"],
+  ["NNC","Núi Nhỏ UPCOM","UPCOM"],["NOS","NOS","UPCOM"],["NQT","NQT","UPCOM"],
+  ["NRC","Navibank RC","UPCOM"],["NSC","Giống cây trồng VN","UPCOM"],["NT2","NT2","UPCOM"],
+  ["NTH","Thủy điện Nậm Thà","UPCOM"],["NTP","Nhựa Tiền Phong UPCOM","UPCOM"],
+  ["OIL","PVOIL","UPCOM"],["ORB","ORB","UPCOM"],["PAG","Đầu tư PAG","UPCOM"],
+  ["PBP","Bao bì PB","UPCOM"],["PCC","Xi măng Phú Thọ","UPCOM"],["PCF","Bao bì Miền Trung","UPCOM"],
+  ["PCS","Dịch vụ PCS","UPCOM"],["PDV","Dịch vụ DK PD","UPCOM"],["PEG","Điện PEGAS","UPCOM"],
+  ["PET","Petrovietnam UPCOM","UPCOM"],["PGB","Petrolimex Insurance UPCOM","UPCOM"],
+  ["PGI","PGI","UPCOM"],["PGN","Hóa dầu PGN","UPCOM"],["PGT","PGT Holdings","UPCOM"],
+  ["PHN","Pin Hà Nội","UPCOM"],["PIT","PITCO UPCOM","UPCOM"],["PJT","Xây dựng UPCOM","UPCOM"],
+  ["PKA","Bao bì Khang An","UPCOM"],["PLC","Hóa dầu PLC","UPCOM"],["PLO","PLO UPCOM","UPCOM"],
+  ["PMW","Cơ điện PMW","UPCOM"],["PND","Phân bón miền Nam","UPCOM"],
+  ["PNP","Giấy PNP","UPCOM"],["POB","Đầu tư POB","UPCOM"],["POE","Điện lực Phú Yên","UPCOM"],
+  ["PPE","Điện Dầu khí Vũng Tàu","UPCOM"],["PPY","PPY","UPCOM"],
+  ["PQN","Điện nước Quảng Ngãi","UPCOM"],["PSB","Nghiên cứu PSB","UPCOM"],["PSW","Cấp nước PS","UPCOM"],
+  ["PTH","Điện Thái Nguyên","UPCOM"],["PTS","PTS UPCOM","UPCOM"],
+  ["QNP","Điện lực Quảng Ngãi","UPCOM"],["QPH","QPH","UPCOM"],["QTP","Quảng Ninh Thermal","UPCOM"],
+  ["RAL","Bóng đèn Điện quang","UPCOM"],["RCL","Rivercliff UPCOM","UPCOM"],["RHC","Thủy điện RHC","UPCOM"],
+  ["RIC","Đầu tư RIC","UPCOM"],["SBA","Stone Bay UPCOM","UPCOM"],["SBD","Soda","UPCOM"],
+  ["SBG","SBG","UPCOM"],["SCD","Soda Chai UPCOM","UPCOM"],["SCJ","SCJ","UPCOM"],
+  ["SCL","Sacomreal Land","UPCOM"],["SCP","Sơn cách nhiệt SCP","UPCOM"],["SCR","SCR","UPCOM"],
+  ["SCS","SCS UPCOM","UPCOM"],["SDH","Sóng Đà Hydro","UPCOM"],["SEB","Năng lượng Điện","UPCOM"],
+  ["SGB","Saigonbank","UPCOM"],["SGD","Sài Gòn Đà Lạt","UPCOM"],
+  ["SGH","Khách sạn SG","UPCOM"],["SGI","SGI","UPCOM"],["SGO","Dầu Thực vật","UPCOM"],
+  ["SGP","Dược SGP","UPCOM"],["SGS","SGS","UPCOM"],["SHI","SHI UPCOM","UPCOM"],
+  ["SHN","Đầu tư SHN","UPCOM"],["SHX","SHX","UPCOM"],["SIC","SIC UPCOM","UPCOM"],
+  ["SJD","Cung ứng SJ","UPCOM"],["SJE","Thủy điện SJE","UPCOM"],
+  ["SKH","SKH","UPCOM"],["SLB","Tư vấn SLB","UPCOM"],["SLS","SLS UPCOM","UPCOM"],
+  ["SNB","Ngân hàng Saigon National","UPCOM"],["SNG","Saigon N&G","UPCOM"],
+  ["SNP","SNP","UPCOM"],["SNZ","Sonadezi","UPCOM"],["SOB","SOB","UPCOM"],
+  ["SPP","Bao bì SPP","UPCOM"],["SPT","Dịch vụ SP","UPCOM"],["SPV","SPV","UPCOM"],
+  ["SQC","Khoáng sản SQC","UPCOM"],["SRC","SRC UPCOM","UPCOM"],["SRN","Sơn Lâm","UPCOM"],
+  ["SSF","SSF","UPCOM"],["SSG","SSG","UPCOM"],["SSH","SSH","UPCOM"],["SSS","SSS","UPCOM"],
+  ["STA","STA","UPCOM"],["STD","Xuất nhập khẩu STD","UPCOM"],
+  ["STP","Sơn Tây Power","UPCOM"],["STT","STT UPCOM","UPCOM"],
+  ["SVB","Viet A Bank","UPCOM"],["SVH","Dịch vụ SVH","UPCOM"],["SVJ","SVJ","UPCOM"],
+  ["SWH","Cấp thoát nước SWH","UPCOM"],["SWT","Cấp nước Tây Hồ","UPCOM"],
+  ["TBH","Bia Hà Tây","UPCOM"],["TBW","Cấp nước TBW","UPCOM"],["TCD","Thanh Cong","UPCOM"],
+  ["TCH","Toàn Cầu UPCOM","UPCOM"],["TCJ","TCJ","UPCOM"],["TCL","Canh tác TCL","UPCOM"],
+  ["TCO","Vận tải biển Thọ","UPCOM"],["TCR","TCR","UPCOM"],["TCP","TCP","UPCOM"],
+  ["TDG","TDG","UPCOM"],["TDP","Nhựa Thiếu niên Tiền Phong","UPCOM"],
+  ["TDS","Thuduc House","UPCOM"],["TDW","Cấp nước Thủ Đức","UPCOM"],
+  ["TET","Thủy điện TET","UPCOM"],["TFC","TFC","UPCOM"],["TGG","Thành Công Group","UPCOM"],
+  ["TGH","Thủy điện TGH","UPCOM"],["THG","Đầu tư Xây dựng THG","UPCOM"],
+  ["TIE","Điện Thái Nguyên","UPCOM"],["TIP","TIP UPCOM","UPCOM"],
+  ["TJC","TJC UPCOM","UPCOM"],["TKC","TKC UPCOM","UPCOM"],
+  ["TLD","TLD UPCOM","UPCOM"],["TLG","Thiên Long","UPCOM"],
+  ["TLT","TLT UPCOM","UPCOM"],["TMB","TMB UPCOM","UPCOM"],
+  ["TMD","Đá mài TMD","UPCOM"],["TMG","Thuận Mua Vui","UPCOM"],
+  ["TMN","Cảng Tân Cảng","UPCOM"],["TNH","Bệnh viện TN","UPCOM"],
+  ["TNM","Tin Nghĩa","UPCOM"],["TNP","TNP UPCOM","UPCOM"],
+  ["TNW","Cấp nước TN","UPCOM"],["TOT","TOT UPCOM","UPCOM"],
+  ["TPC","TPC UPCOM","UPCOM"],["TQN","Điện Tây Quảng Ngãi","UPCOM"],
+  ["TRA","Traphaco","UPCOM"],["TRC","Cao su Tây Ninh","UPCOM"],
+  ["TRS","Trường Sơn","UPCOM"],["TSP","Cảng TSP","UPCOM"],["TTA","TTA","UPCOM"],
+  ["TTG","Thăng Long Gốm","UPCOM"],["TTH","Thăng Long Holdings","UPCOM"],
+  ["TTN","Thủy điện TTN","UPCOM"],["TTO","TTO","UPCOM"],["TTS","TTS","UPCOM"],
+  ["TTW","Cấp nước TT","UPCOM"],["TXH","Thành Xương Holdings","UPCOM"],
+  ["TYA","Dệt Thành Công","UPCOM"],["UDJ","UDJ","UPCOM"],
+  ["UPH","UPH","UPCOM"],["UPL","UPL","UPCOM"],["USD","USD","UPCOM"],
+  ["VAB","Việt Á Bank","UPCOM"],["VAF","Vinapharm","UPCOM"],
+  ["VBB","VBB","UPCOM"],["VCB","Vietcombank UPCOM","UPCOM"],
+  ["VCH","VCH","UPCOM"],["VCI","VCI UPCOM","UPCOM"],["VCR","VCR","UPCOM"],
+  ["VCW","Cấp nước VC","UPCOM"],["VDB","VDB","UPCOM"],["VDT","VDT","UPCOM"],
+  ["VEA","Veam","UPCOM"],["VGT","Vinatex","UPCOM"],["VHA","Việt Hà","UPCOM"],
+  ["VID","VID UPCOM","UPCOM"],["VIH","VIH","UPCOM"],["VIM","Khoáng sản VIM","UPCOM"],
+  ["VIN","VIN","UPCOM"],["VJP","VJP","UPCOM"],["VKA","VKA","UPCOM"],
+  ["VLC","VLC","UPCOM"],["VMD","Y Dược Vimedimex","UPCOM"],["VMH","VMH","UPCOM"],
+  ["VMR","VMR","UPCOM"],["VNA","VNA UPCOM","UPCOM"],["VNF","Lương thực VN","UPCOM"],
+  ["VNL","Logistics VN","UPCOM"],["VNP","Sách VNP","UPCOM"],
+  ["VNT","Cảng VNT UPCOM","UPCOM"],["VOC","Dầu khí Phú Khánh","UPCOM"],
+  ["VOM","VOM","UPCOM"],["VPG","VPG UPCOM","UPCOM"],["VPL","VPL","UPCOM"],
+  ["VPN","VPN","UPCOM"],["VPR","VPR","UPCOM"],["VPS","VPS Sec","UPCOM"],
+  ["VQC","Chất lượng VN","UPCOM"],["VRG","VRG UPCOM","UPCOM"],["VSA","VSA","UPCOM"],
+  ["VSB","VSB","UPCOM"],["VSH","VSH UPCOM","UPCOM"],["VSM","VSM","UPCOM"],
+  ["VTB","Vietbank","UPCOM"],["VTE","VTE","UPCOM"],["VTG","Vạn Thái Group","UPCOM"],
+  ["VTH","VTH","UPCOM"],["VTJ","VTJ","UPCOM"],["VTL","VTL","UPCOM"],
+  ["VTM","VTM","UPCOM"],["VTO","VTO UPCOM","UPCOM"],["VTQ","VTQ","UPCOM"],
+  ["VTS","VTS UPCOM","UPCOM"],["VTZ","VTZ","UPCOM"],["VUA","VUA","UPCOM"],
+  ["VXP","Dược phẩm VXP","UPCOM"],["WAB","Cấp nước WAB","UPCOM"],
+  ["WEB","WEB","UPCOM"],["WSB","WSB","UPCOM"],["WSS","Chứng khoán WSS","UPCOM"],
 ];
 
-/* Build a lookup: ticker → {name, exchange} */
-const STOCK_MAP = {};
-STOCKS.forEach(([t,n,ex]) => { STOCK_MAP[t] = {name:n, exchange:ex}; });
-
-/* Exchange mapping to TradingView prefix */
-const EX_PREFIX = { HOSE: "HOSE", HNX: "HNX", UPCOM: "UPCOM" };
-
-/* Quick-access tickers (shown as pills) */
-const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
-
-/* ════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════
    STATE
-   ════════════════════════════════════════════════════════════════ */
-let currentSymbol = null;
+   ════════════════════════════════════════════════════════ */
+let STOCKS   = [];           // full list (from API or fallback)
+let STOCK_MAP = {};           // ticker → {name, exchange}
 let currentExFilter = "ALL";
 let acIndex = -1;
 let acItems = [];
 let tvScriptLoaded = false;
-let tvWidget = null;
 
-/* ════════════════════════════════════════════════════════════════
-   INIT
-   ════════════════════════════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", () => {
+const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
+
+/* ════════════════════════════════════════════════════════
+   BOOT
+   ════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", async () => {
   buildQuickList();
   setupSearch();
   setupExTabs();
+  updateCount("Đang tải...", false);
+
+  try {
+    await fetchStocksFromAPI();
+  } catch (e) {
+    loadFallback();
+  }
 });
 
-/* ─── Quick pills ──────────────────────────────────────────── */
+/* ─── Load fallback ──────────────────────────────────── */
+function loadFallback() {
+  STOCKS = FALLBACK;
+  buildMap();
+  const n = STOCKS.length;
+  updateCount(`${n} mã (offline)`, true);
+  document.getElementById("empty-hint").textContent =
+    `Hỗ trợ ${n} mã HOSE · HNX · UPCOM`;
+}
+
+/* ─── Fetch from SSI iBoard API (no auth needed) ─────── */
+async function fetchStocksFromAPI() {
+  // Try multiple public endpoints in order
+  const apis = [
+    {
+      url: "https://iboard-query.ssi.com.vn/v2/stock-price/symbols-list?exchange=ALL&type=stock",
+      parse: parseSSI
+    },
+    {
+      url: "https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/ticker?locale=vi&page=0&size=2000",
+      parse: parseTCBS
+    }
+  ];
+
+  for (const api of apis) {
+    try {
+      const res = await fetch(api.url, {
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(6000)
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const stocks = api.parse(json);
+      if (stocks && stocks.length > 100) {
+        STOCKS = stocks;
+        buildMap();
+        const n = STOCKS.length;
+        updateCount(`${n} mã`, true);
+        document.getElementById("empty-hint").textContent =
+          `Hỗ trợ ${n}+ mã HOSE · HNX · UPCOM`;
+        return;
+      }
+    } catch (_) { /* try next */ }
+  }
+  throw new Error("All APIs failed");
+}
+
+/* ─── Parsers ────────────────────────────────────────── */
+function parseSSI(json) {
+  // SSI returns: { data: [ { symbol, exchange, companyName }, ... ] }
+  const rows = json?.data || json?.items || [];
+  if (!rows.length) return null;
+  return rows.map(r => {
+    const ex = normalizeExchange(r.exchange || r.exchangeId || r.floorCode || "");
+    return [r.symbol || r.ticker, r.companyName || r.name || r.symbol, ex];
+  }).filter(([t,,ex]) => t && ex);
+}
+
+function parseTCBS(json) {
+  // TCBS returns: { data: [ { ticker, organName, exchange }, ... ] }
+  const rows = json?.data || [];
+  if (!rows.length) return null;
+  return rows.map(r => {
+    const ex = normalizeExchange(r.exchange || "");
+    return [r.ticker, r.organName || r.shortName || r.ticker, ex];
+  }).filter(([t,,ex]) => t && ex);
+}
+
+function normalizeExchange(raw) {
+  const s = (raw || "").toUpperCase();
+  if (s.includes("HOSE") || s === "HSX" || s === "HCM" || s === "HSTC") return "HOSE";
+  if (s.includes("HNX") || s === "HNX" || s === "HASTC") return "HNX";
+  if (s.includes("UPCOM") || s === "UPC") return "UPCOM";
+  return null;
+}
+
+function buildMap() {
+  STOCK_MAP = {};
+  STOCKS.forEach(([t, n, ex]) => { STOCK_MAP[t] = { name: n, exchange: ex }; });
+}
+
+/* ─── Count badge ────────────────────────────────────── */
+function updateCount(text, loaded) {
+  const el = document.getElementById("stock-count");
+  el.textContent = text;
+  el.classList.toggle("loaded", loaded);
+}
+
+/* ════════════════════════════════════════════════════════
+   QUICK LIST
+   ════════════════════════════════════════════════════════ */
 function buildQuickList() {
   const wrap = document.getElementById("quicklist");
   const lbl = document.createElement("span");
   lbl.className = "watch-label";
   lbl.textContent = "Phổ biến:";
   wrap.appendChild(lbl);
-
   QUICK.forEach(t => {
     const btn = document.createElement("button");
-    btn.className = "pill";
-    btn.textContent = t;
-    btn.dataset.ticker = t;
+    btn.className = "pill"; btn.textContent = t; btn.dataset.ticker = t;
     btn.addEventListener("click", () => loadTicker(t));
     wrap.appendChild(btn);
   });
 }
 
-/* ─── Exchange tabs ────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   EXCHANGE TABS
+   ════════════════════════════════════════════════════════ */
 function setupExTabs() {
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentExFilter = btn.dataset.ex;
-      // re-run autocomplete with current input
+      acIndex = -1;
       showAutocomplete(document.getElementById("ticker-input").value);
     });
   });
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════
    SEARCH & AUTOCOMPLETE
-   ──────────────────────────────────────────────────────────────── */
+   ════════════════════════════════════════════════════════ */
 function setupSearch() {
   const input = document.getElementById("ticker-input");
-  const ac    = document.getElementById("autocomplete");
+  const clearBtn = document.getElementById("clear-btn");
 
   input.addEventListener("input", () => {
     acIndex = -1;
+    clearBtn.style.display = input.value ? "block" : "none";
     showAutocomplete(input.value);
   });
 
-  input.addEventListener("keydown", e => {
-    if (!acItems.length) {
-      if (e.key === "Enter") {
-        const v = input.value.trim().toUpperCase();
-        if (v) tryLoadTicker(v);
-      }
-      return;
-    }
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    clearBtn.style.display = "none";
+    closeAc();
+    input.focus();
+  });
 
+  input.addEventListener("keydown", e => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       acIndex = Math.min(acIndex + 1, acItems.length - 1);
@@ -459,7 +704,7 @@ function setupSearch() {
       renderAcHighlight();
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (acIndex >= 0) {
+      if (acIndex >= 0 && acItems[acIndex]) {
         selectAcItem(acItems[acIndex]);
       } else {
         const v = input.value.trim().toUpperCase();
@@ -477,81 +722,99 @@ function setupSearch() {
 
 function showAutocomplete(rawVal) {
   const val = rawVal.trim().toUpperCase();
-  const ac  = document.getElementById("autocomplete");
-  ac.innerHTML = "";
-  acItems = [];
-  acIndex = -1; // always reset on every refresh
+  const ac = document.getElementById("autocomplete");
+  ac.innerHTML = ""; acItems = []; acIndex = -1;
 
   if (!val) { ac.style.display = "none"; return; }
+  if (!STOCKS.length) { ac.style.display = "none"; return; }
 
-  const filtered = STOCKS.filter(([t, n, ex]) => {
-    const matchEx = currentExFilter === "ALL" || ex === currentExFilter;
-    const matchQ  = t.startsWith(val) || n.toUpperCase().includes(val);
-    return matchEx && matchQ;
-  }).slice(0, 15);
+  const exactMatch = [], startsWith = [], contains = [];
 
-  if (!filtered.length) { ac.style.display = "none"; return; }
-
-  acItems = filtered;
-
-  filtered.forEach(([t, n, ex], i) => {
-    const item = document.createElement("div");
-    item.className = "ac-item";
-    item.dataset.idx = i;
-    item.innerHTML = `
-      <span class="ac-ticker">${t}</span>
-      <span class="ac-name">${n}</span>
-      <span class="ac-exchange">${ex}</span>
-    `;
-    item.addEventListener("mouseenter", () => { acIndex = i; renderAcHighlight(); });
-    item.addEventListener("click", () => selectAcItem([t, n, ex]));
-    ac.appendChild(item);
+  STOCKS.forEach(item => {
+    const [t, n, ex] = item;
+    if (currentExFilter !== "ALL" && ex !== currentExFilter) return;
+    if (t === val)                              exactMatch.push(item);
+    else if (t.startsWith(val))                startsWith.push(item);
+    else if (n.toUpperCase().includes(val))    contains.push(item);
   });
+
+  const merged = [...exactMatch, ...startsWith, ...contains].slice(0, 20);
+  if (!merged.length) { ac.style.display = "none"; return; }
+  acItems = merged;
+
+  if (exactMatch.length)  appendAcGroup(ac, "Khớp chính xác", exactMatch.slice(0,3));
+  if (startsWith.length)  appendAcGroup(ac, "Mã bắt đầu bằng", startsWith.slice(0,10));
+  if (contains.length)    appendAcGroup(ac, "Theo tên công ty", contains.slice(0,8));
 
   ac.style.display = "block";
 }
 
+function appendAcGroup(container, label, items) {
+  if (!items.length) return;
+  const hdr = document.createElement("div");
+  hdr.className = "ac-header"; hdr.textContent = label;
+  container.appendChild(hdr);
+
+  items.forEach(item => {
+    const [t, n, ex] = item;
+    const div = document.createElement("div");
+    div.className = "ac-item";
+    div.dataset.ticker = t;
+
+    const tickerEl = document.createElement("span"); tickerEl.className = "ac-ticker"; tickerEl.textContent = t;
+    const nameEl   = document.createElement("span"); nameEl.className   = "ac-name";   nameEl.textContent   = n;
+    const exEl     = document.createElement("span");
+    exEl.className = `ac-ex ${ex.toLowerCase()}`; exEl.textContent = ex;
+
+    div.append(tickerEl, nameEl, exEl);
+    div.addEventListener("mouseenter", () => {
+      acIndex = acItems.indexOf(item);
+      renderAcHighlight();
+    });
+    div.addEventListener("click", () => selectAcItem(item));
+    container.appendChild(div);
+  });
+}
+
 function renderAcHighlight() {
-  document.querySelectorAll(".ac-item").forEach((el, i) => {
-    el.classList.toggle("active", i === acIndex);
+  const all = document.querySelectorAll(".ac-item");
+  all.forEach(el => {
+    const idx = acItems.findIndex(i => i[0] === el.dataset.ticker);
+    el.classList.toggle("active", idx === acIndex);
   });
 }
 
 function selectAcItem(item) {
   if (!item) return;
   const [t] = item;
-  document.getElementById("ticker-input").value = t;
+  const input = document.getElementById("ticker-input");
+  input.value = t;
+  document.getElementById("clear-btn").style.display = "block";
   closeAc();
   loadTicker(t);
 }
 
 function closeAc() {
   document.getElementById("autocomplete").style.display = "none";
-  acItems = [];
-  acIndex = -1;
+  acItems = []; acIndex = -1;
 }
 
 function tryLoadTicker(t) {
-  /* allow any ticker even if not in list – just try it */
   closeAc();
   loadTicker(t);
 }
 
-/* ════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════
    CHART – TradingView Advanced Widget
-   ════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════ */
 function loadTicker(ticker) {
   ticker = ticker.toUpperCase().trim();
   if (!ticker) return;
 
-  /* Determine exchange prefix:
-     1. Known ticker → use its declared exchange
-     2. Unknown ticker + exchange tab selected → use that tab
-     3. Fallback → HOSE */
   const info = STOCK_MAP[ticker];
   let exchange;
   if (info) {
-    exchange = EX_PREFIX[info.exchange];
+    exchange = info.exchange;
   } else if (currentExFilter !== "ALL") {
     exchange = currentExFilter;
   } else {
@@ -559,42 +822,35 @@ function loadTicker(ticker) {
   }
   const tvSymbol = `${exchange}:${ticker}`;
 
-  currentSymbol = ticker;
+  // Update pills
+  document.querySelectorAll(".pill").forEach(p =>
+    p.classList.toggle("active", p.dataset.ticker === ticker));
 
-  /* Update pills */
-  document.querySelectorAll(".pill").forEach(p => {
-    p.classList.toggle("active", p.dataset.ticker === ticker);
-  });
-
-  /* Status – built with DOM nodes to avoid XSS */
+  // Status bar (no innerHTML – XSS-safe)
   const statusEl = document.getElementById("status-info");
   statusEl.textContent = "";
   const tickerSpan = document.createElement("span");
-  tickerSpan.className = "status-ticker";
-  tickerSpan.textContent = ticker;
+  tickerSpan.className = "status-ticker"; tickerSpan.textContent = ticker;
   statusEl.appendChild(tickerSpan);
   if (info) {
-    const detail = document.createTextNode(` · ${info.name} · ${info.exchange}`);
-    statusEl.appendChild(detail);
+    statusEl.appendChild(document.createTextNode(` · ${info.name} · ${info.exchange}`));
+  } else {
+    statusEl.appendChild(document.createTextNode(` · ${exchange}`));
   }
 
-  /* Hide empty state */
   document.getElementById("empty-state").style.display = "none";
-
-  /* Load / reload chart */
   loadTVWidget(tvSymbol);
 }
 
 function loadTVWidget(symbol) {
   const container = document.getElementById("tv-chart-container");
-  container.innerHTML = ""; // clear previous
+  container.innerHTML = "";
 
-  /* Load TradingView script once */
   const render = () => {
-    /* eslint-disable no-undef */
+    /* global TradingView */
     new TradingView.widget({
       autosize: true,
-      symbol: symbol,
+      symbol,
       interval: "D",
       timezone: "Asia/Ho_Chi_Minh",
       theme: "dark",
@@ -608,31 +864,22 @@ function loadTVWidget(symbol) {
       range: "12M",
       save_image: false,
       container_id: "tv-chart-container",
-      studies: ["Volume@tv-basicstudies", "MACD@tv-basicstudies"],
-      show_popup_button: false,
-      popup_width: "1000",
-      popup_height: "650",
-      no_referral_id: true,
+      studies: ["Volume@tv-basicstudies","MACD@tv-basicstudies"],
       allow_symbol_change: true,
+      show_popup_button: false,
     });
   };
 
-  if (tvScriptLoaded) {
-    render();
-    return;
-  }
+  if (tvScriptLoaded) { render(); return; }
 
   const script = document.createElement("script");
   script.src = "https://s3.tradingview.com/tv.js";
   script.async = true;
-  script.onload = () => {
-    tvScriptLoaded = true;
-    render();
-  };
+  script.onload = () => { tvScriptLoaded = true; render(); };
   script.onerror = () => {
     container.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;
-                  height:100%;color:var(--muted);flex-direction:column;gap:12px;">
+           height:100%;flex-direction:column;gap:12px;color:#8b949e;">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"/>
@@ -640,7 +887,7 @@ function loadTVWidget(symbol) {
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
         <p>Không tải được widget TradingView.</p>
-        <small>Vui lòng kiểm tra kết nối internet.</small>
+        <small>Kiểm tra kết nối internet rồi thử lại.</small>
       </div>`;
   };
   document.head.appendChild(script);
