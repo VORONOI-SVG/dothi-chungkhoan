@@ -99,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Đồng bộ dữ liệu trực tiếp từ Yahoo Finance (CORS Approved cho GitHub Pages)</p>
+            <p>Đồng bộ dữ liệu trực tiếp từ Yahoo Finance (Đã sửa lỗi chặn CORS cho Mã VN)</p>
         </div>
         
         <div class="search-container">
@@ -121,30 +121,31 @@
 
         async function fetchStockData(ticker) {
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
-            // Yahoo Finance yêu cầu hậu tố .VN đối với cổ phiếu Việt Nam
             if (!cleanTicker.endsWith(".VN")) {
                 cleanTicker = cleanTicker + ".VN";
             }
             
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang tải dữ liệu mã ${cleanTicker} từ Yahoo Finance...`;
+            statusBar.innerText = `Đang tải dữ liệu mã ${cleanTicker} qua cổng an toàn...`;
             
             const toPeriod = Math.floor(Date.now() / 1000);
             const fromPeriod = toPeriod - (24 * 60 * 60 * 240); // Lấy khoảng 240 ngày dữ liệu
             
-            // Sử dụng API Chart công khai của Yahoo Finance (hỗ trợ CORS đầy đủ)
-            const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?period1=${fromPeriod}&period2=${toPeriod}&interval=1d`;
+            const targetApiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?period1=${fromPeriod}&period2=${toPeriod}&interval=1d`;
+            
+            // Bọc URL qua proxy AllOrigins mở CORS 100%
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApiUrl)}`;
             
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Không thể kết nối đến Yahoo Finance");
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Cổng trung chuyển dữ liệu bận, vui lòng thử lại!");
                 
                 const resData = await response.json();
                 const chartResult = resData.chart?.result?.[0];
                 
                 if (!chartResult || !chartResult.timestamp || chartResult.timestamp.length === 0) {
-                    throw new Error("Không tìm thấy dữ liệu hoặc sai định dạng mã (Thêm .VN nếu cần)");
+                    throw new Error("Không tìm thấy dữ liệu mã này trên Yahoo Finance.");
                 }
                 
                 const timestamps = chartResult.timestamp;
@@ -152,8 +153,7 @@
                 
                 let marketData = [];
                 for (let i = 0; i < timestamps.length; i++) {
-                    // Bỏ qua nếu ngày đó bị thiếu dữ liệu giá (ngày lễ/cuối tuần bị rỗng)
-                    if (indicators.open[i] == null || indicators.close[i] == null) continue;
+                    if (indicators.open[i] == null || indicators.close[i] == null || indicators.high[i] == null || indicators.low[i] == null) continue;
                     
                     let dateObj = new Date(timestamps[i] * 1000);
                     let open = indicators.open[i];
@@ -162,7 +162,6 @@
                     let close = indicators.close[i];
                     let strDate = dateObj.toISOString().split('T')[0];
                     
-                    // Do Yahoo Finance trả giá gốc (VD: 54000 thay vì 54.0), chia cho 1000 để hiển thị dạng chuẩn điểm số VN
                     if (open > 1000) {
                         open /= 1000; high /= 1000; low /= 1000; close /= 1000;
                     }
@@ -185,7 +184,7 @@
                 }
                 
                 statusBar.style.color = "#26a69a";
-                statusBar.innerText = `Đồng bộ thành công dữ liệu Yahoo Finance cho mã ${cleanTicker}!`;
+                statusBar.innerText = `Đồng bộ thành công dữ liệu mã ${cleanTicker}!`;
                 return marketData;
                 
             } catch (error) {
