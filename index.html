@@ -99,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Dữ liệu đồ thị kết nối API thực tế 100% không giả lập từ máy chủ thị trường</p>
+            <p>Dữ liệu đồ thị kết nối API trực tiếp 100% không qua proxy trung gian</p>
         </div>
         
         <div class="search-container">
@@ -119,43 +119,40 @@
         let renderSubset = [];
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
-        // 1. GỌI API QUA PROXY ĐỂ TRANH LỖI CORS KHI CHẠY FILE HTML OFFLINE
+        // 1. GỌI API CHUẨN ĐƯỢC MỞ CORS CHO WEB HOSTING (GITHUB PAGES)
         async function fetchStockData(ticker) {
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
-            document.getElementById('status-bar').innerText = `Đang tải nến THẬT mã ${cleanTicker} từ API thị trường...`;
+            document.getElementById('status-bar').innerText = `Đang tải nến THẬT mã ${cleanTicker} từ máy chủ thị trường...`;
             
-            // Lấy dữ liệu lịch sử trong khoảng 180 ngày gần nhất
-            const toTimestamp = Math.floor(Date.now() / 1000);
-            const fromTimestamp = toTimestamp - (180 * 24 * 60 * 60); 
-            
-            const targetUrl = `https://services.entrade.com.vn/chart-api/v2/ohlc/history?resolution=1D&symbol=${cleanTicker}&from=${fromTimestamp}&to=${toTimestamp}`;
-            // Sử dụng AllOrigins Proxy để vượt qua chính sách chặn CORS của trình duyệt khi chạy file local
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            // Gọi nguồn API chứng khoán mở trực tiếp không chặn CORS trên môi trường Web
+            const apiUrl = `https://finfo-api.vndirect.com.vn/v2/history/ohlc?table=stock_ohlc&code=${cleanTicker}&size=100&status=active`;
             
             try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Lỗi kết nối máy chủ dữ liệu");
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("Lỗi kết nối API");
                 
-                const jsonWrapper = await response.json();
-                // Dữ liệu thực tế nằm trong trường .contents dưới dạng string JSON
-                const resData = JSON.parse(jsonWrapper.contents);
+                const resData = await response.json();
                 
-                if (!resData || !resData.t || resData.t.length === 0) {
+                // VNDirect trả về mảng dữ liệu trong trường .data.items
+                if (!resData || !resData.data || !resData.data.items || resData.data.items.length === 0) {
                     document.getElementById('status-bar').innerText = `Không tìm thấy dữ liệu cho mã ${cleanTicker}!`;
                     return [];
                 }
                 
+                // API trả về từ mới nhất đến cũ nhất, ta đảo ngược mảng để vẽ đồ thị từ trái qua phải
+                let rawItems = resData.data.items.reverse();
                 let marketData = [];
-                for (let i = 0; i < resData.t.length; i++) {
-                    let dateObj = new Date(resData.t[i] * 1000);
-                    let strDate = dateObj.toISOString().split('T')[0];
+                
+                for (let i = 0; i < rawItems.length; i++) {
+                    let item = rawItems[i];
                     
-                    let open = resData.o[i];
-                    let high = resData.h[i];
-                    let low = resData.l[i];
-                    let close = resData.c[i];
+                    let strDate = item.date; // Định dạng sẵn YYYY-MM-DD
+                    let open = item.open;
+                    let high = item.high;
+                    let low = item.low;
+                    let close = item.close;
                     
-                    // --- TÍNH TOÁN CHỈ BÁO KỸ THUẬT DỰA TRÊN GIÁ THẬT ---
+                    // --- TÍNH TOÁN CHỈ BÁO KỸ THUẬT KT2 ---
                     let trueRange = high - low;
                     let body = close - open;
                     
