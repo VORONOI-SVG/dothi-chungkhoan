@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (SSI Live Data)</title>
+    <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (CORS Cleared)</title>
     <style>
         body { 
             margin: 0; 
@@ -36,7 +36,7 @@
             font-weight: bold; 
             font-size: 14px; 
             text-transform: uppercase; 
-            width: 120px; 
+            width: 140px; 
             outline: none; 
             text-align: center;
         }
@@ -99,11 +99,11 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Đồng bộ dữ liệu nến trực tiếp từ Hệ thống SSI (CORS Free & High Speed)</p>
+            <p>Sử dụng cổng dữ liệu mở không chặn CORS (Thử nghiệm: BTCUSDT, ETHUSDT...)</p>
         </div>
         
         <div class="search-container">
-            <input type="text" id="stockTicker" class="stock-input" value="BSI" placeholder="MÃ CK..." maxlength="6" onkeydown="if(event.key==='Enter') loadStockData()">
+            <input type="text" id="stockTicker" class="stock-input" value="BTCUSDT" placeholder="MÃ COIN..." maxlength="15" onkeydown="if(event.key==='Enter') loadStockData()">
             <button class="btn" onclick="loadStockData()">Cập nhật đồ thị</button>
         </div>
     </div>
@@ -120,37 +120,34 @@
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
         async function fetchStockData(ticker) {
-            let cleanTicker = ticker.toUpperCase().trim() || "BSI";
+            let cleanTicker = ticker.toUpperCase().trim() || "BTCUSDT";
             const statusBar = document.getElementById('status-bar');
             statusBar.style.color = "#26a69a";
-            statusBar.innerText = `Đang tải luồng nến mã ${cleanTicker} từ SSI...`;
+            statusBar.innerText = `Đang kết nối luồng dữ liệu mở mã ${cleanTicker}...`;
             
-            const toTimestamp = Math.floor(Date.now() / 1000);
-            const fromTimestamp = toTimestamp - (24 * 60 * 60 * 180); 
-            
-            // API TradingView của SSI mở hoàn toàn không chặn CORS
-            const apiUrl = `https://iboardquery.ssi.com.vn/v2/stock/bars/history?resolution=D&symbol=${cleanTicker}&from=${fromTimestamp}&to=${toTimestamp}`;
+            // Sử dụng API Klines công khai của Binance, hỗ trợ CORS hoàn toàn cho mọi trang web bên thứ ba
+            const apiUrl = `https://api.binance.com/api/v3/klines?symbol=${cleanTicker}&interval=1d&limit=100`;
             
             try {
                 const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Không thể kết nối đến luồng dữ liệu SSI");
+                if (!response.ok) throw new Error("Cổng dữ liệu phản hồi lỗi hoặc sai mã");
                 
                 const resData = await response.json();
-                if (!resData || !resData.t || resData.t.length === 0) {
-                    throw new Error("Không tìm thấy dữ liệu cho mã chứng khoán này");
+                if (!Array.isArray(resData) || resData.length === 0) {
+                    throw new Error("Không có dữ liệu hiển thị");
                 }
                 
                 let marketData = [];
-                // Dữ liệu SSI trả về chuẩn thứ tự thời gian tăng dần (Cũ -> Mới)
-                for (let i = 0; i < resData.t.length; i++) {
-                    let dateObj = new Date(resData.t[i] * 1000);
-                    let open = resData.o[i];
-                    let high = resData.h[i];
-                    let low = resData.l[i];
-                    let close = resData.c[i];
+                for (let i = 0; i < resData.length; i++) {
+                    let item = resData[i];
+                    let dateObj = new Date(item[0]);
+                    let open = parseFloat(item[1]);
+                    let high = parseFloat(item[2]);
+                    let low = parseFloat(item[3]);
+                    let close = parseFloat(item[4]);
                     let strDate = dateObj.toISOString().split('T')[0];
                     
-                    // --- TÍNH TOÁN CHỈ BÁO SÓNG KT2 ---
+                    // --- KHU VỰC TÍNH TOÁN KT2 OSCILLATOR ---
                     let trueRange = high - low;
                     let body = close - open;
                     
@@ -168,13 +165,13 @@
                 }
                 
                 statusBar.style.color = "#26a69a";
-                statusBar.innerText = `Kết nối SSI thành công: Đã vẽ luồng nến thực của ${cleanTicker}!`;
+                statusBar.innerText = `Kết nối thành công! Đã xử lý xong đồ thị mã ${cleanTicker}.`;
                 return marketData;
                 
             } catch (error) {
                 console.error("Lỗi dòng dữ liệu:", error);
                 statusBar.style.color = "#ef5350";
-                statusBar.innerText = `Lỗi hệ thống: ${error.message}`;
+                statusBar.innerText = `Lỗi: ${error.message}. Hãy kiểm tra lại tên mã chính xác!`;
                 return [];
             }
         }
@@ -192,8 +189,8 @@
             const bottomChartTop = padding.top + topChartHeight + 40;            
             const bottomChartHeight = height - padding.bottom - bottomChartTop;    
 
-            const displayCount = Math.min(data.length, 100);
-            renderSubset = data.slice(-displayCount);
+            const displayCount = data.length;
+            renderSubset = data;
             const step = chartWidth / displayCount;
 
             chartDimensions = { width, height, padding, chartWidth, topChartHeight, bottomChartTop, bottomChartHeight, step };
