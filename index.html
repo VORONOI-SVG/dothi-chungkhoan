@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIR ADX of Vortex [Multi-Tool] — KT2 Multi (DỮ LIỆU THẬT 100%)</title>
     <style>
         body { 
@@ -98,7 +99,7 @@
     <div class="header-panel">
         <div class="title-area">
             <h2>AIR ADX of Vortex [Multi-Tool] — KT2 Multi</h2>
-            <p>Dữ liệu kết nối trực tiếp thị trường thực tế 100% không giả lập</p>
+            <p>Dữ liệu đồ thị kết nối API thực tế 100% không giả lập từ máy chủ thị trường</p>
         </div>
         
         <div class="search-container">
@@ -111,118 +112,80 @@
         <svg id="main-svg"></svg>
         <div id="tooltip" class="chart-tooltip"></div>
     </div>
-    <div id="status-bar">Đang khởi tạo luồng dữ liệu thật...</div>
+    <div id="status-bar">Đang khởi tạo kết nối...</div>
 
     <script>
         let globalData = [];
         let renderSubset = [];
         let chartDimensions = { width: 0, height: 0, padding: { top: 30, right: 60, bottom: 30, left: 20 }, chartWidth: 0, topChartHeight: 0, bottomChartTop: 0, bottomChartHeight: 0, step: 0 };
 
-        // GỌI API THỰC THỜI GIAN THỰC TỪ NGUỒN DỮ LIỆU ĐỒ THỊ CHỨNG KHOÁN VIỆT NAM
+        // 1. GỌI API LẤY NẾN GIÁ THẬT 100% TỪ THỊ TRƯỜNG CHỨNG KHOÁN VIỆT NAM
         async function fetchStockData(ticker) {
             let cleanTicker = ticker.toUpperCase().trim() || "BSI";
-            document.getElementById('status-bar').innerText = `Đang kết nối API lấy nến thật mã ${cleanTicker}...`;
+            document.getElementById('status-bar').innerText = `Đang tải nến THẬT mã ${cleanTicker} từ API thị trường...`;
             
-            // Sử dụng API cổng dữ liệu chứng khoán lịch sử tích hợp
-            const apiUrl = `https://fapi.coinfaucet.eu/v1/dummy`; // Định tuyến kết nối proxy phân tích dữ liệu 
+            // Lấy dữ liệu lịch sử trong khoảng 180 ngày gần nhất
+            const toTimestamp = Math.floor(Date.now() / 1000);
+            const fromTimestamp = toTimestamp - (180 * 24 * 60 * 60); 
+            
+            // Gọi cổng API UDF TradingView mở từ máy chủ chứng khoán
+            const apiUrl = `https://services.entrade.com.vn/chart-api/v2/ohlc/history?resolution=1D&symbol=${cleanTicker}&from=${fromTimestamp}&to=${toTimestamp}`;
             
             try {
-                // Để đảm bảo 100% dữ liệu không lỗi khi render nến trên GitHub Pages,
-                // Ta sử dụng nguồn cấp dữ liệu chuẩn hóa trực tiếp tương đương dữ liệu thực của SSI nguồn FiinTrade
-                let data = await fetchRealDataFeed(cleanTicker);
-                return data;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("Lỗi kết nối máy chủ dữ liệu");
+                
+                const resData = await response.json();
+                
+                // Kiểm tra tính toàn vẹn của mảng dữ liệu (t: thời gian, o: mở, h: cao, l: thấp, c: đóng)
+                if (!resData || !resData.t || resData.t.length === 0) {
+                    document.getElementById('status-bar').innerText = `Không tìm thấy dữ liệu cho mã ${cleanTicker}!`;
+                    return [];
+                }
+                
+                let marketData = [];
+                for (let i = 0; i < resData.t.length; i++) {
+                    let dateObj = new Date(resData.t[i] * 1000);
+                    let strDate = dateObj.toISOString().split('T')[0];
+                    
+                    let open = resData.o[i];
+                    let high = resData.h[i];
+                    let low = resData.l[i];
+                    let close = resData.c[i];
+                    
+                    // --- TÍNH TOÁN CHỈ BÁO KỸ THUẬT DỰA TRÊN GIÁ THẬT ---
+                    let trueRange = high - low;
+                    let body = close - open;
+                    
+                    // Công thức tính toán các đường sóng Oscillator đồng bộ theo bước giá thật
+                    let vPlus = 50 + (body > 0 ? (body / open) * 500 : 0) + (trueRange / open) * 100;
+                    let vMinus = 50 + (body < 0 ? (Math.abs(body) / open) * 500 : 0) + (trueRange / open) * 100;
+                    let arsiVal = 50 + (body / open) * 600;
+                    
+                    vPlus = Math.min(Math.max(vPlus, 10), 90);
+                    vMinus = Math.min(Math.max(vMinus, 10), 90);
+                    arsiVal = Math.min(Math.max(arsiVal, 10), 90);
+                    
+                    marketData.push({
+                        time: strDate,
+                        open: open,
+                        high: high,
+                        low: low,
+                        close: close,
+                        vPlus: vPlus,
+                        vMinus: vMinus,
+                        arsi: arsiVal
+                    });
+                }
+                
+                return marketData;
+                
             } catch (error) {
-                document.getElementById('status-bar').innerText = `Lỗi kết nối máy chủ dữ liệu!`;
+                console.error("Lỗi:", error);
+                document.getElementById('status-bar').innerText = `Lỗi hệ thống! Hãy kiểm tra lại mã hoặc kết nối mạng.`;
                 return [];
             }
         }
-
-        // Hàm xử lý dữ liệu chuẩn thị trường lịch sử của mã chứng khoán (Giá điều chỉnh)
-        async function fetchRealDataFeed(ticker) {
-            let marketData = [];
-            
-            // Thiết lập giá trị mốc thực tế chính xác của thị trường
-            let currentPrice = 35.90; // Giá thực tế của BSI ngày gần nhất
-            if (ticker === "OCB") currentPrice = 11.30;
-            if (ticker === "HPG") currentPrice = 26.80;
-
-            // Đồng bộ mảng nến lịch sử thực tế dựa trên đồ thị kỹ thuật lịch sử VN
-            let totalCandles = 100;
-            let baseDate = new Date();
-            
-            // Tạo mảng nến biến động thực tế uốn lượn mượt mà chuẩn kỹ thuật
-            // Dữ liệu này khớp chính xác bước giá, biên độ trần sàn +/- 7% của sàn HOSE
-            let tempPrice = currentPrice;
-            
-            for (let i = 0; i < totalCandles; i++) {
-                let changePercent = (Math.sin(i * 0.15) * 0.02) + (Math.cos(i * 0.08) * 0.015);
-                let open = tempPrice * (1 - changePercent);
-                let close = tempPrice;
-                let high = Math.max(open, close) * (1 + Math.abs(Math.sin(i)) * 0.01);
-                let low = Math.min(open, close) * (1 - Math.abs(Math.cos(i)) * 0.01);
-                
-                // Tính toán các chỉ báo kỹ thuật mâm dưới dựa trên thuật toán nến thật phía trên
-                let trueRange = high - low;
-                let vPlus = 50 + (trueRange * 12) + (Math.sin(i) * 5);
-                let vMinus = 50 - (trueRange * 12) + (Math.cos(i) * 5);
-                let arsiVal = 50 + ((close - open) / open) * 350;
-
-                vPlus = Math.min(Math.max(vPlus, 15), 85);
-                vMinus = Math.min(Math.max(vMinus, 15), 85);
-                arsiVal = Math.min(Math.max(arsiVal, 20), 80);
-
-                let d = new Date(baseDate);
-                d.setDate(d.getDate() - (totalCandles - i));
-                let strDate = d.toISOString().split('T')[0];
-
-                marketData.push({
-                    time: strDate, open, high, low, close, vPlus, vMinus, arsi: arsiVal
-                });
-                
-                // Chuẩn bị mức giá cho phiên tiếp theo
-                tempPrice = open; 
-            }
-
-            // Đảo ngược và tính toán tiến trình xu hướng để nến cuối cùng trúng khớp giá đóng cửa thực tế hiện tại
-            let finalData = [];
-            let currentWalker = currentPrice - 5.5; // Tạo độ dốc tăng trưởng thực tế
-            
-            for(let i=0; i<totalCandles; i++) {
-                let d = new Date();
-                d.setDate(d.getDate() - (totalCandles - i));
-                // Bỏ qua thứ 7, chủ nhật
-                if(d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 2);
-                let strDate = d.toISOString().split('T')[0];
-                
-                let noise = (Math.sin(i * 0.2) * 0.4) + (Math.cos(i * 0.4) * 0.3);
-                let trend = (i / totalCandles) * 5.5; 
-                
-                if (ticker === "OCB") trend = (i / totalCandles) * 1.2;
-                
-                let close = (i === totalDaysCalculated(totalCandles) - 1) ? currentPrice : (currentPrice - 5.5 + trend + noise);
-                let open = close - ((Math.sin(i) * 0.3));
-                
-                if (i === totalCandles - 1) {
-                    close = currentPrice;
-                    open = close + 0.15; // Nến đỏ giảm nhẹ phiên gần nhất
-                }
-                
-                let high = Math.max(open, close) + (Math.abs(Math.sin(i)) * 0.2);
-                let low = Math.min(open, close) - (Math.abs(Math.cos(i)) * 0.2);
-                
-                let vPlus = 50 + (Math.sin(i*0.1) * 15) + (noise * 5);
-                let vMinus = 50 - (Math.sin(i*0.1) * 15) - (noise * 5);
-                let arsiVal = 50 + (close - open) * 20;
-
-                finalData.push({
-                    time: strDate, open, high, low, close, vPlus, vMinus, arsi: arsiVal
-                });
-            }
-
-            return finalData;
-        }
-
-        function totalDaysCalculated(tc) { return tc; }
 
         // 2. HÀM VẼ ĐỒ THỊ SVG TỰ ĐỘNG THEO DỮ LIỆU
         function drawChart(data) {
@@ -238,15 +201,16 @@
             const bottomChartTop = padding.top + topChartHeight + 40;            
             const bottomChartHeight = height - padding.bottom - bottomChartTop;    
 
-            const displayCount = data.length;
-            renderSubset = data;
+            // Hiển thị tối đa 100 phiên giao dịch gần nhất lên màn hình
+            const displayCount = Math.min(data.length, 100);
+            renderSubset = data.slice(-displayCount);
             const step = chartWidth / displayCount;
 
             chartDimensions = { width, height, padding, chartWidth, topChartHeight, bottomChartTop, bottomChartHeight, step };
 
             let mainHTML = '';
 
-            // Lưới mờ
+            // Lưới dọc và lưới ngang mờ nền
             mainHTML += `<g stroke="#1f222d" stroke-width="1">`;
             for (let i = 1; i <= 4; i++) {
                 let yGrid = padding.top + (topChartHeight / 4) * i;
@@ -258,7 +222,12 @@
             }
             mainHTML += `</g>`;
 
-            // Đường chỉ báo Oscillator 80-50-20
+            mainHTML += `
+                <text x="${padding.left + 10}" y="${padding.top + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">BIỂU ĐỒ NẾN GIÁ</text>
+                <text x="${padding.left + 10}" y="${bottomChartTop + 20}" fill="#ffffff" font-size="11" font-weight="bold" opacity="0.3">HỆ THỐNG SÓNG KT2 OSCILLATOR</text>
+            `;
+
+            // Đường chỉ báo Oscillator vùng 80 - 50 - 20
             const y80 = bottomChartTop + bottomChartHeight * (1 - 80 / 100);
             const y50 = bottomChartTop + bottomChartHeight * (1 - 50 / 100);
             const y20 = bottomChartTop + bottomChartHeight * (1 - 20 / 100);
@@ -285,7 +254,7 @@
                 <text x="${width - padding.right + 8}" y="${padding.top + topChartHeight + 4}" fill="#787b86" font-size="11">${minPrice.toFixed(2)}</text>
             `;
 
-            // Khối nến nến giá thật
+            // Khối vẽ nến giá thật dựa trên tọa độ biên độ
             let candlesHTML = '<g>';
             renderSubset.forEach((d, i) => {
                 let x = padding.left + (i * step) + (step / 2);
@@ -306,7 +275,7 @@
             candlesHTML += '</g>';
             mainHTML += candlesHTML;
 
-            // Khối chỉ báo mâm dưới
+            // Khối vẽ đường chỉ báo mâm dưới
             let vtxPlusPoints = [], vtxMinusPoints = [], arsiPoints = [];
             let histoHTML = '<g>';
 
@@ -334,14 +303,14 @@
                 <polyline points="${arsiPoints.join(' ')}" fill="none" stroke="#ba4bcd" stroke-width="1.5" />
             `;
 
-            // Định vị chuột
+            // Thanh dóng định vị chuột
             mainHTML += `
                 <g id="crosshair" style="display:none;">
                     <line id="crosshair-x" x1="0" y1="${padding.top}" x2="0" y2="${height - padding.bottom}" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="3" />
                 </g>
             `;
 
-            // Trục thời gian hoành thật
+            // Vẽ mốc thời gian hoành thật dưới đáy biểu đồ
             let datesHTML = '<g fill="#787b86" font-size="10" text-anchor="middle">';
             let jump = Math.ceil(renderSubset.length / 5);
             renderSubset.forEach((d, i) => {
@@ -357,7 +326,7 @@
             attachMouseEvents(svg);
         }
 
-        // TƯƠNG TÁC CHUỘT LẤY THÔNG TIN NẾN THẬT TỪNG PHIÊN
+        // 3. TƯƠNG TÁC CHUỘT LẤY THÔNG TIN NẾN CHUẨN XÁC TỪNG PHIÊN
         function attachMouseEvents(svg) {
             const container = document.getElementById('chart-container');
             const tooltip = document.getElementById('tooltip');
@@ -426,7 +395,7 @@
             globalData = await fetchStockData(ticker);
             if(globalData.length > 0) {
                 drawChart(globalData);
-                document.getElementById('status-bar').innerText = `Kết nối thời gian thực: Đã nạp thành công ${globalData.length} phiên nến thật mã ${ticker}!`;
+                document.getElementById('status-bar').innerText = `Kết nối trực tuyến: Đồng bộ thành công nến thị trường mã ${ticker}!`;
             }
         }
 
