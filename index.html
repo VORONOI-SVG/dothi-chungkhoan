@@ -602,69 +602,78 @@ async function trySource(url, parseFn, label, timeoutMs) {
      3. TCBS direct               – CORS-blocked on most browsers
      4–7. CORS proxies            – last resort
    ══════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════
-   DATA FETCHING LOGIC
-   ══════════════════════════════════════════════════════════ */
 async function loadChartData() {
   if (!curTicker) return;
-
   showState('loading');
-  
-  // Tính toán thời gian bắt đầu (fromTs) dựa trên số ngày cấu hình (rangeDays)
-  const toTs = Math.floor(Date.now() / 1000);
-  const fromTs = toTs - (rangeDays * 24 * 60 * 60);
 
-  // Khởi tạo URL nguồn dữ liệu (Bạn có thể chọn 1 trong 3 nguồn dưới đây bằng cách bỏ comment)
-  
-  // Nguồn 1: Dữ liệu từ file local pre-generated (.json)
-  const url = `data/${curTicker}.json`;
-  
-  // Nguồn 2: Nếu bạn muốn gọi API dạng TradingView (SSI / Entrade)
-  // const url = `https://api.entrade.com.vn/chart/history?resolution=${resolution === 'D' ? '1D' : resolution}&symbol=${curTicker}&from=${fromTs}&to=${toTs}`;
-  
-  // Nguồn 3: Nếu bạn muốn gọi API từ TCBS
-  // const url = `https://tcanalysis.tcbs.com.vn/api/v1/bars?ticker=${curTicker}&resolution=${resolution}&from=${fromTs}&to=${toTs}`;
+  const now  = Math.floor(Date.now() / 1000);
+  const from = rangeDays > 0
+    ? now - rangeDays * 86400
+    : Math.floor(new Date('2000-01-01').getTime() / 1000);
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Không thể tải dữ liệu (Mã lỗi: ${response.status})`);
-    }
-    
-    const json = await response.json();
-    let candles = null;
+  const rD = resolution;
+  const rE = resolution === 'W' ? '1W' : resolution === 'M' ? '1M' : '1D';
+  const t  = encodeURIComponent(curTicker);
 
-    // Tự động nhận diện cấu trúc dữ liệu trả về để dùng đúng Parser tương ứng
-    if (json && Array.isArray(json.candles)) {
-      candles = parseLocalFile(json, fromTs, resolution);
-    } else if (json && Array.isArray(json.t)) {
-      candles = parseTVFormat(json);
-    } else if (json && Array.isArray(json.data)) {
-      candles = parseTCBS(json);
-    }
+  /* ── Phase 0: local pre-generated file (same-origin, no CORS) ── */
+  let candles = await trySource(
+    `data/${curTicker}.json`,
+    json => parseLocalFile(json, from, resolution),
+    'local', 5000
+  );
 
-    // Kiểm tra kết quả sau khi parse
-    if (!candles || candles.length === 0) {
-      showState('error', 'Dữ liệu trả về trống hoặc không đúng định dạng.');
-      return;
-    }
-
-    // Đẩy dữ liệu vào Lightweight Charts
-    candleSeries.setData(candles);
-    
-    // Cập nhật các đường chỉ báo MA20, MA50 dựa trên dữ liệu nến mới
-    if (typeof renderMA === 'function') {
-      renderMA(candles);
-    }
-
-    // Ẩn các trạng thái chờ, hiển thị biểu đồ chính thức
-    showState('ready');
-    mainChart.timeScale().fitContent();
-
-  } catch (error) {
-    console.error("Lỗi fetch dữ liệu:", error);
-    showState('error', `Lỗi kết nối: ${error.message}`);
+  /* ── Phase 1: race Entrade X vs SSI (live APIs) ──────────────── */
+  if (!candles) {
+    const ENTRADE = `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock` +
+      `?from=${from}&to=${now}&symbol=${t}&resolution=${rE}`;
+    const SSI = `https://iboard-query.ssi.com.vn/v2/stock-price/his-price` +
+      `?symbol=${t}&resolution=${rD}&from=${from}&to=${now}`;
+    candles = await Promise.any([
+      trySource(ENTRADE, parseTVFormat, 'Entrade', 8000),
+      trySource(SSI,     parseTVFormat, 'SSI',     8000),
+    ].map(p => p.then(c => c ?? Promise.reject('no data')))).catch(() => null);
   }
+
+  /* ── Phase 2: TCBS direct ─────────────────────────────────────── */
+  if (!candles) {
+    const TCBS = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
+      `?ticker=${t}&type=stock&resolution=${rD}&from=${from}&to=${now}`;
+    candles = await trySource(TCBS, parseTCBS, 'TCBS', 10000);
+
+    /* ── Phase 3: CORS proxies wrapping TCBS ──────────────────── */
+    if (!candles) candles = await trySource(
+      `https://corsproxy.io/?${TCBS}`, parseTCBS, 'corsproxy.io', 10000);
+    if (!candles) candles = await trySource(
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS)}`,
+      parseTCBS, 'allorigins', 10000);
+    if (!candles) candles = await trySource(
+      `https://thingproxy.freeboard.io/fetch/${TCBS}`,
+      parseTCBS, 'thingproxy', 10000);
+    if (!candles) candles = await trySource(
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(TCBS)}`,
+      parseTCBS, 'codetabs', 10000);
+  }
+
+  if (!candles) {
+    showState('error',
+      `Không tải được dữ liệu cho mã "${curTicker}".\n` +
+      `💡 Thiếu file data/${curTicker}.json – chạy GitHub Actions để tạo dữ liệu.\n` +
+      `Xem Console (F12) để biết chi tiết.`
+    );
+    return;
+  }
+
+  const volData = candles.map(c => ({
+    time:  c.time,
+    value: c.volume,
+    color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
+  }));
+  candleSeries.setData(candles);
+  volSeries.setData(volData);
+  renderMA(candles);
+  mainChart.timeScale().fitContent();
+  showState('chart');
+  document.getElementById('ohlc').style.display = 'flex';
 }
 
 /* ── Parsers ─────────────────────────────────────────── */
