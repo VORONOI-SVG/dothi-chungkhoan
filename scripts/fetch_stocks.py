@@ -88,7 +88,16 @@ HEADERS = {
 
 def fetch_json(url: str) -> dict:
     try:
-        response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        # Bẻ lái tên miền sang IP trực tiếp để bypass lỗi DNS của GitHub Actions
+        direct_url = url.replace("iboardquery.ssi.com.vn", "118.69.231.54")
+        
+        # Tạo bản sao HEADERS và ép Host là tên miền gốc để server SSI hiểu
+        custom_headers = HEADERS.copy()
+        custom_headers["Host"] = "iboardquery.ssi.com.vn"
+        
+        # Thực hiện gọi request (verify=False để bỏ qua chứng chỉ SSL khi gọi bằng IP)
+        response = requests.get(direct_url, headers=custom_headers, timeout=TIMEOUT, verify=False)
+        
         if response.status_code == 200:
             return response.json()
         print(f" -> Lỗi HTTP: {response.status_code}")
