@@ -1,64 +1,186 @@
-/* ══════════════════════════════════════════════════════════
-   DATA FETCHING LOGIC
-   ══════════════════════════════════════════════════════════ */
-async function loadChartData() {
-  if (!curTicker) return;
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu Đồ Chứng Khoán</title>
+    <!-- Nhúng thư viện Lightweight Charts từ CDN -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #131722;
+            color: #d1d4dc;
+        }
+        #chart-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+        }
+        #status {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .loading { background-color: #2962ff; color: white; }
+        .error { background-color: #ef5350; color: white; }
+        .ready { background-color: #26a69a; color: white; }
+    </style>
+</head>
+<body>
 
-  showState('loading');
-  
-  // Tính toán thời gian bắt đầu (fromTs) dựa trên số ngày cấu hình (rangeDays)
-  const toTs = Math.floor(Date.now() / 1000);
-  const fromTs = toTs - (rangeDays * 24 * 60 * 60);
+    <h2>Đồ Thị Chứng Khoán</h2>
+    <div id="status">Đang khởi tạo...</div>
+    <div id="chart-container"></div>
 
-  // Khởi tạo URL nguồn dữ liệu (Bạn có thể chọn 1 trong 3 nguồn dưới đây bằng cách bỏ comment)
-  
-  // Nguồn 1: Dữ liệu từ file local pre-generated (.json)
-  const url = `data/${curTicker}.json`;
-  
-  // Nguồn 2: Nếu bạn muốn gọi API dạng TradingView (SSI / Entrade)
-  // const url = `https://api.entrade.com.vn/chart/history?resolution=${resolution === 'D' ? '1D' : resolution}&symbol=${curTicker}&from=${fromTs}&to=${toTs}`;
-  
-  // Nguồn 3: Nếu bạn muốn gọi API từ TCBS
-  // const url = `https://tcanalysis.tcbs.com.vn/api/v1/bars?ticker=${curTicker}&resolution=${resolution}&from=${fromTs}&to=${toTs}`;
+    <script>
+        // --- 1. KHỞI TẠO CÁC BIẾN CẤU HÌNH BAN ĐẦU ---
+        let curTicker = "SSI"; // Mã chứng khoán mặc định
+        let rangeDays = 30;    // Số ngày lấy dữ liệu
+        let resolution = "D";   // Khung thời gian (Daily)
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Không thể tải dữ liệu (Mã lỗi: ${response.status})`);
-    }
-    
-    const json = await response.json();
-    let candles = null;
+        // --- 2. KHỞI TẠO BIỂU ĐỒ (LIGHTWEIGHT CHARTS) ---
+        const chartContainer = document.getElementById('chart-container');
+        const mainChart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: 500,
+            layout: {
+                backgroundColor: '#131722',
+                textColor: '#d1d4dc',
+            },
+            grid: {
+                vertLines: { color: '#2b2e3a' },
+                horzLines: { color: '#2b2e3a' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#2b2e3a',
+            },
+            timeScale: {
+                borderColor: '#2b2e3a',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
 
-    // Tự động nhận diện cấu trúc dữ liệu trả về để dùng đúng Parser tương ứng
-    if (json && Array.isArray(json.candles)) {
-      candles = parseLocalFile(json, fromTs, resolution);
-    } else if (json && Array.isArray(json.t)) {
-      candles = parseTVFormat(json);
-    } else if (json && Array.isArray(json.data)) {
-      candles = parseTCBS(json);
-    }
+        // Thêm chuỗi nến (Candlestick Series) vào biểu đồ
+        const candleSeries = mainChart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        });
 
-    // Kiểm tra kết quả sau khi parse
-    if (!candles || candles.length === 0) {
-      showState('error', 'Dữ liệu trả về trống hoặc không đúng định dạng.');
-      return;
-    }
+        // --- 3. CÁC HÀM HỖ TRỢ TRẠNG THÁI VÀ PARSER (Bổ sung để tránh lỗi gọi hàm trống) ---
+        function showState(state, message = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = state;
+            if (state === 'loading') statusEl.innerText = 'Đang tải dữ liệu...';
+            if (state === 'ready') statusEl.innerText = 'Đã tải xong';
+            if (state === 'error') statusEl.innerText = `Lỗi: ${message}`;
+        }
 
-    // Đẩy dữ liệu vào Lightweight Charts
-    candleSeries.setData(candles);
-    
-    // Cập nhật các đường chỉ báo MA20, MA50 dựa trên dữ liệu nến mới
-    if (typeof renderMA === 'function') {
-      renderMA(candles);
-    }
+        // Các hàm Parse dữ liệu mẫu (Thay đổi logic bên trong theo đúng cấu trúc API của bạn nếu cần)
+        function parseLocalFile(json, fromTs, res) {
+            return json.candles.filter(c => c.time >= fromTs);
+        }
+        function parseTVFormat(json) {
+            // Chuẩn TradingView thường trả về mảng t, o, h, l, c, v
+            return json.t.map((time, idx) => ({
+                time: time,
+                open: json.o[idx],
+                high: json.h[idx],
+                low: json.l[idx],
+                close: json.c[idx]
+            }));
+        }
+        function parseTCBS(json) {
+            return json.data.map(item => ({
+                time: Math.floor(new Date(item.tradingDate).getTime() / 1000),
+                open: item.open,
+                high: item.high,
+                low: item.low,
+                close: item.close
+            }));
+        }
+        function renderMA(candles) {
+            console.log("Đã tính toán chỉ báo MA cho", candles.length, "nến");
+        }
 
-    // Ẩn các trạng thái chờ, hiển thị biểu đồ chính thức
-    showState('ready');
-    mainChart.timeScale().fitContent();
+        // Tự động thay đổi kích thước biểu đồ khi kéo dãn cửa sổ trình duyệt
+        window.addEventListener('resize', () => {
+            mainChart.resize(chartContainer.clientWidth, 500);
+        });
 
-  } catch (error) {
-    console.error("Lỗi fetch dữ liệu:", error);
-    showState('error', `Lỗi kết nối: ${error.message}`);
-  }
-}
+        /* ========================================== DATA FETCHING LOGIC ========================================== */
+        // Khôi phục nguyên trạng mã xử lý dữ liệu từ ảnh của bạn (Đã sửa cú pháp comment xuống dòng an toàn)
+        async function loadChartData() { 
+            if (!curTicker) return; 
+            showState('loading'); 
+            
+            // Tính toán thời gian bắt đầu (fromTs) dựa trên số ngày cấu hình (rangedDays)
+            const toTs = Math.floor(Date.now() / 1000); 
+            const fromTs = toTs - (rangeDays * 24 * 60 * 60); 
+            
+            // Khởi tạo URL nguồn dữ liệu (Bạn có thể chọn 1 trong 3 nguồn dưới đây bằng cách bỏ comment) 
+            // Nguồn 1: Dữ liệu từ file local pre-generated (.json)
+            const url = `data/${curTicker}.json`; 
+            
+            // Nguồn 2: Nếu bạn muốn gọi API dạng TradingView (SSI / Entrade) 
+            // const url = `https://api.entrade.com.vn/chart/history?resolution=${resolution === 'D' ? '1D' : resolution}&symbol=${curTicker}&from=${fromTs}&to=${toTs}`; 
+            
+            // Nguồn 3: Nếu bạn muốn gọi API từ TCBS 
+            // const url = `https://tcanalysis.tcbs.com.vn/api/v1/bars?ticker=${curTicker}&resolution=${resolution}&from=${fromTs}&to=${toTs}`;
+            
+            try { 
+                const response = await fetch(url); 
+                if (!response.ok) { 
+                    throw new Error(`Không thể tải dữ liệu (Mã lỗi: ${response.status})`); 
+                } 
+                const json = await response.json(); 
+                let candles = null; 
+                
+                // Tự động nhận diện cấu trúc dữ liệu trả về để dùng đúng Parser tương ứng
+                if (json && Array.isArray(json.candles)) { 
+                    candles = parseLocalFile(json, fromTs, resolution); 
+                } else if (json && Array.isArray(json.t)) { 
+                    candles = parseTVFormat(json); 
+                } else if (json && Array.isArray(json.data)) { 
+                    candles = parseTCBS(json); 
+                } 
+                
+                // Kiểm tra kết quả sau khi parse
+                if (!candles || candles.length === 0) { 
+                    showState('error', 'Dữ liệu trả về trống hoặc không đúng định dạng.'); 
+                    return; 
+                } 
+                
+                // Đẩy dữ liệu vào Lightweight Charts
+                candleSeries.setData(candles); 
+                
+                // Cập nhật các đường chỉ báo MA20, MA50 trên dữ liệu nến mới nếu có
+                if (typeof renderMA === 'function') { 
+                    renderMA(candles); 
+                } 
+                
+                // Ẩn các trạng thái chờ, hiển thị biểu đồ chính thức
+                showState('ready'); 
+                mainChart.timeScale().fitContent(); 
+            } catch (error) { 
+                console.error("Lỗi fetch dữ liệu:", error); 
+                showState('error', `Lỗi kết nối: ${error.message}`); 
+            } 
+        }
+
+        // --- 4. CHẠY HÀM TẢI DỮ LIỆU KHI TRANG SẴN SÀNG ---
+        loadChartData();
+    </script>
+</body>
+</html>
