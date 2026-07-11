@@ -1,18 +1,13 @@
 import os
 import json
 import time
-import requests
+import yfinance as yf
 
-# Cấu hình chung
-TIMEOUT = 15
-SLEEP_SEC = 0.3
-RESOLUTION = "D"
-
-# Danh sách các mã cổ phiếu (HOSE, HNX, UPCOM)
+# Danh sách mã chứng khoán của bạn
 STOCKS = [
     # HOSE
     ("AAA","An Phát Bioplastics","HOSE"),("ACB","Á Châu","HOSE"),("ADG","Clever Group","HOSE"),("AGG","An Gia","HOSE"),
-    ("AGR","Agribank Securities","HOSE"),("ANV","Nam Việt","HOSE"),("APC","Chiếu xạ An Phú"),("ASM","Sao Mai","HOSE"),
+    ("AGR","Agribank Securities","HOSE"),("ANV","Nam Việt","HOSE"),("APC","Chiếu xạ An Phú","HOSE"),("ASM","Sao Mai","HOSE"),
     ("ASP","Dầu khí An Pha","HOSE"),("AST","Taseco Airs","HOSE"),("BCE","Xây dựng Bình Dương","HOSE"),("BCG","Bamboo Capital","HOSE"),
     ("BCM","Becamex","HOSE"),("BFC","Phân bón Bình Điền","HOSE"),("BHN","Habeco","HOSE"),("BIC","Bảo hiểm BIDV","HOSE"),
     ("BID","BIDV","HOSE"),("BMC","Khoáng sản Bình Định","HOSE"),("BMI","Bảo Minh","HOSE"),("BMP","Nhựa Bình Minh","HOSE"),
@@ -45,7 +40,7 @@ STOCKS = [
     ("HCD","Đầu tư Sản xuất và Thương mại HCD","HOSE"),("HCM","HSC Securities","HOSE"),("HDB","HDBank","HOSE"),("HDC","Phát triển Nhà Bà Rịa - Vũng Tàu","HOSE"),
     ("HDG","Tập đoàn Hà Đô","HOSE"),("HHP","Giấy Hải Phòng","HOSE"),("HHS","Hoàng Huy Đầu tư Dịch vụ","HOSE"),("HHV","Đầu tư Hạ tầng Giao thông Đèo Cả","HOSE"),
     ("HID","Halcom Việt Nam","HOSE"),("HII","An Tiến Industries","HOSE"),("HMC","Kim khí TP.HCM","HOSE"),("HNG","HAGL Agrico","HOSE"),
-    ("Hố","Bất động sản Hồ","HOSE"),("HOT","Du lịch Dịch vụ Hội An","HOSE"),("HPG","Tập đoàn Hòa Phát","HOSE"),("HPX","Hải Phát Investment","HOSE"),
+    ("HOT","Du lịch Dịch vụ Hội An","HOSE"),("HPG","Tập đoàn Hòa Phát","HOSE"),("HPX","Hải Phát Investment","HOSE"),
     ("HQC","Địa ốc Hoàng Quân","HOSE"),("HRC","Cao su Hòa Bình","HOSE"),("HSG","Tập đoàn Hoa Sen","HOSE"),("HSL","Đầu tư Phát triển Thực phẩm Sao Vàng","HOSE"),
     ("HT1","Xi măng Hà Tiên 1","HOSE"),("HT9","Xây lắp Thành An 96","HOSE"),("HTG","May Hòa Thọ","HOSE"),("HTI","Đầu tư Phát triển Hạ tầng IDICO","HOSE"),
     ("HTL","Kỹ thuật và Ô tô Trường Long","HOSE"),("HTN","Hưng Thịnh Incons","HOSE"),("HTV","Vận tải Hà Tiên","HOSE"),("HU1","HUD1","HOSE"),
@@ -57,17 +52,16 @@ STOCKS = [
     ("KHP","Điện lực Khánh Hòa","HOSE"),("KMR","Mirae","HOSE"),("KOS","KOSY","HOSE"),("KPF","Đầu tư Tài chính KPF","HOSE"),
     ("KSB","Khoáng sản và Xây dựng Bình Dương","HOSE"),("L10","LILAMA 10","HOSE"),("L14","Licogi 14","HOSE"),("L18","Licogi 18","HOSE"),
     # HNX
-    ("PHP","Cảng Hải Phòng","HNX"),("PME","Pymepharco","HNX"),("PVC","PV Coating","HNX"),
+    ("PHP","Cảng Hải Phòng","HNX"),("PVC","PV Coating","HNX"),
     ("PVI","PVI Holdings","HNX"),("PVS","PV Technical","HNX"),
     ("SHS","SHS Sec","HNX"),("SLS","Mía đường Sơn La","HNX"),
     ("TBC","Thủy điện Thác Bà","HNX"),("TDN","Thép Đà Nẵng","HNX"),
-    ("TMT","Ô tô TMT","HNX"),("TNG","TNG Invest","HNX"),("TVB","Than Vàng Danh","HNX"),
+    ("TMT","Ô tô TMT","HNX"),("TNG","TNG Invest","HNX"),
     ("VCC","Vicostone","HNX"),("VCG","Vinaconex","HNX"),("VGS","Thép VGS","HNX"),
     ("VNA","Vinalines","HNX"),("VNR","Tái BH VN","HNX"),("VTC","VTC Media","HNX"),
     # UPCOM
     ("ACV","ACV","UPCOM"),("BAB","Bắc Á Bank","UPCOM"),("BVB","Bản Việt Bank","UPCOM"),
-    ("CTF","City Auto","UPCOM"),("KLB","Kiên Long Bank","UPCOM"),
-    ("MCH","Masan Consumer","UPCOM"),("MSR","Masan Resources","UPCOM"),
+    ("KLB","Kiên Long Bank","UPCOM"),("MCH","Masan Consumer","UPCOM"),("MSR","Masan Resources","UPCOM"),
     ("NAB","Nam Á Bank","UPCOM"),("NSC","Giống cây trồng VN","UPCOM"),
     ("NT2","NT2","UPCOM"),("OIL","PVOIL","UPCOM"),("RAL","Điện Quang","UPCOM"),
     ("SGB","Saigonbank","UPCOM"),("SNZ","Sonadezi","UPCOM"),
@@ -77,113 +71,77 @@ STOCKS = [
     ("VPS","VPS Sec","UPCOM"),("VTB","Vietbank","UPCOM"),("WSS","WSS Sec","UPCOM"),
 ]
 
-# --- SSI iBoard API --------------------------------------------------------
-SSI_URL = "https://iboardquery.ssi.com.vn/v1/history/chart?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "application/json",
-    "Referer": "https://iboard.ssi.com.vn/",
-}
-
-def fetch_json(url: str) -> dict:
-    try:
-        # Bẻ lái tên miền sang IP trực tiếp để bypass lỗi DNS của GitHub Actions
-        direct_url = url.replace("iboardquery.ssi.com.vn", "118.69.231.54")
-        
-        # Tạo bản sao HEADERS và ép Host là tên miền gốc để server SSI hiểu
-        custom_headers = HEADERS.copy()
-        custom_headers["Host"] = "iboardquery.ssi.com.vn"
-        
-        # Thực hiện gọi request (verify=False để bỏ qua chứng chỉ SSL khi gọi bằng IP)
-        response = requests.get(direct_url, headers=custom_headers, timeout=TIMEOUT, verify=False)
-        
-        if response.status_code == 200:
-            return response.json()
-        print(f" -> Lỗi HTTP: {response.status_code}")
-        return {}
-    except Exception as e:
-        print(f" -> Lỗi kết nối mạng: {e}")
-        return {}
-
-def fetch_ticker(ticker: str, from_ts: int, to_ts: int) -> list:
-    # Resolution cho SSI: 1D thay vì D
-    res = "1D" if RESOLUTION == "D" else RESOLUTION
-    url = SSI_URL.format(ticker=ticker, resolution=res, from_ts=from_ts, to_ts=to_ts)
-    
-    data = fetch_json(url)
-    
-    # Check cấu trúc UDF tiêu chuẩn (t, o, h, l, c, v)
-    if data.get("s") != "ok" or "t" not in data:
-        return []
-        
-    timestamps = data["t"]
-    opens = data["o"]
-    highs = data["h"]
-    lows = data["l"]
-    closes = data["c"]
-    volumes = data["v"]
-    
-    candles = []
-    for i in range(len(timestamps)):
-        # Chuyển đổi timestamp giây sang ngày định dạng YYYY-MM-DD
-        t_sec = timestamps[i]
-        date_str = time.strftime('%Y-%m-%d', time.localtime(t_sec))
-        
-        candles.append([
-            date_str,
-            float(opens[i]),
-            float(highs[i]),
-            float(lows[i]),
-            float(closes[i]),
-            int(volumes[i])
-        ])
-    return candles
-
 def main():
     os.makedirs("data", exist_ok=True)
-    
-    # Tính khoảng thời gian: cào dữ liệu trong 1 năm qua
-    now_ts = int(time.time())
-    one_year_ago_ts = now_ts - (365 * 24 * 60 * 60)
     
     success_count = 0
     manifest = {}
     
-    print(f"Bắt đầu tải dữ liệu từ API SSI từ {time.strftime('%Y-%m-%d', time.localtime(one_year_ago_ts))} đến {time.strftime('%Y-%m-%d', time.localtime(now_ts))}...")
+    print("Bắt đầu tải dữ liệu lịch sử 1 năm từ Yahoo Finance...")
     
     for idx, item in enumerate(STOCKS, 1):
         ticker = item[0]
         name = item[1] if len(item) > 1 else ""
         exchange = item[2] if len(item) > 2 else ""
         
-        print(f"[{idx}/{len(STOCKS)}] Đang tải {ticker}...", end="", flush=True)
+        # Thêm đuôi .VN đối với thị trường Việt Nam trên Yahoo Finance
+        yahoo_ticker = f"{ticker}.VN"
         
-        candles = fetch_ticker(ticker, one_year_ago_ts, now_ts)
+        print(f"[{idx}/{len(STOCKS)}] Đang tải {yahoo_ticker}...", end="", flush=True)
         
-        if candles:
-            file_path = f"data/{ticker}.json"
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(candles, f, ensure_ascii=False)
+        try:
+            # Tải dữ liệu 1 năm qua (1y), khoảng thời gian cố định theo ngày (1d)
+            stock_data = yf.download(yahoo_ticker, period="1y", interval="1d", progress=False)
             
-            manifest[ticker] = {
-                "name": name,
-                "exchange": exchange,
-                "last_updated": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                "candles_count": len(candles)
-            }
-            success_count += 1
-            print(f" OK ({len(candles)} nến)")
-        else:
-            print(" Thất bại (Không có dữ liệu hoặc lỗi)")
+            if stock_data.empty:
+                print(" Thất bại (Không có dữ liệu trên Yahoo)")
+                continue
+                
+            candles = []
+            # Duyệt qua các dòng dữ liệu để chuyển định dạng
+            for index, row in stock_data.iterrows():
+                date_str = index.strftime('%Y-%m-%d')
+                
+                # Yahoo đôi khi trả về mảng giá trị (nếu lỗi đa chỉ mục), lấy giá trị float thuần tuý
+                o = float(row['Open'])
+                h = float(row['High'])
+                l = float(row['Low'])
+                c = float(row['Close'])
+                v = int(row['Volume'])
+                
+                # Bỏ qua ngày không có giao dịch hoặc giá trị bất thường
+                if v <= 0 or o <= 0:
+                    continue
+                    
+                candles.append([date_str, o, h, l, c, v])
+                
+            if candles:
+                file_path = f"data/{ticker}.json"
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(candles, f, ensure_ascii=False)
+                
+                manifest[ticker] = {
+                    "name": name,
+                    "exchange": exchange,
+                    "last_updated": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                    "candles_count": len(candles)
+                }
+                success_count += 1
+                print(f" OK ({len(candles)} ngày)")
+            else:
+                print(" Thất bại (Dữ liệu rỗng sau khi lọc)")
+                
+        except Exception as e:
+            print(f" Thất bại (Lỗi: {e})")
             
-        time.sleep(SLEEP_SEC)
+        # Nghỉ ngắn tránh spam Yahoo
+        time.sleep(0.1)
         
     # Ghi file manifest tổng hợp
     with open("data/manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
         
-    print(f" Hoàn thành: {success_count}/{len(STOCKS)} mã thành công.")
+    print(f"\n Hoàn thành: {success_count}/{len(STOCKS)} mã thành công.")
 
 if __name__ == "__main__":
     main()
