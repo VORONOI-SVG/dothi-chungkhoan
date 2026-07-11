@@ -276,7 +276,7 @@
       <span class="ohlc-lbl">C</span><span class="ohlc-v" id="ov-c">—</span>
       <span class="ohlc-chg" id="ov-chg"></span>
     </div>
-    <span>Dữ liệu: <a href="https://tcbs.com.vn" target="_blank">TCBS</a> ·
+    <span id="dataSource">Dữ liệu: — ·
           Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a></span>
     <span class="sbar-r">HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025</span>
   </div>
@@ -574,6 +574,8 @@ function fetchWithTimeout(url, ms) {
 }
 
 /* ── Try one URL, return parsed candles or null ──────── */
+let lastSource = null; // { label, updated? } — set on success, read by updateDataSourceLabel()
+
 async function trySource(url, parseFn, label, timeoutMs) {
   try {
     const res = await fetchWithTimeout(url, timeoutMs);
@@ -582,6 +584,7 @@ async function trySource(url, parseFn, label, timeoutMs) {
     const candles = parseFn(json);
     if (candles && candles.length >= 2) {
       console.info(`[VNChart] ✓ ${label}`);
+      lastSource = { label, updated: json?.updated };
       return candles;
     }
     console.warn(`[VNChart] ${label} no candles`);
@@ -590,6 +593,28 @@ async function trySource(url, parseFn, label, timeoutMs) {
     console.warn(`[VNChart] ${label} error:`, e.message);
     return null;
   }
+}
+
+/* ── Reflect which source served the current chart in the status bar ── */
+function updateDataSourceLabel() {
+  const el = document.getElementById('dataSource');
+  if (!el || !lastSource) return;
+  const NAMES = {
+    local: 'Yahoo Finance (cache nội bộ, cập nhật hàng ngày)',
+    Entrade: 'Entrade X',
+    SSI: 'SSI iBoard',
+    TCBS: 'TCBS',
+    'corsproxy.io': 'TCBS (qua proxy)',
+    allorigins: 'TCBS (qua proxy)',
+    thingproxy: 'TCBS (qua proxy)',
+    codetabs: 'TCBS (qua proxy)',
+  };
+  const name = NAMES[lastSource.label] || lastSource.label;
+  const suffix = lastSource.updated
+    ? ` <span style="opacity:.7">(cập nhật ${new Date(lastSource.updated).toLocaleString('vi-VN')})</span>`
+    : '';
+  el.innerHTML = `Dữ liệu: ${name}${suffix} ·
+          Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a>`;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -663,6 +688,8 @@ async function loadChartData() {
     return;
   }
 
+  updateDataSourceLabel();
+
   const volData = candles.map(c => ({
     time:  c.time,
     value: c.volume,
@@ -678,19 +705,29 @@ async function loadChartData() {
 
 /* ── Parsers ─────────────────────────────────────────── */
 
-// Local pre-generated file format (from scripts/fetch_stocks.py):
-// { ticker, exchange, updated, candles: [[ts,o,h,l,c,v], ...] }
+// Local pre-generated file format (from scripts/fetch_stocks.py, Yahoo Finance):
+// plain array: [["2024-01-02", o, h, l, c, v], ...]  (dates ascending, no wrapper object)
 function parseLocalFile(json, fromTs, res) {
-  const candles = json?.candles;
-  if (!Array.isArray(candles) || candles.length < 2) return null;
+  const raw = Array.isArray(json) ? json : json?.candles;
+  if (!Array.isArray(raw) || raw.length < 2) return null;
+
+  const normalised = raw.map(row => {
+    const [d, o, h, l, c, v] = row;
+    const ts = typeof d === 'number' ? d : dateToTime(d);
+    const ov=+o, hv=+h, lv=+l, cv=+c, vv=+v;
+    if (!ts || !isFinite(ov) || !isFinite(hv) || !isFinite(lv) || !isFinite(cv)) return null;
+    return [ts, ov, hv, lv, cv, isFinite(vv) ? vv : 0];
+  }).filter(Boolean).sort((a,b) => a[0] - b[0]);
+  if (normalised.length < 2) return null;
+
   // Local files always store daily data; if user wants W/M, aggregate
-  let filtered = candles.filter(([ts]) => ts >= fromTs);
-  if (!filtered.length) filtered = candles; // fallback: show all
+  let filtered = normalised.filter(([ts]) => ts >= fromTs);
+  if (!filtered.length) filtered = normalised; // fallback: show all
 
   if (res === 'D') {
     return filtered.map(([ts,o,h,l,c,v]) => ({
       time:ts, open:o, high:h, low:l, close:c, volume:v
-    })).filter(r => isFinite(r.open) && isFinite(r.close));
+    }));
   }
 
   // Aggregate to weekly (Mon) or monthly (1st) buckets
