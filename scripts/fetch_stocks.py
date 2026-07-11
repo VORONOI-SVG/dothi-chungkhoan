@@ -84,32 +84,31 @@ def main():
         name = item[1] if len(item) > 1 else ""
         exchange = item[2] if len(item) > 2 else ""
         
-        # Thêm đuôi .VN đối với thị trường Việt Nam trên Yahoo Finance
         yahoo_ticker = f"{ticker}.VN"
-        
         print(f"[{idx}/{len(STOCKS)}] Đang tải {yahoo_ticker}...", end="", flush=True)
         
         try:
-            # Tải dữ liệu 1 năm qua (1y), khoảng thời gian cố định theo ngày (1d)
             stock_data = yf.download(yahoo_ticker, period="1y", interval="1d", progress=False)
             
             if stock_data.empty:
                 print(" Thất bại (Không có dữ liệu trên Yahoo)")
                 continue
+            
+            # Làm phẳng cấu trúc Đa chỉ mục (Multi-Index) từ yfinance mới
+            if hasattr(stock_data.columns, 'levels'):
+                stock_data.columns = stock_data.columns.get_level_values(0)
                 
             candles = []
-            # Duyệt qua các dòng dữ liệu để chuyển định dạng
             for index, row in stock_data.iterrows():
                 date_str = index.strftime('%Y-%m-%d')
                 
-                # Yahoo đôi khi trả về mảng giá trị (nếu lỗi đa chỉ mục), lấy giá trị float thuần tuý
-                o = float(row['Open'])
-                h = float(row['High'])
-                l = float(row['Low'])
-                c = float(row['Close'])
-                v = int(row['Volume'])
+                # Trích xuất giá trị float/int an toàn bằng .iloc nếu cột bị lặp cấu trúc Series
+                o = float(row['Open'].iloc[0]) if hasattr(row['Open'], 'iloc') else float(row['Open'])
+                h = float(row['High'].iloc[0]) if hasattr(row['High'], 'iloc') else float(row['High'])
+                l = float(row['Low'].iloc[0]) if hasattr(row['Low'], 'iloc') else float(row['Low'])
+                c = float(row['Close'].iloc[0]) if hasattr(row['Close'], 'iloc') else float(row['Close'])
+                v = int(row['Volume'].iloc[0]) if hasattr(row['Volume'], 'iloc') else int(row['Volume'])
                 
-                # Bỏ qua ngày không có giao dịch hoặc giá trị bất thường
                 if v <= 0 or o <= 0:
                     continue
                     
@@ -134,10 +133,8 @@ def main():
         except Exception as e:
             print(f" Thất bại (Lỗi: {e})")
             
-        # Nghỉ ngắn tránh spam Yahoo
         time.sleep(0.1)
         
-    # Ghi file manifest tổng hợp
     with open("data/manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
         
