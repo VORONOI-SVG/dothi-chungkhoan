@@ -73,52 +73,52 @@ STOCKS = [
 
 def main():
     os.makedirs("data", exist_ok=True)
-    
+
     success_count = 0
     manifest = {}
-    
+
     print("Bắt đầu tải dữ liệu lịch sử 1 năm từ Yahoo Finance...")
-    
+
     for idx, item in enumerate(STOCKS, 1):
         ticker = item[0]
         name = item[1] if len(item) > 1 else ""
         exchange = item[2] if len(item) > 2 else ""
-        
+
         yahoo_ticker = f"{ticker}.VN"
         print(f"[{idx}/{len(STOCKS)}] Đang tải {yahoo_ticker}...", end="", flush=True)
-        
+
         try:
             stock_data = yf.download(yahoo_ticker, period="1y", interval="1d", progress=False)
-            
+
             if stock_data.empty:
                 print(" Thất bại (Không có dữ liệu trên Yahoo)")
                 continue
-            
+
             # Làm phẳng cấu trúc Đa chỉ mục (Multi-Index) từ yfinance mới
             if hasattr(stock_data.columns, 'levels'):
                 stock_data.columns = stock_data.columns.get_level_values(0)
-                
+
             candles = []
             for index, row in stock_data.iterrows():
                 date_str = index.strftime('%Y-%m-%d')
-                
+
                 # Trích xuất giá trị float/int an toàn bằng .iloc nếu cột bị lặp cấu trúc Series
                 o = float(row['Open'].iloc[0]) if hasattr(row['Open'], 'iloc') else float(row['Open'])
                 h = float(row['High'].iloc[0]) if hasattr(row['High'], 'iloc') else float(row['High'])
                 l = float(row['Low'].iloc[0]) if hasattr(row['Low'], 'iloc') else float(row['Low'])
                 c = float(row['Close'].iloc[0]) if hasattr(row['Close'], 'iloc') else float(row['Close'])
                 v = int(row['Volume'].iloc[0]) if hasattr(row['Volume'], 'iloc') else int(row['Volume'])
-                
+
                 if v <= 0 or o <= 0:
                     continue
-                    
+
                 candles.append([date_str, o, h, l, c, v])
-                
+
             if candles:
                 file_path = f"data/{ticker}.json"
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(candles, f, ensure_ascii=False)
-                
+
                 manifest[ticker] = {
                     "name": name,
                     "exchange": exchange,
@@ -129,15 +129,15 @@ def main():
                 print(f" OK ({len(candles)} ngày)")
             else:
                 print(" Thất bại (Dữ liệu rỗng sau khi lọc)")
-                
+
         except Exception as e:
             print(f" Thất bại (Lỗi: {e})")
-            
+
         time.sleep(0.1)
-        
+
     with open("data/manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
-        
+
     print(f"\n Hoàn thành: {success_count}/{len(STOCKS)} mã thành công.")
 
 if __name__ == "__main__":
