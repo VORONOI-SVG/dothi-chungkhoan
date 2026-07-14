@@ -8,20 +8,20 @@
    KT1  → vẽ ĐÈ lên khung nến chính (overlay):
           - Đường nền SSL Hybrid (HMA 60), đổi màu theo xu hướng tăng/giảm
           - Vùng Fair Value Gap (FVG) dạng hộp mờ
+          - Quadro Volume Profile (4 cột volume mua/bán bên phải nến cuối)
    KT2  → khung riêng bên dưới khung Volume (pane mới, thời gian đồng bộ):
           - Vortex Oscillator (histogram, tô màu theo tín hiệu)
-          - Augmented RSI (đường)
+          - Augmented RSI (đường) + tín hiệu Quá mua (>80) / Quá bán (<20)
           - Tín hiệu Mua/Bán (mũi tên) khi Vortex+/- vượt ngưỡng và được
             xác nhận bởi RSI
 
    GHI CHÚ VỀ PHẠM VI:
    File Pine gốc của bạn gộp rất nhiều chỉ báo nhỏ trong 1 script (Cycles
-   Analysis, BBx4, Quadro Volume Profile, KVO, Thermal Gauge, Breadth
-   Thrust...). Các phần đó dùng nhiều box/table/label kiểu vẽ tùy biến mà
-   Lightweight Charts không hỗ trợ trực tiếp, nên bản này tập trung vào
-   PHẦN CỐT LÕI của KT1 (SSL Hybrid + FVG) và KT2 (Vortex + ARSI + tín
-   hiệu Mua/Bán) — đây cũng là phần dùng để ra quyết định giao dịch chính
-   trong 2 script gốc. Có thể mở rộng thêm sau nếu cần.
+   Analysis, BBx4, KVO, Thermal Gauge, Breadth Thrust...). Các phần đó
+   dùng nhiều box/table/label kiểu vẽ tùy biến mà Lightweight Charts
+   không hỗ trợ trực tiếp, nên bản này tập trung vào PHẦN CỐT LÕI của
+   KT1 (SSL Hybrid + FVG + Quadro Volume Profile) và KT2 (Vortex + ARSI
+   + tín hiệu Mua/Bán). Có thể mở rộng thêm sau nếu cần.
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── State ────────────────────────────────────────────────────────── */
@@ -30,26 +30,18 @@ let kt1On = false, kt2On = false;
 let sslBullSeries = null, sslBearSeries = null;
 let fvgCanvas = null, fvgCtx = null;
 let fvgBoxes = [];
+let qvpBars = [];
 
 let kt2Chart = null;
 let vortexHistSeries = null, arsiLineSeries = null;
-let kt2ThreshLine = null;
 let kt2SyncGuard = false;
+
+const KT_DEFAULT_RIGHT_OFFSET = 8;
+const KT_QVP_RIGHT_OFFSET = 65;
 
 /* ══════════════════════════════════════════════════════════════════
    MATH HELPERS (JS port of the Pine Script functions we need)
    ══════════════════════════════════════════════════════════════════ */
-function ktEma(arr, len) {
-  const k = 2 / (len + 1);
-  const out = new Array(arr.length).fill(null);
-  let prev = null;
-  for (let i = 0; i < arr.length; i++) {
-    prev = prev === null ? arr[i] : arr[i] * k + prev * (1 - k);
-    out[i] = prev;
-  }
-  return out;
-}
-
 function ktWma(arr, len) {
   const out = new Array(arr.length).fill(null);
   for (let i = len - 1; i < arr.length; i++) {
@@ -203,6 +195,57 @@ function computeFVG(candles, thresholdPct = 0) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   KT1 — QUADRO VOLUME PROFILE (BigBeluga) — overlay bars near last bar
+   Với mỗi bin giá trong `lookback` nến gần nhất:
+     - Nến lịch sử được xếp vào bin theo GIÁ ĐÓNG CỬA của chính nó.
+     - Volume của nến đó được tính là "mua" (nến tăng) hay "bán" (nến
+       giảm), rồi được gộp vào cột TRÁI hay PHẢI tùy theo bin đó nằm
+       TRÊN hay DƯỚI giá đóng cửa HIỆN TẠI (giống bản Pine gốc).
+   ══════════════════════════════════════════════════════════════════ */
+function computeQVP(candles, opts = {}) {
+  const lookback = Math.min(opts.lookback ?? 200, candles.length);
+  const bins = opts.bins ?? 60;
+  if (lookback < 10) return [];
+  const slice = candles.slice(candles.length - lookback);
+  const currentClose = candles[candles.length - 1].close;
+
+  let top = -Infinity, bottom = Infinity;
+  for (const c of slice) { top = Math.max(top, c.high); bottom = Math.min(bottom, c.low); }
+  const step = (top - bottom) / bins;
+  if (!(step > 0)) return [];
+
+  const leftProfile = new Array(bins).fill(0);
+  const rightProfile = new Array(bins).fill(0);
+
+  for (const c of slice) {
+    const isBull = c.close > c.open;
+    const bullVol = isBull ? c.volume : 0;
+    const bearVol = isBull ? 0 : c.volume;
+    for (let k = 0; k < bins; k++) {
+      const loww = bottom + step * k, highh = loww + step, middle = loww + step / 2;
+      if (c.close >= loww - step && c.close <= highh + step) {
+        if (currentClose > middle) { leftProfile[k] += bullVol; rightProfile[k] += bearVol; }
+        else { leftProfile[k] += bearVol; rightProfile[k] += bullVol; }
+      }
+    }
+  }
+
+  const maxLeft = Math.max(...leftProfile, 1e-9);
+  const maxRight = Math.max(...rightProfile, 1e-9);
+  const bars = [];
+  for (let k = 0; k < bins; k++) {
+    const loww = bottom + step * k, highh = loww + step, middle = loww + step / 2;
+    bars.push({
+      top: highh, bottom: loww,
+      leftVal: leftProfile[k] / maxLeft,
+      rightVal: rightProfile[k] / maxRight,
+      isUpper: middle > currentClose,
+    });
+  }
+  return bars;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    KT2 — VORTEX OSCILLATOR (lower pane)
    ══════════════════════════════════════════════════════════════════ */
 function computeVortex(candles, opts = {}) {
@@ -320,6 +363,11 @@ function setupKTToggles() {
     b1.classList.toggle('on', kt1On);
     b1.style.background = kt1On ? '#00c3ff' : 'transparent';
     b1.style.borderColor = kt1On ? '#00c3ff' : 'var(--border)';
+    if (mainChart) {
+      mainChart.timeScale().applyOptions({
+        rightOffset: kt1On ? KT_QVP_RIGHT_OFFSET : KT_DEFAULT_RIGHT_OFFSET,
+      });
+    }
     if (kt1On) renderKT1(lastCandles || []); else clearKT1();
   });
 
@@ -336,7 +384,8 @@ function setupKTToggles() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   FVG canvas overlay (drawn on top of #chart, synced to mainChart)
+   OVERLAY CANVAS (FVG boxes + Quadro Volume Profile), drawn on top of
+   #chart, synced to mainChart's time/price scales
    ══════════════════════════════════════════════════════════════════ */
 function setupFVGCanvas() {
   const chartEl = document.getElementById('chart');
@@ -347,7 +396,7 @@ function setupFVGCanvas() {
   fvgCtx = fvgCanvas.getContext('2d');
   resizeFVGCanvas();
   window.addEventListener('resize', resizeFVGCanvas);
-  if (mainChart) mainChart.timeScale().subscribeVisibleLogicalRangeChange(drawFVGBoxes);
+  if (mainChart) mainChart.timeScale().subscribeVisibleLogicalRangeChange(drawKT1Overlay);
 }
 
 function resizeFVGCanvas() {
@@ -356,14 +405,43 @@ function resizeFVGCanvas() {
   const w = chartEl.clientWidth, h = chartEl.clientHeight;
   fvgCanvas.width = w; fvgCanvas.height = h;
   fvgCanvas.style.width = w + 'px'; fvgCanvas.style.height = h + 'px';
-  drawFVGBoxes();
+  drawKT1Overlay();
 }
 
-function drawFVGBoxes() {
+function drawQVPBars(ts) {
+  if (!qvpBars.length || !lastCandles || !lastCandles.length) return;
+  const baseX = ts.logicalToCoordinate(lastCandles.length - 1 + 3);
+  if (baseX == null) return;
+  const maxBarPx = 70;
+
+  for (const bar of qvpBars) {
+    const y1 = candleSeries.priceToCoordinate(bar.top);
+    const y2 = candleSeries.priceToCoordinate(bar.bottom);
+    if (y1 == null || y2 == null) continue;
+    const yTop = Math.min(y1, y2), h = Math.max(1, Math.abs(y2 - y1));
+    const leftColor  = bar.isUpper ? 'rgba(242,54,69,0.55)' : 'rgba(8,153,129,0.55)';
+    const rightColor = bar.isUpper ? 'rgba(8,153,129,0.55)' : 'rgba(242,54,69,0.55)';
+    const leftW = bar.leftVal * maxBarPx;
+    const rightW = bar.rightVal * maxBarPx;
+    fvgCtx.fillStyle = leftColor;
+    fvgCtx.fillRect(baseX - leftW, yTop, leftW, h);
+    fvgCtx.fillStyle = rightColor;
+    fvgCtx.fillRect(baseX, yTop, rightW, h);
+  }
+
+  fvgCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+  fvgCtx.beginPath();
+  fvgCtx.moveTo(baseX, 0);
+  fvgCtx.lineTo(baseX, fvgCanvas.height);
+  fvgCtx.stroke();
+}
+
+function drawKT1Overlay() {
   if (!fvgCtx || !mainChart || !candleSeries) return;
   fvgCtx.clearRect(0, 0, fvgCanvas.width, fvgCanvas.height);
-  if (!kt1On || !fvgBoxes.length) return;
+  if (!kt1On) return;
   const ts = mainChart.timeScale();
+
   for (const box of fvgBoxes) {
     const x1 = ts.logicalToCoordinate(box.leftLogical);
     const x2 = ts.logicalToCoordinate(box.rightLogical);
@@ -373,6 +451,8 @@ function drawFVGBoxes() {
     fvgCtx.fillStyle = box.bull ? 'rgba(8,153,129,0.25)' : 'rgba(242,54,69,0.25)';
     fvgCtx.fillRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
   }
+
+  drawQVPBars(ts);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -399,23 +479,50 @@ function ensureKT2Chart() {
   arsiLineSeries = kt2Chart.addLineSeries({
     color: '#c0c0c0', lineWidth: 1, priceLineVisible: false, lastValueVisible: false,
   });
-  kt2ThreshLine = vortexHistSeries.createPriceLine({
+
+  vortexHistSeries.createPriceLine({
     price: 20, color: 'rgba(255,255,255,0.3)',
     lineStyle: LightweightCharts.LineStyle.Dashed, lineWidth: 1,
-    axisLabelVisible: true, title: 'Ngưỡng',
+    axisLabelVisible: true, title: 'Ngưỡng Vortex',
+  });
+  arsiLineSeries.createPriceLine({
+    price: 80, color: 'rgba(8,153,129,0.6)',
+    lineStyle: LightweightCharts.LineStyle.Dashed, lineWidth: 1,
+    axisLabelVisible: true, title: 'Quá mua',
+  });
+  arsiLineSeries.createPriceLine({
+    price: 20, color: 'rgba(242,54,69,0.6)',
+    lineStyle: LightweightCharts.LineStyle.Dashed, lineWidth: 1,
+    axisLabelVisible: true, title: 'Quá bán',
   });
 
-  mainChart.timeScale().subscribeVisibleLogicalRangeChange(r => {
+  const syncFromMain = r => {
     if (!kt2On || kt2SyncGuard || !r) return;
     kt2SyncGuard = true; kt2Chart.timeScale().setVisibleLogicalRange(r); kt2SyncGuard = false;
-  });
-  kt2Chart.timeScale().subscribeVisibleLogicalRangeChange(r => {
+  };
+  const syncFromKt2 = r => {
     if (!kt2On || kt2SyncGuard || !r) return;
     kt2SyncGuard = true; mainChart.timeScale().setVisibleLogicalRange(r); kt2SyncGuard = false;
-  });
+  };
+  mainChart.timeScale().subscribeVisibleLogicalRangeChange(syncFromMain);
+  kt2Chart.timeScale().subscribeVisibleLogicalRangeChange(syncFromKt2);
+
   window.addEventListener('resize', () => {
     if (kt2Chart) kt2Chart.applyOptions({ width: el.offsetWidth });
   });
+}
+
+/* Copy the main chart's current visible range onto KT2 right away —
+   subscribeVisibleLogicalRangeChange only fires on *future* changes,
+   so without this the two panes stay misaligned until the user pans. */
+function syncKT2ToMain() {
+  if (!kt2Chart || !mainChart) return;
+  const range = mainChart.timeScale().getVisibleLogicalRange();
+  if (range) {
+    kt2SyncGuard = true;
+    kt2Chart.timeScale().setVisibleLogicalRange(range);
+    kt2SyncGuard = false;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -453,13 +560,17 @@ function renderKT1(candles) {
     leftLogical: b.startIndex,
     rightLogical: b.mitigatedAt != null ? b.mitigatedAt : Math.min(b.startIndex + 200, candles.length - 1 + 20),
   }));
-  drawFVGBoxes();
+
+  qvpBars = computeQVP(candles, { lookback: 200, bins: 60 });
+
+  drawKT1Overlay();
 }
 
 function clearKT1() {
   if (sslBullSeries) sslBullSeries.setData([]);
   if (sslBearSeries) sslBearSeries.setData([]);
   fvgBoxes = [];
+  qvpBars = [];
   if (fvgCtx && fvgCanvas) fvgCtx.clearRect(0, 0, fvgCanvas.width, fvgCanvas.height);
 }
 
@@ -474,36 +585,61 @@ function renderKT2(candles) {
   const rsiArr = ktRsi(candles.map(c => c.close), 14);
   const threshold = 0.2;
 
-  const histData = [], arsiData = [], markers = [];
+  const histData = [], arsiData = [];
+  const vortexMarkers = [], arsiMarkers = [];
+  let prevArsi = null;
+
   for (let i = 0; i < candles.length; i++) {
-    if (vortex[i] == null) continue;
-    const v = vortex[i] * 100, vp = vortexPlus[i], vm = vortexMinus[i];
-    const aboveUp = vortex[i] > threshold && vp > vm;
-    const aboveDn = vortex[i] > threshold && vp < vm;
-    const rsiCond = rsiArr[i] != null && (rsiArr[i] > 56 || rsiArr[i] < 44);
-    const buy = vp > vm && vp > vortex[i] && aboveUp && rsiCond;
-    const sell = vm > vp && vm > vortex[i] && aboveDn && rsiCond;
+    const time = candles[i].time;
 
-    let color = 'rgba(120,120,120,0.5)';
-    if (buy) color = '#57d132';
-    else if (sell) color = '#e42626';
-    else if (aboveUp) color = 'rgba(87,209,50,0.5)';
-    else if (aboveDn) color = 'rgba(228,38,38,0.5)';
+    if (vortex[i] == null) {
+      histData.push({ time }); // whitespace — keeps KT2's time axis aligned with the candles
+    } else {
+      const v = vortex[i] * 100, vp = vortexPlus[i], vm = vortexMinus[i];
+      const aboveUp = vortex[i] > threshold && vp > vm;
+      const aboveDn = vortex[i] > threshold && vp < vm;
+      const rsiCond = rsiArr[i] != null && (rsiArr[i] > 56 || rsiArr[i] < 44);
+      const buy = vp > vm && vp > vortex[i] && aboveUp && rsiCond;
+      const sell = vm > vp && vm > vortex[i] && aboveDn && rsiCond;
 
-    histData.push({ time: candles[i].time, value: v, color });
-    if (arsi[i] != null) arsiData.push({ time: candles[i].time, value: arsi[i] });
-    if (buy) markers.push({ time: candles[i].time, position: 'belowBar', color: '#57d132', shape: 'arrowUp', text: 'Mua' });
-    if (sell) markers.push({ time: candles[i].time, position: 'aboveBar', color: '#e42626', shape: 'arrowDown', text: 'Bán' });
+      let color = 'rgba(120,120,120,0.5)';
+      if (buy) color = '#57d132';
+      else if (sell) color = '#e42626';
+      else if (aboveUp) color = 'rgba(87,209,50,0.5)';
+      else if (aboveDn) color = 'rgba(228,38,38,0.5)';
+
+      histData.push({ time, value: v, color });
+      if (buy) vortexMarkers.push({ time, position: 'belowBar', color: '#57d132', shape: 'arrowUp', text: 'Mua' });
+      if (sell) vortexMarkers.push({ time, position: 'aboveBar', color: '#e42626', shape: 'arrowDown', text: 'Bán' });
+    }
+
+    if (arsi[i] == null) {
+      arsiData.push({ time }); // whitespace
+    } else {
+      arsiData.push({ time, value: arsi[i] });
+      if (prevArsi != null) {
+        if (prevArsi <= 80 && arsi[i] > 80) {
+          arsiMarkers.push({ time, position: 'aboveBar', color: '#ffd600', shape: 'arrowDown', text: 'Quá mua >80' });
+        }
+        if (prevArsi >= 20 && arsi[i] < 20) {
+          arsiMarkers.push({ time, position: 'belowBar', color: '#00bcd4', shape: 'arrowUp', text: 'Quá bán <20' });
+        }
+      }
+      prevArsi = arsi[i];
+    }
   }
 
   vortexHistSeries.setData(histData);
+  vortexHistSeries.setMarkers(vortexMarkers);
   arsiLineSeries.setData(arsiData);
-  vortexHistSeries.setMarkers(markers);
+  arsiLineSeries.setMarkers(arsiMarkers);
+
+  syncKT2ToMain();
 }
 
 function clearKT2() {
   if (vortexHistSeries) { vortexHistSeries.setData([]); vortexHistSeries.setMarkers([]); }
-  if (arsiLineSeries) arsiLineSeries.setData([]);
+  if (arsiLineSeries) { arsiLineSeries.setData([]); arsiLineSeries.setMarkers([]); }
 }
 
 /* ══════════════════════════════════════════════════════════════════
