@@ -218,16 +218,18 @@ function computeQVP(candles, opts = {}) {
   const rightProfile = new Array(bins).fill(0);
 
   for (const c of slice) {
+    // Assign each candle to exactly ONE price bin (its own closing price),
+    // instead of smearing it across neighboring bins — this keeps the
+    // profile's bar lengths proportional to the real volume at each level.
+    let k = Math.floor((c.close - bottom) / step);
+    if (k < 0) k = 0;
+    if (k > bins - 1) k = bins - 1;
+    const middle = bottom + step * k + step / 2;
     const isBull = c.close > c.open;
     const bullVol = isBull ? c.volume : 0;
     const bearVol = isBull ? 0 : c.volume;
-    for (let k = 0; k < bins; k++) {
-      const loww = bottom + step * k, highh = loww + step, middle = loww + step / 2;
-      if (c.close >= loww - step && c.close <= highh + step) {
-        if (currentClose > middle) { leftProfile[k] += bullVol; rightProfile[k] += bearVol; }
-        else { leftProfile[k] += bearVol; rightProfile[k] += bullVol; }
-      }
-    }
+    if (currentClose > middle) { leftProfile[k] += bullVol; rightProfile[k] += bearVol; }
+    else { leftProfile[k] += bearVol; rightProfile[k] += bullVol; }
   }
 
   const maxLeft = Math.max(...leftProfile, 1e-9);
