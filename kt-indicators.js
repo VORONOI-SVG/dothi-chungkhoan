@@ -573,8 +573,9 @@ function ensureKT2Chart() {
     color: '#c0c0c0', lineWidth: 1, priceLineVisible: false, lastValueVisible: false,
   });
 
-  // KVO gets its own (left-side) price scale since its values are on a
-  // completely different scale (volume-weighted) than Vortex/ARSI (0-100).
+  // KVO gets its own hidden overlay scale (independent auto-scaling,
+  // no visible axis) since its values are on a completely different
+  // scale (volume-weighted) than Vortex/ARSI (0-100).
   kvoBullSeries = kt2Chart.addLineSeries({
     color: '#ff9800', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
@@ -583,21 +584,17 @@ function ensureKT2Chart() {
     color: '#2962ff', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
-  kvoSignalSeries = kt2Chart.addLineSeries({
-    color: 'rgba(200,200,200,0.6)', lineWidth: 1, priceScaleId: 'kvo',
+  // Donchian Channel rendered as solid filled bands anchored at 0 (like
+  // TradingView's blocky "shelf" look) instead of thin dashed outlines.
+  kvoDcUpSeries = kt2Chart.addHistogramSeries({
+    color: 'rgba(0,187,255,0.35)', base: 0, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
-  kvoDcUpSeries = kt2Chart.addLineSeries({
-    color: 'rgba(239,83,80,0.5)', lineWidth: 1, priceScaleId: 'kvo',
-    lineStyle: LightweightCharts.LineStyle.Dashed,
+  kvoDcLoSeries = kt2Chart.addHistogramSeries({
+    color: 'rgba(255,82,82,0.35)', base: 0, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
-  kvoDcLoSeries = kt2Chart.addLineSeries({
-    color: 'rgba(33,150,243,0.5)', lineWidth: 1, priceScaleId: 'kvo',
-    lineStyle: LightweightCharts.LineStyle.Dashed,
-    priceLineVisible: false, lastValueVisible: false,
-  });
-  kvoSignalSeries.createPriceLine({
+  kvoDcUpSeries.createPriceLine({
     price: 0, color: 'rgba(255,255,255,0.25)',
     lineStyle: LightweightCharts.LineStyle.Dotted, lineWidth: 1,
     axisLabelVisible: false, title: '',
@@ -759,9 +756,9 @@ function renderKT2(candles) {
     }
   }
 
-  const { kvo, signal } = computeKVO(candles, 34, 55, 13);
+  const { kvo } = computeKVO(candles, 34, 55, 13);
   const { dcUp, dcLo } = computeKVODonchian(kvo, 55);
-  const kvoBullData = [], kvoBearData = [], kvoSignalData = [];
+  const kvoBullData = [], kvoBearData = [];
   const kvoDcUpData = [], kvoDcLoData = [];
   for (let i = 0; i < candles.length; i++) {
     const time = candles[i].time;
@@ -775,13 +772,11 @@ function renderKT2(candles) {
       kvoBullData.push({ time });
       kvoBearData.push({ time, value: kvo[i] });
     }
-    kvoSignalData.push(signal[i] == null ? { time } : { time, value: signal[i] });
     kvoDcUpData.push(dcUp[i] == null ? { time } : { time, value: dcUp[i] });
     kvoDcLoData.push(dcLo[i] == null ? { time } : { time, value: dcLo[i] });
   }
   kvoBullSeries.setData(kvoBullData);
   kvoBearSeries.setData(kvoBearData);
-  kvoSignalSeries.setData(kvoSignalData);
   kvoDcUpSeries.setData(kvoDcUpData);
   kvoDcLoSeries.setData(kvoDcLoData);
 
@@ -798,7 +793,6 @@ function clearKT2() {
   if (arsiLineSeries) { arsiLineSeries.setData([]); arsiLineSeries.setMarkers([]); }
   if (kvoBullSeries) kvoBullSeries.setData([]);
   if (kvoBearSeries) kvoBearSeries.setData([]);
-  if (kvoSignalSeries) kvoSignalSeries.setData([]);
   if (kvoDcUpSeries) kvoDcUpSeries.setData([]);
   if (kvoDcLoSeries) kvoDcLoSeries.setData([]);
 }
