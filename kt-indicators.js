@@ -559,7 +559,6 @@ function ensureKT2Chart() {
     grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
     timeScale: { visible: false, borderColor: '#21262d' },
     rightPriceScale: { borderColor: '#21262d' },
-    leftPriceScale: { visible: true, borderColor: '#21262d' },
     crosshair: { vertLine: { visible: true }, horzLine: { visible: true } },
     handleScale: { mouseWheel: true, pinch: true },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true },
@@ -577,24 +576,24 @@ function ensureKT2Chart() {
   // KVO gets its own (left-side) price scale since its values are on a
   // completely different scale (volume-weighted) than Vortex/ARSI (0-100).
   kvoBullSeries = kt2Chart.addLineSeries({
-    color: '#ff9800', lineWidth: 1, priceScaleId: 'left',
+    color: '#ff9800', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
   kvoBearSeries = kt2Chart.addLineSeries({
-    color: '#2962ff', lineWidth: 1, priceScaleId: 'left',
+    color: '#2962ff', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
   kvoSignalSeries = kt2Chart.addLineSeries({
-    color: 'rgba(200,200,200,0.6)', lineWidth: 1, priceScaleId: 'left',
+    color: 'rgba(200,200,200,0.6)', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
   kvoDcUpSeries = kt2Chart.addLineSeries({
-    color: 'rgba(239,83,80,0.5)', lineWidth: 1, priceScaleId: 'left',
+    color: 'rgba(239,83,80,0.5)', lineWidth: 1, priceScaleId: 'kvo',
     lineStyle: LightweightCharts.LineStyle.Dashed,
     priceLineVisible: false, lastValueVisible: false,
   });
   kvoDcLoSeries = kt2Chart.addLineSeries({
-    color: 'rgba(33,150,243,0.5)', lineWidth: 1, priceScaleId: 'left',
+    color: 'rgba(33,150,243,0.5)', lineWidth: 1, priceScaleId: 'kvo',
     lineStyle: LightweightCharts.LineStyle.Dashed,
     priceLineVisible: false, lastValueVisible: false,
   });
