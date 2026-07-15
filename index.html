@@ -119,7 +119,7 @@
     /* ── Time-range & Resolution buttons ─────── */
     .range-bar{display:flex;align-items:center;gap:4px;padding:5px 14px;
                background:var(--surface);border-bottom:1px solid var(--border);
-               flex-shrink:0;display:none}
+               flex-shrink:0;display:none;flex-wrap:wrap;row-gap:6px}
     .range-bar.vis{display:flex}
     .rbtn,.resbtn{padding:3px 9px;border-radius:5px;border:1px solid transparent;
                   background:transparent;color:var(--muted);font-size:11px;
@@ -128,7 +128,7 @@
     .rbtn.on,.resbtn.on{background:var(--surface2);color:var(--text);
                          border-color:var(--border)}
     .rb-sep{width:1px;height:16px;background:var(--border);margin:0 4px}
-    .rb-right{margin-left:auto;display:flex;gap:4px;align-items:center}
+    .rb-right{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
     .ma-toggle{padding:3px 8px;border-radius:5px;border:1px solid var(--border);
                background:transparent;font-size:11px;font-weight:600;cursor:pointer;
                transition:all .15s}
