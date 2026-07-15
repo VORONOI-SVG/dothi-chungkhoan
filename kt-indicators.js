@@ -35,6 +35,7 @@ let qvpData = null;
 let kt2Chart = null;
 let vortexHistSeries = null, arsiLineSeries = null;
 let kvoBullSeries = null, kvoBearSeries = null, kvoSignalSeries = null;
+let kvoDcUpSeries = null, kvoDcLoSeries = null;
 let kt2SyncGuard = false;
 
 const KT_DEFAULT_RIGHT_OFFSET = 8;
@@ -377,6 +378,22 @@ function computeKVO(candles, len1 = 34, len2 = 55, sigLen = 13) {
   return { kvo, signal };
 }
 
+function computeKVODonchian(kvo, lookback = 55) {
+  const n = kvo.length;
+  const dcUp = new Array(n).fill(null);
+  const dcLo = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) {
+    if (kvo[i] == null) continue;
+    let hi = -Infinity, lo = Infinity, cnt = 0;
+    for (let j = Math.max(0, i - lookback + 1); j <= i; j++) {
+      if (kvo[j] == null) continue;
+      hi = Math.max(hi, kvo[j]); lo = Math.min(lo, kvo[j]); cnt++;
+    }
+    if (cnt > 0) { dcUp[i] = hi; dcLo[i] = lo; }
+  }
+  return { dcUp, dcLo };
+}
+
 /* ══════════════════════════════════════════════════════════════════
    UI SETUP — toggle buttons injected next to the MA20/MA50 buttons
    ══════════════════════════════════════════════════════════════════ */
@@ -571,6 +588,16 @@ function ensureKT2Chart() {
     color: 'rgba(200,200,200,0.6)', lineWidth: 1, priceScaleId: 'left',
     priceLineVisible: false, lastValueVisible: false,
   });
+  kvoDcUpSeries = kt2Chart.addLineSeries({
+    color: 'rgba(239,83,80,0.5)', lineWidth: 1, priceScaleId: 'left',
+    lineStyle: LightweightCharts.LineStyle.Dashed,
+    priceLineVisible: false, lastValueVisible: false,
+  });
+  kvoDcLoSeries = kt2Chart.addLineSeries({
+    color: 'rgba(33,150,243,0.5)', lineWidth: 1, priceScaleId: 'left',
+    lineStyle: LightweightCharts.LineStyle.Dashed,
+    priceLineVisible: false, lastValueVisible: false,
+  });
   kvoSignalSeries.createPriceLine({
     price: 0, color: 'rgba(255,255,255,0.25)',
     lineStyle: LightweightCharts.LineStyle.Dotted, lineWidth: 1,
@@ -734,7 +761,9 @@ function renderKT2(candles) {
   }
 
   const { kvo, signal } = computeKVO(candles, 34, 55, 13);
+  const { dcUp, dcLo } = computeKVODonchian(kvo, 55);
   const kvoBullData = [], kvoBearData = [], kvoSignalData = [];
+  const kvoDcUpData = [], kvoDcLoData = [];
   for (let i = 0; i < candles.length; i++) {
     const time = candles[i].time;
     if (kvo[i] == null) {
@@ -748,10 +777,14 @@ function renderKT2(candles) {
       kvoBearData.push({ time, value: kvo[i] });
     }
     kvoSignalData.push(signal[i] == null ? { time } : { time, value: signal[i] });
+    kvoDcUpData.push(dcUp[i] == null ? { time } : { time, value: dcUp[i] });
+    kvoDcLoData.push(dcLo[i] == null ? { time } : { time, value: dcLo[i] });
   }
   kvoBullSeries.setData(kvoBullData);
   kvoBearSeries.setData(kvoBearData);
   kvoSignalSeries.setData(kvoSignalData);
+  kvoDcUpSeries.setData(kvoDcUpData);
+  kvoDcLoSeries.setData(kvoDcLoData);
 
   vortexHistSeries.setData(histData);
   vortexHistSeries.setMarkers(vortexMarkers);
@@ -767,6 +800,8 @@ function clearKT2() {
   if (kvoBullSeries) kvoBullSeries.setData([]);
   if (kvoBearSeries) kvoBearSeries.setData([]);
   if (kvoSignalSeries) kvoSignalSeries.setData([]);
+  if (kvoDcUpSeries) kvoDcUpSeries.setData([]);
+  if (kvoDcLoSeries) kvoDcLoSeries.setData([]);
 }
 
 /* ══════════════════════════════════════════════════════════════════
