@@ -30,7 +30,7 @@ let kt1On = false, kt2On = false;
 let sslBullSeries = null, sslBearSeries = null;
 let fvgCanvas = null, fvgCtx = null;
 let fvgBoxes = [];
-let qvpBars = [];
+let qvpData = null;
 
 let kt2Chart = null;
 let vortexHistSeries = null, arsiLineSeries = null;
@@ -205,14 +205,14 @@ function computeFVG(candles, thresholdPct = 0) {
 function computeQVP(candles, opts = {}) {
   const lookback = Math.min(opts.lookback ?? 200, candles.length);
   const bins = opts.bins ?? 60;
-  if (lookback < 10) return [];
+  if (lookback < 10) return null;
   const slice = candles.slice(candles.length - lookback);
   const currentClose = candles[candles.length - 1].close;
 
   let top = -Infinity, bottom = Infinity;
   for (const c of slice) { top = Math.max(top, c.high); bottom = Math.min(bottom, c.low); }
   const step = (top - bottom) / bins;
-  if (!(step > 0)) return [];
+  if (!(step > 0)) return null;
 
   const leftProfile = new Array(bins).fill(0);
   const rightProfile = new Array(bins).fill(0);
@@ -235,16 +235,29 @@ function computeQVP(candles, opts = {}) {
   const maxLeft = Math.max(...leftProfile, 1e-9);
   const maxRight = Math.max(...rightProfile, 1e-9);
   const bars = [];
+  let totSell1 = 0, totBuy1 = 0, totBuy2 = 0, totSell2 = 0; // 1 = upper quadrant, 2 = lower quadrant
   for (let k = 0; k < bins; k++) {
     const loww = bottom + step * k, highh = loww + step, middle = loww + step / 2;
+    const isUpper = middle > currentClose;
+    if (isUpper) { totSell1 += leftProfile[k]; totBuy1 += rightProfile[k]; }
+    else { totBuy2 += leftProfile[k]; totSell2 += rightProfile[k]; }
     bars.push({
       top: highh, bottom: loww,
       leftVal: leftProfile[k] / maxLeft,
       rightVal: rightProfile[k] / maxRight,
-      isUpper: middle > currentClose,
+      isUpper,
     });
   }
-  return bars;
+  const totalVol = totSell1 + totBuy1 + totBuy2 + totSell2 || 1e-9;
+  return {
+    bars,
+    currentClose,
+    totSell1, totBuy1, totBuy2, totSell2,
+    pctSell1: totSell1 / totalVol * 100,
+    pctBuy1: totBuy1 / totalVol * 100,
+    pctBuy2: totBuy2 / totalVol * 100,
+    pctSell2: totSell2 / totalVol * 100,
+  };
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -410,13 +423,22 @@ function resizeFVGCanvas() {
   drawKT1Overlay();
 }
 
+function ktFmtVol(v) {
+  if (typeof FMT_VOL === 'function') return FMT_VOL(v);
+  if (!v) return '—';
+  if (v >= 1e9) return (v / 1e9).toFixed(2) + ' tỷ';
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + ' tr';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + ' k';
+  return String(Math.round(v));
+}
+
 function drawQVPBars(ts) {
-  if (!qvpBars.length || !lastCandles || !lastCandles.length) return;
+  if (!qvpData || !qvpData.bars.length || !lastCandles || !lastCandles.length) return;
   const baseX = ts.logicalToCoordinate(lastCandles.length - 1 + 3);
   if (baseX == null) return;
   const maxBarPx = 70;
 
-  for (const bar of qvpBars) {
+  for (const bar of qvpData.bars) {
     const y1 = candleSeries.priceToCoordinate(bar.top);
     const y2 = candleSeries.priceToCoordinate(bar.bottom);
     if (y1 == null || y2 == null) continue;
@@ -436,6 +458,28 @@ function drawQVPBars(ts) {
   fvgCtx.moveTo(baseX, 0);
   fvgCtx.lineTo(baseX, fvgCanvas.height);
   fvgCtx.stroke();
+
+  // 4 nhãn tổng khối lượng + % — giống 4 nhãn góc của bản gốc, neo tại
+  // mức giá đóng cửa hiện tại: 2 nhãn phía dưới (vùng gần giá), 2 nhãn
+  // phía trên (vùng xa hơn theo góc phần tư dưới).
+  const yMid = candleSeries.priceToCoordinate(qvpData.currentClose);
+  if (yMid == null) return;
+  fvgCtx.font = '11px Inter, sans-serif';
+  fvgCtx.textBaseline = 'middle';
+
+  fvgCtx.textAlign = 'right';
+  fvgCtx.fillStyle = 'rgba(8,153,129,0.95)';
+  fvgCtx.fillText(`BUY ${ktFmtVol(qvpData.totBuy1)} · ${qvpData.pctBuy1.toFixed(2)}%`, baseX - 6, yMid + 16);
+  fvgCtx.textAlign = 'left';
+  fvgCtx.fillStyle = 'rgba(242,54,69,0.95)';
+  fvgCtx.fillText(`SELL ${ktFmtVol(qvpData.totSell1)} · ${qvpData.pctSell1.toFixed(2)}%`, baseX + 6, yMid + 16);
+
+  fvgCtx.textAlign = 'right';
+  fvgCtx.fillStyle = 'rgba(242,54,69,0.95)';
+  fvgCtx.fillText(`SELL ${qvpData.pctSell2.toFixed(2)}% · ${ktFmtVol(qvpData.totSell2)}`, baseX - 6, yMid - 16);
+  fvgCtx.textAlign = 'left';
+  fvgCtx.fillStyle = 'rgba(8,153,129,0.95)';
+  fvgCtx.fillText(`BUY ${qvpData.pctBuy2.toFixed(2)}% · ${ktFmtVol(qvpData.totBuy2)}`, baseX + 6, yMid - 16);
 }
 
 function drawKT1Overlay() {
@@ -563,7 +607,7 @@ function renderKT1(candles) {
     rightLogical: b.mitigatedAt != null ? b.mitigatedAt : Math.min(b.startIndex + 200, candles.length - 1 + 20),
   }));
 
-  qvpBars = computeQVP(candles, { lookback: 200, bins: 60 });
+  qvpData = computeQVP(candles, { lookback: 200, bins: 60 });
 
   drawKT1Overlay();
 }
@@ -572,7 +616,7 @@ function clearKT1() {
   if (sslBullSeries) sslBullSeries.setData([]);
   if (sslBearSeries) sslBearSeries.setData([]);
   fvgBoxes = [];
-  qvpBars = [];
+  qvpData = null;
   if (fvgCtx && fvgCanvas) fvgCtx.clearRect(0, 0, fvgCanvas.width, fvgCanvas.height);
 }
 
