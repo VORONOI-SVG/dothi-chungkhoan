@@ -37,7 +37,7 @@ let vortexHistSeries = null, arsiLineSeries = null;
 let kt2SyncGuard = false;
 
 const KT_DEFAULT_RIGHT_OFFSET = 8;
-const KT_QVP_RIGHT_OFFSET = 65;
+const KT_QVP_RIGHT_OFFSET = 90;
 
 /* ══════════════════════════════════════════════════════════════════
    MATH HELPERS (JS port of the Pine Script functions we need)
@@ -434,9 +434,9 @@ function ktFmtVol(v) {
 
 function drawQVPBars(ts) {
   if (!qvpData || !qvpData.bars.length || !lastCandles || !lastCandles.length) return;
-  const baseX = ts.logicalToCoordinate(lastCandles.length - 1 + 3);
+  const baseX = ts.logicalToCoordinate(lastCandles.length - 1 + 55);
   if (baseX == null) return;
-  const maxBarPx = 70;
+  const maxBarPx = 55;
 
   for (const bar of qvpData.bars) {
     const y1 = candleSeries.priceToCoordinate(bar.top);
@@ -647,12 +647,19 @@ function renderKT2(candles) {
       const rsiCond = rsiArr[i] != null && (rsiArr[i] > 56 || rsiArr[i] < 44);
       const buy = vp > vm && vp > vortex[i] && aboveUp && rsiCond;
       const sell = vm > vp && vm > vortex[i] && aboveDn && rsiCond;
+      const selfCancel = vp < threshold && vm < threshold;
+      const vtxOb = !selfCancel && !buy && !sell && vp > vm && rsiCond;
+      const vtxOs = !selfCancel && !buy && !sell && vm > vp && rsiCond;
 
-      let color = 'rgba(120,120,120,0.5)';
+      // Matches the original script: mostly transparent (self-cancel / no
+      // clear signal), only clearly colored on confirmed buy/sell or a
+      // strong overbought/oversold lean — not a constant gray fill.
+      let color = 'rgba(120,120,120,0.12)';
+      if (selfCancel) color = 'rgba(120,120,120,0)';
       if (buy) color = '#57d132';
       else if (sell) color = '#e42626';
-      else if (aboveUp) color = 'rgba(87,209,50,0.5)';
-      else if (aboveDn) color = 'rgba(228,38,38,0.5)';
+      else if (vtxOb) color = 'rgba(87,209,50,0.65)';
+      else if (vtxOs) color = 'rgba(228,38,38,0.65)';
 
       histData.push({ time, value: v, color });
       if (buy) vortexMarkers.push({ time, position: 'belowBar', color: '#57d132', shape: 'arrowUp', text: 'Mua' });
