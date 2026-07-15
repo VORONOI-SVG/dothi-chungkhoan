@@ -34,6 +34,7 @@ let qvpData = null;
 
 let kt2Chart = null;
 let vortexHistSeries = null, arsiLineSeries = null;
+let kvoBullSeries = null, kvoBearSeries = null, kvoSignalSeries = null;
 let kt2SyncGuard = false;
 
 const KT_DEFAULT_RIGHT_OFFSET = 8;
@@ -42,6 +43,17 @@ const KT_QVP_RIGHT_OFFSET = 90;
 /* ══════════════════════════════════════════════════════════════════
    MATH HELPERS (JS port of the Pine Script functions we need)
    ══════════════════════════════════════════════════════════════════ */
+function ktEma(arr, len) {
+  const k = 2 / (len + 1);
+  const out = new Array(arr.length).fill(null);
+  let prev = null;
+  for (let i = 0; i < arr.length; i++) {
+    prev = prev === null ? arr[i] : arr[i] * k + prev * (1 - k);
+    out[i] = prev;
+  }
+  return out;
+}
+
 function ktWma(arr, len) {
   const out = new Array(arr.length).fill(null);
   for (let i = len - 1; i < arr.length; i++) {
@@ -348,6 +360,24 @@ function computeARSI(candles, len = 14) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   KT2 — KLINGER VOLUME OSCILLATOR (lower pane, own price scale)
+   ══════════════════════════════════════════════════════════════════ */
+function computeKVO(candles, len1 = 34, len2 = 55, sigLen = 13) {
+  const hlc3 = candles.map(c => (c.high + c.low + c.close) / 3);
+  const sv = candles.map((c, i) => {
+    if (i === 0) return c.volume;
+    return hlc3[i] - hlc3[i - 1] >= 0 ? c.volume : -c.volume;
+  });
+  const emaFast = ktEma(sv, len1);
+  const emaSlow = ktEma(sv, len2);
+  const kvo = emaFast.map((v, i) => (v == null || emaSlow[i] == null) ? null : v - emaSlow[i]);
+  const kvoFilled = kvo.map(v => v == null ? 0 : v);
+  const signalRaw = ktEma(kvoFilled, sigLen);
+  const signal = signalRaw.map((v, i) => kvo[i] == null ? null : v);
+  return { kvo, signal };
+}
+
+/* ══════════════════════════════════════════════════════════════════
    UI SETUP — toggle buttons injected next to the MA20/MA50 buttons
    ══════════════════════════════════════════════════════════════════ */
 function setupKTToggles() {
@@ -512,6 +542,7 @@ function ensureKT2Chart() {
     grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
     timeScale: { visible: false, borderColor: '#21262d' },
     rightPriceScale: { borderColor: '#21262d' },
+    leftPriceScale: { visible: true, borderColor: '#21262d' },
     crosshair: { vertLine: { visible: true }, horzLine: { visible: true } },
     handleScale: { mouseWheel: true, pinch: true },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true },
@@ -524,6 +555,26 @@ function ensureKT2Chart() {
   });
   arsiLineSeries = kt2Chart.addLineSeries({
     color: '#c0c0c0', lineWidth: 1, priceLineVisible: false, lastValueVisible: false,
+  });
+
+  // KVO gets its own (left-side) price scale since its values are on a
+  // completely different scale (volume-weighted) than Vortex/ARSI (0-100).
+  kvoBullSeries = kt2Chart.addLineSeries({
+    color: '#ff9800', lineWidth: 1, priceScaleId: 'left',
+    priceLineVisible: false, lastValueVisible: false,
+  });
+  kvoBearSeries = kt2Chart.addLineSeries({
+    color: '#2962ff', lineWidth: 1, priceScaleId: 'left',
+    priceLineVisible: false, lastValueVisible: false,
+  });
+  kvoSignalSeries = kt2Chart.addLineSeries({
+    color: 'rgba(200,200,200,0.6)', lineWidth: 1, priceScaleId: 'left',
+    priceLineVisible: false, lastValueVisible: false,
+  });
+  kvoSignalSeries.createPriceLine({
+    price: 0, color: 'rgba(255,255,255,0.25)',
+    lineStyle: LightweightCharts.LineStyle.Dotted, lineWidth: 1,
+    axisLabelVisible: false, title: '',
   });
 
   vortexHistSeries.createPriceLine({
@@ -682,6 +733,26 @@ function renderKT2(candles) {
     }
   }
 
+  const { kvo, signal } = computeKVO(candles, 34, 55, 13);
+  const kvoBullData = [], kvoBearData = [], kvoSignalData = [];
+  for (let i = 0; i < candles.length; i++) {
+    const time = candles[i].time;
+    if (kvo[i] == null) {
+      kvoBullData.push({ time });
+      kvoBearData.push({ time });
+    } else if (kvo[i] >= 0) {
+      kvoBullData.push({ time, value: kvo[i] });
+      kvoBearData.push({ time });
+    } else {
+      kvoBullData.push({ time });
+      kvoBearData.push({ time, value: kvo[i] });
+    }
+    kvoSignalData.push(signal[i] == null ? { time } : { time, value: signal[i] });
+  }
+  kvoBullSeries.setData(kvoBullData);
+  kvoBearSeries.setData(kvoBearData);
+  kvoSignalSeries.setData(kvoSignalData);
+
   vortexHistSeries.setData(histData);
   vortexHistSeries.setMarkers(vortexMarkers);
   arsiLineSeries.setData(arsiData);
@@ -693,6 +764,9 @@ function renderKT2(candles) {
 function clearKT2() {
   if (vortexHistSeries) { vortexHistSeries.setData([]); vortexHistSeries.setMarkers([]); }
   if (arsiLineSeries) { arsiLineSeries.setData([]); arsiLineSeries.setMarkers([]); }
+  if (kvoBullSeries) kvoBullSeries.setData([]);
+  if (kvoBearSeries) kvoBearSeries.setData([]);
+  if (kvoSignalSeries) kvoSignalSeries.setData([]);
 }
 
 /* ══════════════════════════════════════════════════════════════════
