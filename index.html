@@ -141,7 +141,7 @@
     /* ── Chart area ──────────────────────────── */
     .chart-area{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
     #chart{flex:1;min-height:0;position:relative}
-    #vol-chart{height:80px;flex-shrink:0}
+    #vol-chart{height:0;flex-shrink:0;display:none}
     #kt2-chart{height:110px;flex-shrink:0;display:none;border-top:1px solid var(--border)}
     #kt2-chart.vis{display:block}
     #fvg-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
@@ -911,7 +911,7 @@ function setupMA() {
     });
   });
 }
-  
+
 function setupSearch() {
   const inp = document.getElementById('q');
   const clr = document.getElementById('clr');
