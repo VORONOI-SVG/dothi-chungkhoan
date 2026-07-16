@@ -35,7 +35,8 @@ let qvpData = null;
 let kt2Chart = null;
 let vortexHistSeries = null, arsiLineSeries = null;
 let kvoBullSeries = null, kvoBearSeries = null, kvoSignalSeries = null;
-let kvoDcUpSeries = null, kvoDcLoSeries = null;
+let kt2Canvas = null, kt2Ctx = null;
+let kt2BandData = null; // { dcUp, dcLo, iUp, iLo } from the latest render
 let kt2SyncGuard = false;
 
 const KT_DEFAULT_RIGHT_OFFSET = 8;
@@ -378,10 +379,12 @@ function computeKVO(candles, len1 = 34, len2 = 55, sigLen = 13) {
   return { kvo, signal };
 }
 
-function computeKVODonchian(kvo, lookback = 55) {
+function computeKVODonchian(kvo, lookback = 55, bandWidth = 8.0) {
   const n = kvo.length;
   const dcUp = new Array(n).fill(null);
   const dcLo = new Array(n).fill(null);
+  const iUp = new Array(n).fill(null);
+  const iLo = new Array(n).fill(null);
   for (let i = 0; i < n; i++) {
     if (kvo[i] == null) continue;
     let hi = -Infinity, lo = Infinity, cnt = 0;
@@ -389,9 +392,14 @@ function computeKVODonchian(kvo, lookback = 55) {
       if (kvo[j] == null) continue;
       hi = Math.max(hi, kvo[j]); lo = Math.min(lo, kvo[j]); cnt++;
     }
-    if (cnt > 0) { dcUp[i] = hi; dcLo[i] = lo; }
+    if (cnt > 0) {
+      dcUp[i] = hi; dcLo[i] = lo;
+      const band = (hi - lo) / bandWidth;
+      iUp[i] = hi - band;
+      iLo[i] = lo + band;
+    }
   }
-  return { dcUp, dcLo };
+  return { dcUp, dcLo, iUp, iLo };
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -584,17 +592,10 @@ function ensureKT2Chart() {
     color: '#2962ff', lineWidth: 1, priceScaleId: 'kvo',
     priceLineVisible: false, lastValueVisible: false,
   });
-  // Donchian Channel rendered as solid filled bands anchored at 0 (like
-  // TradingView's blocky "shelf" look) instead of thin dashed outlines.
-  kvoDcUpSeries = kt2Chart.addHistogramSeries({
-    color: 'rgba(0,187,255,0.35)', base: 0, priceScaleId: 'kvo',
-    priceLineVisible: false, lastValueVisible: false,
-  });
-  kvoDcLoSeries = kt2Chart.addHistogramSeries({
-    color: 'rgba(255,82,82,0.35)', base: 0, priceScaleId: 'kvo',
-    priceLineVisible: false, lastValueVisible: false,
-  });
-  kvoDcUpSeries.createPriceLine({
+  // The Donchian Channel bands (thin fill between DC Up/Down and their
+  // "inner" lines) are drawn on a canvas overlay — see setupKT2Canvas —
+  // since Lightweight Charts has no built-in fill-between-two-lines.
+  kvoBullSeries.createPriceLine({
     price: 0, color: 'rgba(255,255,255,0.25)',
     lineStyle: LightweightCharts.LineStyle.Dotted, lineWidth: 1,
     axisLabelVisible: false, title: '',
@@ -619,17 +620,77 @@ function ensureKT2Chart() {
   const syncFromMain = r => {
     if (!kt2On || kt2SyncGuard || !r) return;
     kt2SyncGuard = true; kt2Chart.timeScale().setVisibleLogicalRange(r); kt2SyncGuard = false;
+    drawKVOBands();
   };
   const syncFromKt2 = r => {
     if (!kt2On || kt2SyncGuard || !r) return;
     kt2SyncGuard = true; mainChart.timeScale().setVisibleLogicalRange(r); kt2SyncGuard = false;
+    drawKVOBands();
   };
   mainChart.timeScale().subscribeVisibleLogicalRangeChange(syncFromMain);
   kt2Chart.timeScale().subscribeVisibleLogicalRangeChange(syncFromKt2);
 
+  setupKT2Canvas(el);
+
   window.addEventListener('resize', () => {
     if (kt2Chart) kt2Chart.applyOptions({ width: el.offsetWidth });
+    resizeKT2Canvas();
   });
+}
+
+function setupKT2Canvas(el) {
+  kt2Canvas = document.createElement('canvas');
+  kt2Canvas.id = 'kt2-overlay';
+  el.appendChild(kt2Canvas);
+  kt2Ctx = kt2Canvas.getContext('2d');
+  resizeKT2Canvas();
+}
+
+function resizeKT2Canvas() {
+  const el = document.getElementById('kt2-chart');
+  if (!el || !kt2Canvas) return;
+  const w = el.clientWidth, h = el.clientHeight;
+  kt2Canvas.width = w; kt2Canvas.height = h;
+  kt2Canvas.style.width = w + 'px'; kt2Canvas.style.height = h + 'px';
+  drawKVOBands();
+}
+
+/* Fill only the thin band between the outer Donchian line (dcUp/dcLo) and
+   its "inner" line (iUp/iLo) — matching the original script's fill(), not
+   the whole region down to zero. */
+function drawKVOBands() {
+  if (!kt2Ctx || !kt2Chart || !kvoBullSeries) return;
+  kt2Ctx.clearRect(0, 0, kt2Canvas.width, kt2Canvas.height);
+  if (!kt2On || !kt2BandData) return;
+  const { dcUp, dcLo, iUp, iLo } = kt2BandData;
+  const ts = kt2Chart.timeScale();
+  const priceToY = v => kvoBullSeries.priceToCoordinate(v);
+
+  const fillBand = (outer, inner, color) => {
+    kt2Ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < outer.length; i++) {
+      if (outer[i] == null) continue;
+      const x = ts.logicalToCoordinate(i);
+      const y = priceToY(outer[i]);
+      if (x == null || y == null) continue;
+      if (!started) { kt2Ctx.moveTo(x, y); started = true; }
+      else kt2Ctx.lineTo(x, y);
+    }
+    for (let i = inner.length - 1; i >= 0; i--) {
+      if (inner[i] == null) continue;
+      const x = ts.logicalToCoordinate(i);
+      const y = priceToY(inner[i]);
+      if (x == null || y == null) continue;
+      kt2Ctx.lineTo(x, y);
+    }
+    kt2Ctx.closePath();
+    kt2Ctx.fillStyle = color;
+    kt2Ctx.fill();
+  };
+
+  fillBand(dcUp, iUp, 'rgba(0,187,255,0.35)');
+  fillBand(dcLo, iLo, 'rgba(255,82,82,0.35)');
 }
 
 /* Copy the main chart's current visible range onto KT2 right away —
@@ -757,9 +818,8 @@ function renderKT2(candles) {
   }
 
   const { kvo } = computeKVO(candles, 34, 55, 13);
-  const { dcUp, dcLo } = computeKVODonchian(kvo, 55);
+  kt2BandData = computeKVODonchian(kvo, 55, 8.0);
   const kvoBullData = [], kvoBearData = [];
-  const kvoDcUpData = [], kvoDcLoData = [];
   for (let i = 0; i < candles.length; i++) {
     const time = candles[i].time;
     if (kvo[i] == null) {
@@ -772,13 +832,9 @@ function renderKT2(candles) {
       kvoBullData.push({ time });
       kvoBearData.push({ time, value: kvo[i] });
     }
-    kvoDcUpData.push(dcUp[i] == null ? { time } : { time, value: dcUp[i] });
-    kvoDcLoData.push(dcLo[i] == null ? { time } : { time, value: dcLo[i] });
   }
   kvoBullSeries.setData(kvoBullData);
   kvoBearSeries.setData(kvoBearData);
-  kvoDcUpSeries.setData(kvoDcUpData);
-  kvoDcLoSeries.setData(kvoDcLoData);
 
   vortexHistSeries.setData(histData);
   vortexHistSeries.setMarkers(vortexMarkers);
@@ -786,6 +842,7 @@ function renderKT2(candles) {
   arsiLineSeries.setMarkers(arsiMarkers);
 
   syncKT2ToMain();
+  drawKVOBands();
 }
 
 function clearKT2() {
@@ -793,8 +850,8 @@ function clearKT2() {
   if (arsiLineSeries) { arsiLineSeries.setData([]); arsiLineSeries.setMarkers([]); }
   if (kvoBullSeries) kvoBullSeries.setData([]);
   if (kvoBearSeries) kvoBearSeries.setData([]);
-  if (kvoDcUpSeries) kvoDcUpSeries.setData([]);
-  if (kvoDcLoSeries) kvoDcLoSeries.setData([]);
+  kt2BandData = null;
+  drawKVOBands();
 }
 
 /* ══════════════════════════════════════════════════════════════════
