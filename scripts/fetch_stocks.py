@@ -1,5 +1,6 @@
 import os
 import json
+import math      # ← thêm dòng này
 import time
 import yfinance as yf
 
@@ -128,7 +129,16 @@ def main():
                 h = float(row['High'].iloc[0]) if hasattr(row['High'], 'iloc') else float(row['High'])
                 l = float(row['Low'].iloc[0]) if hasattr(row['Low'], 'iloc') else float(row['Low'])
                 c = float(row['Close'].iloc[0]) if hasattr(row['Close'], 'iloc') else float(row['Close'])
-                v = int(row['Volume'].iloc[0]) if hasattr(row['Volume'], 'iloc') else int(row['Volume'])
+                v_raw = row['Volume'].iloc[0] if hasattr(row['Volume'], 'iloc') else row['Volume']
+                v_float = float(v_raw)
+
+                # Bỏ qua hẳn dòng này nếu có bất kỳ giá trị nào là NaN —
+                # trước đây "o <= 0" không bắt được NaN (NaN so sánh luôn
+                # ra False trong Python) nên NaN vẫn lọt qua và ghi thành
+                # token "NaN" không hợp lệ trong JSON.
+                if any(math.isnan(x) for x in (o, h, l, c, v_float)):
+                    continue
+                v = int(v_float)
 
                 if v <= 0 or o <= 0:
                     continue
