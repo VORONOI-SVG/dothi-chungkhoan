@@ -2,1363 +2,1363 @@
   "AAA": {
     "name": "An Phát Bioplastics",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:49",
+    "last_updated": "2026-09-23 21:40:52",
     "candles_count": 247
   },
   "ACB": {
     "name": "Á Châu",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:49",
+    "last_updated": "2026-09-23 21:40:52",
     "candles_count": 247
   },
   "ADG": {
     "name": "Clever Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:49",
-    "candles_count": 225
+    "last_updated": "2026-09-23 21:40:52",
+    "candles_count": 224
   },
   "AGG": {
     "name": "An Gia",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:50",
+    "last_updated": "2026-09-23 21:40:52",
     "candles_count": 247
   },
   "AGR": {
     "name": "Agribank Securities",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:50",
+    "last_updated": "2026-09-23 21:40:53",
     "candles_count": 247
   },
   "ANV": {
     "name": "Nam Việt",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:50",
+    "last_updated": "2026-09-23 21:40:53",
     "candles_count": 247
   },
   "ASM": {
     "name": "Sao Mai",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:51",
+    "last_updated": "2026-09-23 21:40:54",
     "candles_count": 247
   },
   "ASP": {
     "name": "Dầu khí An Pha",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:51",
+    "last_updated": "2026-09-23 21:40:54",
     "candles_count": 247
   },
   "AST": {
     "name": "Taseco Airs",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:51",
+    "last_updated": "2026-09-23 21:40:54",
     "candles_count": 241
   },
   "BCE": {
     "name": "Xây dựng Bình Dương",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:52",
+    "last_updated": "2026-09-23 21:40:54",
     "candles_count": 247
   },
   "BCM": {
     "name": "Becamex",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:52",
+    "last_updated": "2026-09-23 21:40:55",
     "candles_count": 247
   },
   "BFC": {
     "name": "Phân bón Bình Điền",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:53",
+    "last_updated": "2026-09-23 21:40:56",
     "candles_count": 247
   },
   "BHN": {
     "name": "Habeco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:53",
+    "last_updated": "2026-09-23 21:40:56",
     "candles_count": 239
   },
   "BIC": {
     "name": "Bảo hiểm BIDV",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:53",
+    "last_updated": "2026-09-23 21:40:56",
     "candles_count": 247
   },
   "BID": {
     "name": "BIDV",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:54",
+    "last_updated": "2026-09-23 21:40:56",
     "candles_count": 247
   },
   "BMC": {
     "name": "Khoáng sản Bình Định",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:54",
+    "last_updated": "2026-09-23 21:40:57",
     "candles_count": 247
   },
   "BMI": {
     "name": "Bảo Minh",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:54",
+    "last_updated": "2026-09-23 21:40:57",
     "candles_count": 247
   },
   "BMP": {
     "name": "Nhựa Bình Minh",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:54",
+    "last_updated": "2026-09-23 21:40:57",
     "candles_count": 247
   },
   "BRC": {
     "name": "Cao su Bến Thành",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:55",
-    "candles_count": 216
+    "last_updated": "2026-09-23 21:40:57",
+    "candles_count": 215
   },
   "BSI": {
     "name": "BSC Securities",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:55",
+    "last_updated": "2026-09-23 21:40:58",
     "candles_count": 247
   },
   "BSR": {
     "name": "Lọc hóa dầu Bình Sơn",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:55",
+    "last_updated": "2026-09-23 21:40:58",
     "candles_count": 247
   },
   "BTP": {
     "name": "Nhiệt điện Bà Rịa",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:55",
+    "last_updated": "2026-09-23 21:40:58",
     "candles_count": 247
   },
   "BVH": {
     "name": "Bảo Việt",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:56",
+    "last_updated": "2026-09-23 21:40:59",
     "candles_count": 247
   },
   "BWE": {
     "name": "Biwase",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:56",
+    "last_updated": "2026-09-23 21:40:59",
     "candles_count": 247
   },
   "C32": {
     "name": "Đầu tư Xây dựng 3-2",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:56",
+    "last_updated": "2026-09-23 21:40:59",
     "candles_count": 236
   },
   "C47": {
     "name": "Xây dựng 47",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:56",
+    "last_updated": "2026-09-23 21:40:59",
     "candles_count": 245
   },
   "CCI": {
     "name": "Đầu tư Phát triển Củ Chi",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:57",
+    "last_updated": "2026-09-23 21:41:00",
     "candles_count": 158
   },
   "CCL": {
     "name": "Dầu khí Cửu Long",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:58",
+    "last_updated": "2026-09-23 21:41:00",
     "candles_count": 247
   },
   "CDC": {
     "name": "Chương Dương",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:58",
+    "last_updated": "2026-09-23 21:41:01",
     "candles_count": 247
   },
   "CIG": {
     "name": "COMA 18",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:59",
+    "last_updated": "2026-09-23 21:41:01",
     "candles_count": 247
   },
   "CII": {
     "name": "Hạ tầng TP.HCM",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:59",
+    "last_updated": "2026-09-23 21:41:02",
     "candles_count": 247
   },
   "CKG": {
     "name": "Xây dựng Kiên Giang",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:59",
+    "last_updated": "2026-09-23 21:41:02",
     "candles_count": 247
   },
   "CLC": {
     "name": "Thuốc lá Cát Lợi",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:34:59",
-    "candles_count": 198
+    "last_updated": "2026-09-23 21:41:02",
+    "candles_count": 197
   },
   "CLL": {
     "name": "Cảng Cát Lái",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:00",
+    "last_updated": "2026-09-23 21:41:04",
     "candles_count": 246
   },
   "CMG": {
     "name": "Công nghệ CMC",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:00",
+    "last_updated": "2026-09-23 21:41:04",
     "candles_count": 247
   },
   "CMV": {
     "name": "Thương nghiệp Cà Mau",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:00",
-    "candles_count": 131
+    "last_updated": "2026-09-23 21:41:04",
+    "candles_count": 130
   },
   "CNG": {
     "name": "CNG Việt Nam",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:01",
+    "last_updated": "2026-09-23 21:41:05",
     "candles_count": 246
   },
   "COM": {
     "name": "Vật tư Xăng dầu",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:01",
+    "last_updated": "2026-09-23 21:41:05",
     "candles_count": 97
   },
   "CRE": {
     "name": "Cen Land",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:01",
+    "last_updated": "2026-09-23 21:41:05",
     "candles_count": 247
   },
   "CSM": {
     "name": "Cao su Miền Nam",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:01",
+    "last_updated": "2026-09-23 21:41:05",
     "candles_count": 247
   },
   "CSV": {
     "name": "Hóa chất Cơ bản miền Nam",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:02",
+    "last_updated": "2026-09-23 21:41:06",
     "candles_count": 247
   },
   "CTD": {
     "name": "Coteccons",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:02",
+    "last_updated": "2026-09-23 21:41:06",
     "candles_count": 247
   },
   "CTF": {
     "name": "City Auto",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:02",
+    "last_updated": "2026-09-23 21:41:06",
     "candles_count": 247
   },
   "CTG": {
     "name": "VietinBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:03",
+    "last_updated": "2026-09-23 21:41:06",
     "candles_count": 247
   },
   "CTI": {
     "name": "Cường Thuận IDICO",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:03",
+    "last_updated": "2026-09-23 21:41:07",
     "candles_count": 247
   },
   "CTR": {
     "name": "Công trình Viettel",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:03",
+    "last_updated": "2026-09-23 21:41:07",
     "candles_count": 247
   },
   "CTS": {
     "name": "VietinBank Securities",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:03",
+    "last_updated": "2026-09-23 21:41:07",
     "candles_count": 247
   },
   "CVT": {
     "name": "CMC Tiles",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:04",
+    "last_updated": "2026-09-23 21:41:07",
     "candles_count": 133
   },
   "D2D": {
     "name": "Phát triển Đô thị công nghiệp số 2",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:04",
+    "last_updated": "2026-09-23 21:41:08",
     "candles_count": 247
   },
   "DAH": {
     "name": "Đông Á Hotel",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:04",
+    "last_updated": "2026-09-23 21:41:09",
     "candles_count": 247
   },
   "DAT": {
     "name": "Đầu tư Du lịch Phát triển Thủy sản",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:05",
-    "candles_count": 212
+    "last_updated": "2026-09-23 21:41:09",
+    "candles_count": 211
   },
   "DBC": {
     "name": "Dabaco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:05",
+    "last_updated": "2026-09-23 21:41:09",
     "candles_count": 247
   },
   "DBD": {
     "name": "Dược - Trang thiết bị Y tế Bình Định",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:05",
+    "last_updated": "2026-09-23 21:41:10",
     "candles_count": 247
   },
   "DBT": {
     "name": "Dược phẩm Bến Tre",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:05",
+    "last_updated": "2026-09-23 21:41:10",
     "candles_count": 237
   },
   "DC4": {
     "name": "DIC số 4",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:06",
+    "last_updated": "2026-09-23 21:41:10",
     "candles_count": 247
   },
   "DCL": {
     "name": "Dược phẩm Cửu Long",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:06",
+    "last_updated": "2026-09-23 21:41:10",
     "candles_count": 247
   },
   "DCM": {
     "name": "Phân bón Dầu khí Cà Mau",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:06",
+    "last_updated": "2026-09-23 21:41:11",
     "candles_count": 247
   },
   "DGC": {
     "name": "Hóa chất Đức Giang",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:06",
+    "last_updated": "2026-09-23 21:41:11",
     "candles_count": 247
   },
   "DGW": {
     "name": "Digiworld",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:07",
+    "last_updated": "2026-09-23 21:41:11",
     "candles_count": 247
   },
   "DHA": {
     "name": "Hóa An",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:07",
+    "last_updated": "2026-09-23 21:41:11",
     "candles_count": 247
   },
   "DHC": {
     "name": "Đông Hải Bến Tre",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:07",
+    "last_updated": "2026-09-23 21:41:12",
     "candles_count": 247
   },
   "DHG": {
     "name": "Dược Hậu Giang",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:07",
+    "last_updated": "2026-09-23 21:41:12",
     "candles_count": 247
   },
   "DHM": {
     "name": "Thương mại và Khai thác Khoáng sản Dương Hiếu",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:08",
+    "last_updated": "2026-09-23 21:41:12",
     "candles_count": 246
   },
   "DIG": {
     "name": "DIC Corp",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:08",
+    "last_updated": "2026-09-23 21:41:13",
     "candles_count": 247
   },
   "DLG": {
     "name": "Đức Long Gia Lai",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:08",
+    "last_updated": "2026-09-23 21:41:13",
     "candles_count": 247
   },
   "DMC": {
     "name": "Dược phẩm Domesco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:08",
+    "last_updated": "2026-09-23 21:41:13",
     "candles_count": 197
   },
   "DPG": {
     "name": "Đạt Phương",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:09",
+    "last_updated": "2026-09-23 21:41:13",
     "candles_count": 247
   },
   "DPM": {
     "name": "Phân bón Hóa chất Dầu khí",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:09",
+    "last_updated": "2026-09-23 21:41:13",
     "candles_count": 247
   },
   "DPR": {
     "name": "Cao su Đồng Phú",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:09",
+    "last_updated": "2026-09-23 21:41:14",
     "candles_count": 247
   },
   "DQC": {
     "name": "Bóng đèn Điện Quang",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:10",
+    "last_updated": "2026-09-23 21:41:14",
     "candles_count": 245
   },
   "DRC": {
     "name": "Cao su Đà Nẵng",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:10",
+    "last_updated": "2026-09-23 21:41:14",
     "candles_count": 247
   },
   "DTL": {
     "name": "Đại Thiên Lộc",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:10",
-    "candles_count": 210
+    "last_updated": "2026-09-23 21:41:15",
+    "candles_count": 209
   },
   "DTT": {
     "name": "Thương mại Thành Tài",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:11",
-    "candles_count": 86
+    "last_updated": "2026-09-23 21:41:15",
+    "candles_count": 85
   },
   "DVP": {
     "name": "Cảng Đình Vũ",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:11",
+    "last_updated": "2026-09-23 21:41:15",
     "candles_count": 247
   },
   "DXG": {
     "name": "Đất Xanh Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:11",
+    "last_updated": "2026-09-23 21:41:15",
     "candles_count": 247
   },
   "DXS": {
     "name": "Đất Xanh Services",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:11",
+    "last_updated": "2026-09-23 21:41:16",
     "candles_count": 247
   },
   "EIB": {
     "name": "Eximbank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:12",
+    "last_updated": "2026-09-23 21:41:16",
     "candles_count": 247
   },
   "ELC": {
     "name": "Công nghệ Elcom",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:12",
+    "last_updated": "2026-09-23 21:41:16",
     "candles_count": 247
   },
   "EVE": {
     "name": "Everpia",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:12",
+    "last_updated": "2026-09-23 21:41:17",
     "candles_count": 247
   },
   "EVF": {
     "name": "Tài chính Điện lực",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:13",
+    "last_updated": "2026-09-23 21:41:17",
     "candles_count": 247
   },
   "EVG": {
     "name": "Tập đoàn Everland",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:13",
+    "last_updated": "2026-09-23 21:41:17",
     "candles_count": 247
   },
   "FCM": {
     "name": "Khoáng sản Fecon",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:13",
+    "last_updated": "2026-09-23 21:41:17",
     "candles_count": 247
   },
   "FCN": {
     "name": "Fecon",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:14",
+    "last_updated": "2026-09-23 21:41:18",
     "candles_count": 247
   },
   "FDC": {
     "name": "Ngoại thương Ngoại doanh HCM",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:14",
+    "last_updated": "2026-09-23 21:41:18",
     "candles_count": 106
   },
   "FIR": {
     "name": "Địa ốc First Real",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:14",
+    "last_updated": "2026-09-23 21:41:18",
     "candles_count": 247
   },
   "FIT": {
     "name": "Tập đoàn F.I.T",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:14",
+    "last_updated": "2026-09-23 21:41:18",
     "candles_count": 247
   },
   "FMC": {
     "name": "Thực phẩm Sao Ta",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:15",
+    "last_updated": "2026-09-23 21:41:19",
     "candles_count": 247
   },
   "FPT": {
     "name": "Tập đoàn FPT",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:16",
-    "candles_count": 246
+    "last_updated": "2026-09-23 21:41:19",
+    "candles_count": 245
   },
   "FRT": {
     "name": "FPT Retail",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:16",
+    "last_updated": "2026-09-23 21:41:19",
     "candles_count": 247
   },
   "FTS": {
     "name": "FPT Securities",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:16",
+    "last_updated": "2026-09-23 21:41:20",
     "candles_count": 247
   },
   "GAS": {
     "name": "PV Gas",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:16",
+    "last_updated": "2026-09-23 21:41:20",
     "candles_count": 247
   },
   "GDT": {
     "name": "Gỗ Đức Thành",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:17",
+    "last_updated": "2026-09-23 21:41:20",
     "candles_count": 247
   },
   "GEG": {
     "name": "Điện Gia Lai",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:17",
+    "last_updated": "2026-09-23 21:41:20",
     "candles_count": 247
   },
   "GEX": {
     "name": "Tập đoàn GELEX",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:17",
+    "last_updated": "2026-09-23 21:41:21",
     "candles_count": 247
   },
   "GIL": {
     "name": "Sản xuất Kinh doanh Xuất nhập khẩu Bình Thạnh",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:17",
+    "last_updated": "2026-09-23 21:41:21",
     "candles_count": 247
   },
   "GMD": {
     "name": "Gemasubt",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:18",
+    "last_updated": "2026-09-23 21:41:21",
     "candles_count": 247
   },
   "GMH": {
     "name": "Minh Hưng Quảng Trị",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:18",
+    "last_updated": "2026-09-23 21:41:22",
     "candles_count": 204
   },
   "GSP": {
     "name": "Vận tải Dầu khí Quảng Ngãi",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:19",
+    "last_updated": "2026-09-23 21:41:22",
     "candles_count": 247
   },
   "GTA": {
     "name": "Gỗ Thuận An",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:19",
+    "last_updated": "2026-09-23 21:41:22",
     "candles_count": 112
   },
   "GVR": {
     "name": "Tập đoàn Công nghiệp Cao su Việt Nam",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:19",
+    "last_updated": "2026-09-23 21:41:22",
     "candles_count": 247
   },
   "HAG": {
     "name": "Hoàng Anh Gia Lai",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:20",
+    "last_updated": "2026-09-23 21:41:23",
     "candles_count": 247
   },
   "HAH": {
     "name": "Vận tải và Xếp dỡ Hải An",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:20",
+    "last_updated": "2026-09-23 21:41:23",
     "candles_count": 247
   },
   "HAP": {
     "name": "Tập đoàn Hapaco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:21",
+    "last_updated": "2026-09-23 21:41:24",
     "candles_count": 247
   },
   "HAR": {
     "name": "Bất động sản An Dương Thảo Điền",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:21",
+    "last_updated": "2026-09-23 21:41:24",
     "candles_count": 247
   },
   "HAS": {
     "name": "Haseco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:22",
-    "candles_count": 159
+    "last_updated": "2026-09-23 21:41:24",
+    "candles_count": 160
   },
   "HAX": {
     "name": "Ô tô Hàng Xanh",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:22",
+    "last_updated": "2026-09-23 21:41:25",
     "candles_count": 247
   },
   "HCD": {
     "name": "Đầu tư Sản xuất và Thương mại HCD",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:22",
+    "last_updated": "2026-09-23 21:41:25",
     "candles_count": 247
   },
   "HCM": {
     "name": "HSC Securities",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:23",
+    "last_updated": "2026-09-23 21:41:25",
     "candles_count": 247
   },
   "HDB": {
     "name": "HDBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:23",
+    "last_updated": "2026-09-23 21:41:26",
     "candles_count": 247
   },
   "HDC": {
     "name": "Phát triển Nhà Bà Rịa - Vũng Tàu",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:23",
+    "last_updated": "2026-09-23 21:41:26",
     "candles_count": 247
   },
   "HDG": {
     "name": "Tập đoàn Hà Đô",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:23",
+    "last_updated": "2026-09-23 21:41:26",
     "candles_count": 247
   },
   "HHP": {
     "name": "Giấy Hải Phòng",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:24",
+    "last_updated": "2026-09-23 21:41:26",
     "candles_count": 247
   },
   "HHS": {
     "name": "Hoàng Huy Đầu tư Dịch vụ",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:24",
+    "last_updated": "2026-09-23 21:41:27",
     "candles_count": 247
   },
   "HHV": {
     "name": "Đầu tư Hạ tầng Giao thông Đèo Cả",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:24",
+    "last_updated": "2026-09-23 21:41:27",
     "candles_count": 247
   },
   "HID": {
     "name": "Halcom Việt Nam",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:24",
+    "last_updated": "2026-09-23 21:41:27",
     "candles_count": 247
   },
   "HII": {
     "name": "An Tiến Industries",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:25",
+    "last_updated": "2026-09-23 21:41:27",
     "candles_count": 247
   },
   "HMC": {
     "name": "Kim khí TP.HCM",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:25",
+    "last_updated": "2026-09-23 21:41:28",
     "candles_count": 234
   },
   "HPG": {
     "name": "Tập đoàn Hòa Phát",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:26",
+    "last_updated": "2026-09-23 21:41:29",
     "candles_count": 247
   },
   "HPX": {
     "name": "Hải Phát Investment",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:26",
+    "last_updated": "2026-09-23 21:41:29",
     "candles_count": 247
   },
   "HQC": {
     "name": "Địa ốc Hoàng Quân",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:26",
+    "last_updated": "2026-09-23 21:41:29",
     "candles_count": 247
   },
   "HRC": {
     "name": "Cao su Hòa Bình",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:27",
-    "candles_count": 209
+    "last_updated": "2026-09-23 21:41:29",
+    "candles_count": 210
   },
   "HSG": {
     "name": "Tập đoàn Hoa Sen",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:27",
+    "last_updated": "2026-09-23 21:41:29",
     "candles_count": 247
   },
   "HSL": {
     "name": "Đầu tư Phát triển Thực phẩm Sao Vàng",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:27",
+    "last_updated": "2026-09-23 21:41:30",
     "candles_count": 247
   },
   "HT1": {
     "name": "Xi măng Hà Tiên 1",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:27",
+    "last_updated": "2026-09-23 21:41:30",
     "candles_count": 247
   },
   "HTG": {
     "name": "May Hòa Thọ",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:28",
+    "last_updated": "2026-09-23 21:41:30",
     "candles_count": 245
   },
   "HTI": {
     "name": "Đầu tư Phát triển Hạ tầng IDICO",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:28",
+    "last_updated": "2026-09-23 21:41:31",
     "candles_count": 246
   },
   "HTL": {
     "name": "Kỹ thuật và Ô tô Trường Long",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:28",
+    "last_updated": "2026-09-23 21:41:31",
     "candles_count": 205
   },
   "HTN": {
     "name": "Hưng Thịnh Incons",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:29",
+    "last_updated": "2026-09-23 21:41:31",
     "candles_count": 247
   },
   "HTV": {
     "name": "Vận tải Hà Tiên",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:29",
-    "candles_count": 162
+    "last_updated": "2026-09-23 21:41:31",
+    "candles_count": 161
   },
   "HU1": {
     "name": "HUD1",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:29",
+    "last_updated": "2026-09-23 21:41:32",
     "candles_count": 151
   },
   "HUB": {
     "name": "Xây lắp Thừa Thiên Huế",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:30",
+    "last_updated": "2026-09-23 21:41:32",
     "candles_count": 244
   },
   "HVH": {
     "name": "Đầu tư và Công nghệ HVC",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:31",
+    "last_updated": "2026-09-23 21:41:33",
     "candles_count": 247
   },
   "HVN": {
     "name": "Vietnam Airlines",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:31",
+    "last_updated": "2026-09-23 21:41:33",
     "candles_count": 247
   },
   "IDI": {
     "name": "Đầu tư và Phát triển Đa Quốc Gia",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:32",
+    "last_updated": "2026-09-23 21:41:34",
     "candles_count": 247
   },
   "IJC": {
     "name": "Phát triển Hạ tầng Becamex IJC",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:33",
+    "last_updated": "2026-09-23 21:41:35",
     "candles_count": 247
   },
   "ILB": {
     "name": "Cảng ICD Tân Cảng Long Bình",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:33",
+    "last_updated": "2026-09-23 21:41:35",
     "candles_count": 245
   },
   "IMP": {
     "name": "Dược phẩm Imexpharm",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:34",
+    "last_updated": "2026-09-23 21:41:35",
     "candles_count": 247
   },
   "ITC": {
     "name": "Đầu tư và Kinh doanh Nhà",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:35",
+    "last_updated": "2026-09-23 21:41:36",
     "candles_count": 247
   },
   "ITD": {
     "name": "Công nghệ Tiên Phong",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:35",
+    "last_updated": "2026-09-23 21:41:36",
     "candles_count": 246
   },
   "KBC": {
     "name": "Đô thị Kinh Bắc",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:35",
+    "last_updated": "2026-09-23 21:41:36",
     "candles_count": 247
   },
   "KDC": {
     "name": "Tập đoàn KIDO",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:35",
+    "last_updated": "2026-09-23 21:41:36",
     "candles_count": 247
   },
   "KDH": {
     "name": "Nhà Khang Điền",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:36",
+    "last_updated": "2026-09-23 21:41:37",
     "candles_count": 247
   },
   "KHG": {
     "name": "Kải Hoàn Land",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:36",
+    "last_updated": "2026-09-23 21:41:37",
     "candles_count": 247
   },
   "KHP": {
     "name": "Điện lực Khánh Hòa",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:36",
+    "last_updated": "2026-09-23 21:41:37",
     "candles_count": 247
   },
   "KMR": {
     "name": "Mirae",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:36",
+    "last_updated": "2026-09-23 21:41:37",
     "candles_count": 247
   },
   "KOS": {
     "name": "KOSY",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:37",
+    "last_updated": "2026-09-23 21:41:38",
     "candles_count": 247
   },
   "KSB": {
     "name": "Khoáng sản và Xây dựng Bình Dương",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:37",
+    "last_updated": "2026-09-23 21:41:38",
     "candles_count": 247
   },
   "L10": {
     "name": "LILAMA 10",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:37",
-    "candles_count": 113
+    "last_updated": "2026-09-23 21:41:38",
+    "candles_count": 112
   },
   "LPB": {
     "name": "LienVietPostBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:38",
+    "last_updated": "2026-09-23 21:41:39",
     "candles_count": 247
   },
   "LSS": {
     "name": "Lam Sơn Sugar",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:40",
+    "last_updated": "2026-09-23 21:41:40",
     "candles_count": 247
   },
   "MBB": {
     "name": "MB Bank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:40",
+    "last_updated": "2026-09-23 21:41:40",
     "candles_count": 247
   },
   "MSN": {
     "name": "Masan Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:40",
+    "last_updated": "2026-09-23 21:41:40",
     "candles_count": 247
   },
   "MWG": {
     "name": "Mobile World",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:40",
+    "last_updated": "2026-09-23 21:41:40",
     "candles_count": 247
   },
   "NAF": {
     "name": "Nafoods",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:41",
+    "last_updated": "2026-09-23 21:41:41",
     "candles_count": 247
   },
   "NKG": {
     "name": "Nam Kim Steel",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:41",
+    "last_updated": "2026-09-23 21:41:41",
     "candles_count": 247
   },
   "NLG": {
     "name": "Nam Long",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:41",
+    "last_updated": "2026-09-23 21:41:41",
     "candles_count": 247
   },
   "NVL": {
     "name": "Novaland",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:41",
+    "last_updated": "2026-09-23 21:41:41",
     "candles_count": 247
   },
   "OCB": {
     "name": "OCB",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:42",
+    "last_updated": "2026-09-23 21:41:42",
     "candles_count": 247
   },
   "OGC": {
     "name": "Ocean Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:42",
+    "last_updated": "2026-09-23 21:41:42",
     "candles_count": 247
   },
   "PAN": {
     "name": "PAN Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:42",
+    "last_updated": "2026-09-23 21:41:42",
     "candles_count": 247
   },
   "PDR": {
     "name": "Phát Đạt",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:42",
+    "last_updated": "2026-09-23 21:41:43",
     "candles_count": 247
   },
   "PHR": {
     "name": "Phước Hòa Rubber",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:43",
+    "last_updated": "2026-09-23 21:41:43",
     "candles_count": 247
   },
   "PLX": {
     "name": "Petrolimex",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:43",
+    "last_updated": "2026-09-23 21:41:43",
     "candles_count": 247
   },
   "PNJ": {
     "name": "PNJ",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:43",
+    "last_updated": "2026-09-23 21:41:43",
     "candles_count": 247
   },
   "POW": {
     "name": "PV Power",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:43",
+    "last_updated": "2026-09-23 21:41:44",
     "candles_count": 247
   },
   "PPC": {
     "name": "Phả Lại Power",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:44",
+    "last_updated": "2026-09-23 21:41:44",
     "candles_count": 247
   },
   "PTB": {
     "name": "Phú Tài",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:44",
+    "last_updated": "2026-09-23 21:41:44",
     "candles_count": 247
   },
   "PVD": {
     "name": "PV Drilling",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:44",
+    "last_updated": "2026-09-23 21:41:44",
     "candles_count": 247
   },
   "PVT": {
     "name": "PVTrans",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:45",
+    "last_updated": "2026-09-23 21:41:45",
     "candles_count": 247
   },
   "REE": {
     "name": "REE Corp",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:45",
+    "last_updated": "2026-09-23 21:41:45",
     "candles_count": 247
   },
   "SAB": {
     "name": "Sabeco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:45",
+    "last_updated": "2026-09-23 21:41:45",
     "candles_count": 247
   },
   "SBT": {
     "name": "SBT Sugar",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:46",
+    "last_updated": "2026-09-23 21:41:46",
     "candles_count": 247
   },
   "SCS": {
     "name": "SCS Airport",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:46",
+    "last_updated": "2026-09-23 21:41:46",
     "candles_count": 247
   },
   "SGN": {
     "name": "Sài Gòn Ground",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:46",
+    "last_updated": "2026-09-23 21:41:46",
     "candles_count": 247
   },
   "SHB": {
     "name": "SHBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:47",
+    "last_updated": "2026-09-23 21:41:46",
     "candles_count": 247
   },
   "SJS": {
     "name": "Sudico",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:47",
+    "last_updated": "2026-09-23 21:41:47",
     "candles_count": 247
   },
   "SMC": {
     "name": "SMC Steel",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:47",
+    "last_updated": "2026-09-23 21:41:47",
     "candles_count": 247
   },
   "SSB": {
     "name": "SeABank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:47",
+    "last_updated": "2026-09-23 21:41:47",
     "candles_count": 247
   },
   "SSI": {
     "name": "SSI",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:48",
+    "last_updated": "2026-09-23 21:41:47",
     "candles_count": 247
   },
   "STB": {
     "name": "Sacombank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:48",
+    "last_updated": "2026-09-23 21:41:48",
     "candles_count": 247
   },
   "STG": {
     "name": "Steraplast",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:48",
-    "candles_count": 166
+    "last_updated": "2026-09-23 21:41:48",
+    "candles_count": 167
   },
   "TCB": {
     "name": "Techcombank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:49",
+    "last_updated": "2026-09-23 21:41:48",
     "candles_count": 247
   },
   "TCH": {
     "name": "Toàn Cầu",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:49",
+    "last_updated": "2026-09-23 21:41:49",
     "candles_count": 247
   },
   "TLH": {
     "name": "TLH Steel",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:49",
+    "last_updated": "2026-09-23 21:41:49",
     "candles_count": 247
   },
   "TMS": {
     "name": "Transimex",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:50",
-    "candles_count": 196
+    "last_updated": "2026-09-23 21:41:49",
+    "candles_count": 195
   },
   "TPB": {
     "name": "TPBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:50",
+    "last_updated": "2026-09-23 21:41:50",
     "candles_count": 247
   },
   "TVS": {
     "name": "Thiên Việt Sec",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:50",
+    "last_updated": "2026-09-23 21:41:50",
     "candles_count": 247
   },
   "VCB": {
     "name": "Vietcombank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:51",
+    "last_updated": "2026-09-23 21:41:50",
     "candles_count": 247
   },
   "VCI": {
     "name": "Viet Capital Sec",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:51",
+    "last_updated": "2026-09-23 21:41:51",
     "candles_count": 247
   },
   "VDS": {
     "name": "Rồng Việt Sec",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:51",
+    "last_updated": "2026-09-23 21:41:51",
     "candles_count": 247
   },
   "VGC": {
     "name": "Viglacera",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:52",
+    "last_updated": "2026-09-23 21:41:51",
     "candles_count": 247
   },
   "VHC": {
     "name": "Vĩnh Hoàn",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:53",
+    "last_updated": "2026-09-23 21:41:52",
     "candles_count": 247
   },
   "VHM": {
     "name": "Vinhomes",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:53",
+    "last_updated": "2026-09-23 21:41:52",
     "candles_count": 246
   },
   "VIB": {
     "name": "VIB",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:53",
+    "last_updated": "2026-09-23 21:41:52",
     "candles_count": 247
   },
   "VIC": {
     "name": "Vingroup",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:54",
+    "last_updated": "2026-09-23 21:41:52",
     "candles_count": 247
   },
   "VIX": {
     "name": "VIX Sec",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:54",
+    "last_updated": "2026-09-23 21:41:53",
     "candles_count": 247
   },
   "VJC": {
     "name": "Vietjet",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:54",
+    "last_updated": "2026-09-23 21:41:53",
     "candles_count": 247
   },
   "VND": {
     "name": "VNDirect Sec",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:55",
+    "last_updated": "2026-09-23 21:41:53",
     "candles_count": 247
   },
   "VNM": {
     "name": "Vinamilk",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:55",
+    "last_updated": "2026-09-23 21:41:54",
     "candles_count": 247
   },
   "VOS": {
     "name": "Vosco",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:55",
+    "last_updated": "2026-09-23 21:41:54",
     "candles_count": 247
   },
   "VPB": {
     "name": "VPBank",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:55",
+    "last_updated": "2026-09-23 21:41:54",
     "candles_count": 247
   },
   "VPI": {
     "name": "Văn Phú Invest",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:56",
+    "last_updated": "2026-09-23 21:41:54",
     "candles_count": 247
   },
   "VRE": {
     "name": "Vincom Retail",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:56",
+    "last_updated": "2026-09-23 21:41:55",
     "candles_count": 247
   },
   "VSC": {
     "name": "Container VN",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:56",
+    "last_updated": "2026-09-23 21:41:55",
     "candles_count": 247
   },
   "VSH": {
     "name": "Vĩnh Sơn–Sông Hinh",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:56",
+    "last_updated": "2026-09-23 21:41:55",
     "candles_count": 244
   },
   "VTP": {
     "name": "Viettel Post",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:57",
+    "last_updated": "2026-09-23 21:41:55",
     "candles_count": 247
   },
   "YEG": {
     "name": "Yeah1 Group",
     "exchange": "HOSE",
-    "last_updated": "2026-09-22 21:35:57",
+    "last_updated": "2026-09-23 21:41:56",
     "candles_count": 246
   },
   "TBC": {
     "name": "Thủy điện Thác Bà",
     "exchange": "HNX",
-    "last_updated": "2026-09-22 21:36:13",
+    "last_updated": "2026-09-23 21:42:09",
     "candles_count": 231
   },
   "TMT": {
     "name": "Ô tô TMT",
     "exchange": "HNX",
-    "last_updated": "2026-09-22 21:36:14",
+    "last_updated": "2026-09-23 21:42:10",
     "candles_count": 245
   },
   "VCG": {
     "name": "Vinaconex",
     "exchange": "HNX",
-    "last_updated": "2026-09-22 21:36:16",
+    "last_updated": "2026-09-23 21:42:11",
     "candles_count": 247
   },
   "BVB": {
     "name": "Bản Việt Bank",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:20",
-    "candles_count": 41
+    "last_updated": "2026-09-23 21:42:14",
+    "candles_count": 42
   },
   "KLB": {
     "name": "Kiên Long Bank",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:20",
-    "candles_count": 166
+    "last_updated": "2026-09-23 21:42:14",
+    "candles_count": 167
   },
   "MCH": {
     "name": "Masan Consumer",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:21",
-    "candles_count": 178
+    "last_updated": "2026-09-23 21:42:14",
+    "candles_count": 179
   },
   "NAB": {
     "name": "Nam Á Bank",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:22",
+    "last_updated": "2026-09-23 21:42:15",
     "candles_count": 247
   },
   "NSC": {
     "name": "Giống cây trồng VN",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:22",
+    "last_updated": "2026-09-23 21:42:15",
     "candles_count": 194
   },
   "NT2": {
     "name": "NT2",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:22",
+    "last_updated": "2026-09-23 21:42:16",
     "candles_count": 247
   },
   "RAL": {
     "name": "Điện Quang",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:24",
+    "last_updated": "2026-09-23 21:42:17",
     "candles_count": 242
   },
   "TLG": {
     "name": "Thiên Long",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:26",
+    "last_updated": "2026-09-23 21:42:18",
     "candles_count": 247
   },
   "TRA": {
     "name": "Traphaco",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:26",
+    "last_updated": "2026-09-23 21:42:19",
     "candles_count": 247
   },
   "TRC": {
     "name": "Cao su Tây Ninh",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:26",
+    "last_updated": "2026-09-23 21:42:19",
     "candles_count": 247
   },
   "TYA": {
     "name": "Dệt Thành Công",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:26",
+    "last_updated": "2026-09-23 21:42:19",
     "candles_count": 237
   },
   "VAB": {
     "name": "Việt Á Bank",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:27",
+    "last_updated": "2026-09-23 21:42:19",
     "candles_count": 1
   },
   "VBB": {
     "name": "VBB",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:27",
-    "candles_count": 46
+    "last_updated": "2026-09-23 21:42:20",
+    "candles_count": 47
   },
   "VMD": {
     "name": "Vimedimex",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:29",
-    "candles_count": 180
+    "last_updated": "2026-09-23 21:42:20",
+    "candles_count": 179
   },
   "VNL": {
     "name": "Logistics VN",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:29",
-    "candles_count": 234
+    "last_updated": "2026-09-23 21:42:21",
+    "candles_count": 233
   },
   "VPS": {
     "name": "VPS Sec",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:29",
+    "last_updated": "2026-09-23 21:42:21",
     "candles_count": 244
   },
   "VTB": {
     "name": "Vietbank",
     "exchange": "UPCOM",
-    "last_updated": "2026-09-22 21:36:30",
+    "last_updated": "2026-09-23 21:42:21",
     "candles_count": 239
   }
 }
