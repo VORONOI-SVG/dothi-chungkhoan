@@ -4,6 +4,32 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
+  :root{--scan-w:25vw}
+.app{width:100vw}
+body.scan-open .app{width:calc(100vw - var(--scan-w))}
+#scan{position:fixed;top:0;right:0;width:var(--scan-w);min-width:240px;height:100vh;
+  display:none;flex-direction:column;background:var(--surface);
+  border-left:1px solid var(--border);z-index:150}
+body.scan-open #scan{display:flex}
+.scan-h{padding:10px 12px;border-bottom:1px solid var(--border);font-weight:700;
+  display:flex;justify-content:space-between;align-items:center}
+.scan-f{padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
+.scan-f label{display:flex;flex-direction:column;gap:3px}
+.scan-f input,.scan-f select{padding:5px 6px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:5px;font-size:12px;width:100%}
+#scan-info{padding:6px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
+#scan-list{flex:1;overflow-y:auto}
+.sc-row{display:grid;grid-template-columns:54px 1fr 1fr;gap:6px;padding:7px 12px;
+  cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)}
+.sc-row:hover,.sc-row.on{background:var(--surface2)}
+.sc-row b{font-size:13px}
+.sc-row span{text-align:right;color:var(--muted)}
+.sc-row .wr{color:var(--accent)}
+@media(max-width:768px){
+  #scan{width:100vw}
+  body.scan-open .app{width:100vw}
+}
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
