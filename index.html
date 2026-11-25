@@ -4,201 +4,122 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
-  :root{--scan-w:25vw}
-.app{width:100vw}
-body.scan-open .app{width:calc(100vw - var(--scan-w))}
-#scan{position:fixed;top:0;right:0;width:var(--scan-w);min-width:240px;height:100vh;
-  display:none;flex-direction:column;background:var(--surface);
-  border-left:1px solid var(--border);z-index:150}
-body.scan-open #scan{display:flex}
-.scan-h{padding:10px 12px;border-bottom:1px solid var(--border);font-weight:700;
-  display:flex;justify-content:space-between;align-items:center}
-.scan-f{padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;
-  border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
-.scan-f label{display:flex;flex-direction:column;gap:3px}
-.scan-f input,.scan-f select{padding:5px 6px;background:var(--surface2);color:var(--text);
-  border:1px solid var(--border);border-radius:5px;font-size:12px;width:100%}
-#scan-info{padding:6px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
-#scan-list{flex:1;overflow-y:auto}
-.sc-row{display:grid;grid-template-columns:54px 1fr 1fr;gap:6px;padding:7px 12px;
-  cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)}
-.sc-row:hover,.sc-row.on{background:var(--surface2)}
-.sc-row b{font-size:13px}
-.sc-row span{text-align:right;color:var(--muted)}
-.sc-row .wr{color:var(--accent)}
-@media(max-width:768px){
-  #scan{width:100vw}
-  body.scan-open .app{width:100vw}
-}
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;
-      --border:#21262d;--accent:#2ecc71;--red:#e74c3c;
-      --blue:#3498db;--orange:#e67e22;
-      --text:#e6edf3;--muted:#8b949e;
-      --shadow:0 4px 24px rgba(0,0,0,.5);
-      --radius:7px;--font:'Inter','Segoe UI',system-ui,sans-serif;
-    }
+    :root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#21262d;
+      --accent:#2ecc71;--red:#e74c3c;--blue:#3498db;--orange:#e67e22;
+      --text:#e6edf3;--muted:#8b949e;--shadow:0 4px 24px rgba(0,0,0,.5);
+      --radius:7px;--font:'Inter','Segoe UI',system-ui,sans-serif}
     html,body{height:100%;background:var(--bg);color:var(--text);
-              font-family:var(--font);font-size:14px;line-height:1.5}
+      font-family:var(--font);font-size:14px;line-height:1.5}
     .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
-    /* ── Header ─────────────────────────────── */
-    header{display:flex;align-items:center;gap:12px;padding:8px 16px;
-           background:var(--surface);border-bottom:1px solid var(--border);
-           flex-shrink:0;flex-wrap:wrap}
-    .logo{display:flex;align-items:center;gap:7px;font-weight:700;
-          font-size:16px;white-space:nowrap}
+    header{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--surface);
+      border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+    .logo{display:flex;align-items:center;gap:7px;font-weight:700;font-size:16px;white-space:nowrap}
     .logo-icon{width:26px;height:26px;background:var(--accent);border-radius:5px;
-               display:flex;align-items:center;justify-content:center;font-size:14px}
+      display:flex;align-items:center;justify-content:center;font-size:14px}
 
-    /* ── Search ──────────────────────────────── */
     .search-wrap{position:relative;flex:1;max-width:460px}
-    .search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);
-                color:var(--muted);pointer-events:none}
-    #q{width:100%;padding:7px 30px 7px 34px;background:var(--surface2);
-       border:1px solid var(--border);border-radius:var(--radius);
-       color:var(--text);font-size:14px;font-family:var(--font);outline:none;
-       transition:border-color .2s;text-transform:uppercase}
+    .search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    #q{width:100%;padding:7px 30px 7px 34px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius);color:var(--text);font-size:14px;font-family:var(--font);outline:none;
+      transition:border-color .2s;text-transform:uppercase}
     #q::placeholder{color:var(--muted);text-transform:none}
     #q:focus{border-color:var(--accent)}
-    #clr{position:absolute;right:7px;top:50%;transform:translateY(-50%);
-         background:none;border:none;color:var(--muted);cursor:pointer;
-         display:none;font-size:13px;line-height:1}
+    #clr{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;
+      color:var(--muted);cursor:pointer;display:none;font-size:13px;line-height:1}
     #clr:hover{color:var(--text)}
 
-    /* ── Autocomplete ────────────────────────── */
-    #ac{position:absolute;top:calc(100% + 4px);left:0;right:0;
-        background:var(--surface);border:1px solid var(--border);
-        border-radius:var(--radius);max-height:280px;overflow-y:auto;
-        z-index:200;box-shadow:var(--shadow);display:none}
-    #ac::-webkit-scrollbar{width:4px}
-    #ac::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-    .ac-hdr{padding:5px 12px 3px;font-size:10px;font-weight:700;
-            color:var(--muted);text-transform:uppercase;letter-spacing:.7px;
-            border-bottom:1px solid var(--border)}
-    .ac-row{display:flex;align-items:center;gap:9px;padding:7px 12px;
-            cursor:pointer;transition:background .12s}
+    #ac{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);
+      border:1px solid var(--border);border-radius:var(--radius);max-height:280px;overflow-y:auto;
+      z-index:200;box-shadow:var(--shadow);display:none}
+    .ac-hdr{padding:5px 12px 3px;font-size:10px;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border)}
+    .ac-row{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;transition:background .12s}
     .ac-row:hover,.ac-row.sel{background:var(--surface2)}
     .ac-t{font-weight:700;font-size:13px;min-width:56px}
-    .ac-n{color:var(--muted);font-size:12px;flex:1;
-          overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .ac-ex{font-size:10px;font-weight:700;padding:2px 5px;
-           border-radius:3px;flex-shrink:0}
-    .ac-ex.HOSE{background:rgba(46,204,113,.15);color:var(--accent)}
-    .ac-ex.HNX {background:rgba(52,152,219,.15);color:var(--blue)}
-    .ac-ex.UPCOM{background:rgba(230,126,34,.15);color:var(--orange)}
+    .ac-n{color:var(--muted);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ac-ex,.ctb-ex{font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;flex-shrink:0}
+    .ctb-ex{font-size:11px;padding:2px 6px;border-radius:4px}
+    .ac-ex.HOSE,.ctb-ex.HOSE{background:rgba(46,204,113,.15);color:var(--accent)}
+    .ac-ex.HNX,.ctb-ex.HNX{background:rgba(52,152,219,.15);color:var(--blue)}
+    .ac-ex.UPCOM,.ctb-ex.UPCOM{background:rgba(230,126,34,.15);color:var(--orange)}
 
-    /* ── Exchange filter tabs ────────────────── */
     .ex-tabs{display:flex;gap:3px}
-    .ex-tab{padding:4px 10px;border-radius:5px;border:1px solid var(--border);
-            background:transparent;color:var(--muted);font-size:11px;
-            font-weight:700;cursor:pointer;transition:all .15s}
-    .ex-tab:hover{color:var(--text);border-color:var(--muted)}
-    .ex-tab.on{color:#000;border-color:transparent}
+    .ex-tab,.xbtn{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;
+      color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+    .xbtn{padding:3px 9px}
+    .ex-tab:hover,.xbtn:hover{color:var(--text);border-color:var(--muted)}
+    .ex-tab.on,.xbtn.on{color:#000;border-color:transparent}
     .ex-tab[data-ex=ALL].on{background:var(--muted)}
-    .ex-tab[data-ex=HOSE].on{background:var(--accent)}
-    .ex-tab[data-ex=HNX].on{background:var(--blue)}
-    .ex-tab[data-ex=UPCOM].on{background:var(--orange)}
+    .ex-tab[data-ex=HOSE].on,.xbtn[data-x=HOSE].on{background:var(--accent)}
+    .ex-tab[data-ex=HNX].on,.xbtn[data-x=HNX].on{background:var(--blue)}
+    .ex-tab[data-ex=UPCOM].on,.xbtn[data-x=UPCOM].on{background:var(--orange)}
 
-    /* ── Count badge ─────────────────────────── */
-    #cnt{font-size:11px;color:var(--muted);padding:3px 8px;
-         border-radius:12px;border:1px solid var(--border);white-space:nowrap}
+    #cnt{font-size:11px;color:var(--muted);padding:3px 8px;border-radius:12px;
+      border:1px solid var(--border);white-space:nowrap}
     #cnt.ok{border-color:rgba(46,204,113,.35);color:var(--accent)}
 
-    /* ── Quick access pills ──────────────────── */
     .quick{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
     .qlbl{font-size:11px;color:var(--muted);white-space:nowrap}
-    .qpill{padding:3px 9px;border-radius:20px;border:1px solid var(--border);
-           background:transparent;color:var(--muted);font-size:11px;
-           font-weight:700;cursor:pointer;transition:all .15s}
+    .qpill{padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:transparent;
+      color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
     .qpill:hover{border-color:var(--accent);color:var(--accent)}
     .qpill.on{background:rgba(46,204,113,.15);border-color:var(--accent);color:var(--accent)}
 
-    /* ── Chart toolbar ───────────────────────── */
-    #ctb{display:none;align-items:center;gap:0;
-         background:var(--surface);border-bottom:1px solid var(--border);
-         flex-shrink:0;overflow:hidden}
+    #ctb{display:none;align-items:center;background:var(--surface);
+      border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden}
     #ctb.vis{display:flex}
-    .ctb-left{display:flex;align-items:center;gap:10px;padding:6px 14px;
-              flex:1;flex-wrap:wrap;min-width:0}
+    .ctb-left{display:flex;align-items:center;gap:10px;padding:6px 14px;flex:1;flex-wrap:wrap;min-width:0}
     .ctb-sym{font-weight:700;font-size:14px}
     .ctb-nm{color:var(--muted);font-size:12px}
-    .ctb-ex{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px}
-    .ctb-ex.HOSE{background:rgba(46,204,113,.15);color:var(--accent)}
-    .ctb-ex.HNX {background:rgba(52,152,219,.15);color:var(--blue)}
-    .ctb-ex.UPCOM{background:rgba(230,126,34,.15);color:var(--orange)}
-
     .ctb-right{display:flex;align-items:center;gap:4px;padding:6px 14px;
-               border-left:1px solid var(--border);flex-shrink:0}
+      border-left:1px solid var(--border);flex-shrink:0}
     .ctb-lbl{font-size:11px;color:var(--muted);margin-right:2px}
-    .xbtn{padding:3px 9px;border-radius:5px;border:1px solid var(--border);
-          background:transparent;color:var(--muted);font-size:11px;
-          font-weight:700;cursor:pointer;transition:all .15s}
-    .xbtn:hover{color:var(--text);border-color:var(--muted)}
-    .xbtn.on{color:#000;border-color:transparent}
-    .xbtn[data-x=HOSE].on{background:var(--accent)}
-    .xbtn[data-x=HNX].on{background:var(--blue)}
-    .xbtn[data-x=UPCOM].on{background:var(--orange)}
 
-    /* ── Time-range & Resolution buttons ─────── */
-    .range-bar{display:flex;align-items:center;gap:4px;padding:5px 14px;
-               background:var(--surface);border-bottom:1px solid var(--border);
-               flex-shrink:0;display:none;flex-wrap:wrap;row-gap:6px}
+    .range-bar{align-items:center;gap:4px;padding:5px 14px;background:var(--surface);
+      border-bottom:1px solid var(--border);flex-shrink:0;display:none;flex-wrap:wrap;row-gap:6px}
     .range-bar.vis{display:flex}
-    .rbtn,.resbtn{padding:3px 9px;border-radius:5px;border:1px solid transparent;
-                  background:transparent;color:var(--muted);font-size:11px;
-                  font-weight:600;cursor:pointer;transition:all .15s}
+    .rbtn,.resbtn{padding:3px 9px;border-radius:5px;border:1px solid transparent;background:transparent;
+      color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
     .rbtn:hover,.resbtn:hover{color:var(--text)}
-    .rbtn.on,.resbtn.on{background:var(--surface2);color:var(--text);
-                         border-color:var(--border)}
+    .rbtn.on,.resbtn.on{background:var(--surface2);color:var(--text);border-color:var(--border)}
     .rb-sep{width:1px;height:16px;background:var(--border);margin:0 4px}
     .rb-right{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
-    .ma-toggle{padding:3px 8px;border-radius:5px;border:1px solid var(--border);
-               background:transparent;font-size:11px;font-weight:600;cursor:pointer;
-               transition:all .15s}
+    .ma-toggle{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;
+      font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
     .ma-toggle.on{color:#000}
-    #ma20-toggle{color:var(--blue)}
-    #ma20-toggle.on{background:var(--blue);border-color:var(--blue)}
-    #ma50-toggle{color:var(--orange)}
-    #ma50-toggle.on{background:var(--orange);border-color:var(--orange)}
+    #ma20-toggle{color:var(--blue)} #ma20-toggle.on{background:var(--blue);border-color:var(--blue)}
+    #ma50-toggle{color:var(--orange)} #ma50-toggle.on{background:var(--orange);border-color:var(--orange)}
 
-    /* ── Chart area ──────────────────────────── */
     .chart-area{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
     #chart{flex:1;min-height:0;position:relative}
     #vol-chart{height:0;flex-shrink:0;display:none}
     #kt2-chart{flex:0;min-height:0;display:none;border-top:1px solid var(--border);position:relative}
-    #kt2-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
+    #kt2-overlay,#fvg-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
     #kt2-chart.vis{display:block;flex:1}
-    #fvg-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
 
-    /* ── Loading / empty ─────────────────────── */
-    .overlay{position:absolute;inset:0;display:flex;flex-direction:column;
-             align-items:center;justify-content:center;gap:12px;
-             color:var(--muted);pointer-events:none;z-index:10}
+    .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:12px;color:var(--muted);pointer-events:none;z-index:10}
     .overlay.hidden{display:none}
     .overlay svg{opacity:.2}
-    .spin{width:32px;height:32px;border:3px solid var(--border);
-          border-top-color:var(--accent);border-radius:50%;
-          animation:spin .7s linear infinite}
+    .spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .err-msg{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);
-             color:var(--red);padding:10px 16px;border-radius:var(--radius);
-             font-size:13px;max-width:380px;text-align:center}
+    .err-msg{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);color:var(--red);
+      padding:10px 16px;border-radius:var(--radius);font-size:13px;max-width:380px;
+      text-align:center;white-space:pre-line}
 
-    /* ── Status bar ──────────────────────────── */
-    .sbar{display:flex;align-items:center;gap:10px;padding:4px 16px;
-          background:var(--surface);border-top:1px solid var(--border);
-          flex-shrink:0;font-size:11px;color:var(--muted);flex-wrap:wrap}
+    .sbar{display:flex;align-items:center;gap:10px;padding:4px 16px;background:var(--surface);
+      border-top:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--muted);flex-wrap:wrap}
     .sbar a{color:var(--muted);text-decoration:none}
     .sbar a:hover{color:var(--text)}
     .sbar-r{margin-left:auto}
     #ohlc{display:flex;gap:12px;align-items:center;font-size:11px}
     .ohlc-lbl{color:var(--muted)}
     .ohlc-v{color:var(--text);font-weight:600}
-    .ohlc-chg.up{color:var(--accent)}
-    .ohlc-chg.dn{color:var(--red)}
+    .ohlc-chg.up{color:var(--accent)} .ohlc-chg.dn{color:var(--red)}
 
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:var(--bg)}
@@ -208,17 +129,13 @@ body.scan-open #scan{display:flex}
 <body>
 <div class="app">
 
-  <!-- Header -->
   <header>
     <div class="logo"><div class="logo-icon">📈</div>VN Chart</div>
 
     <div class="search-wrap" id="sw">
-      <svg class="search-ico" width="13" height="13" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2.5">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input id="q" placeholder="Tìm mã CK hoặc tên công ty..."
-             autocomplete="off" spellcheck="false"/>
+      <svg class="search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="q" placeholder="Tìm mã CK hoặc tên công ty..." autocomplete="off" spellcheck="false"/>
       <button id="clr">✕</button>
       <div id="ac"></div>
     </div>
@@ -231,12 +148,11 @@ body.scan-open #scan{display:flex}
     </div>
 
     <span id="cnt">Đang tải...</span>
-    <button class="ex-tab on" id="scan-toggle">🔎 Lọc</button>
+    <!-- Nút "🔎 Lọc" và panel bộ lọc do screener.js tự thêm vào -->
 
     <div class="quick" id="qlist"></div>
   </header>
 
-  <!-- Chart toolbar (exchange switcher) -->
   <div id="ctb">
     <div class="ctb-left">
       <span class="ctb-sym" id="ctb-sym"></span>
@@ -251,7 +167,6 @@ body.scan-open #scan{display:flex}
     </div>
   </div>
 
-  <!-- Range / resolution bar -->
   <div class="range-bar" id="rbar">
     <button class="rbtn" data-r="7">1T</button>
     <button class="rbtn" data-r="30">1M</button>
@@ -271,35 +186,24 @@ body.scan-open #scan{display:flex}
     </div>
   </div>
 
-  <!-- Chart area -->
   <div class="chart-area" id="chart-area">
     <div id="chart"></div>
     <div id="vol-chart"></div>
     <div id="kt2-chart"></div>
 
-    <!-- Empty state -->
     <div class="overlay" id="empty">
-      <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="1">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-      </svg>
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <p>Nhập mã chứng khoán để xem biểu đồ</p>
       <small id="empty-hint">Đang tải danh sách...</small>
     </div>
-
-    <!-- Loading state -->
     <div class="overlay hidden" id="loading">
       <div class="spin"></div>
       <span style="color:var(--muted);font-size:13px">Đang tải dữ liệu...</span>
     </div>
-
-    <!-- Error state -->
-    <div class="overlay hidden" id="errmsg">
-      <div class="err-msg" id="err-txt"></div>
-    </div>
+    <div class="overlay hidden" id="errmsg"><div class="err-msg" id="err-txt"></div></div>
   </div>
 
-  <!-- Status / OHLC bar -->
   <div class="sbar">
     <div id="ohlc" style="display:none">
       <span class="ohlc-lbl">O</span><span class="ohlc-v" id="ov-o">—</span>
@@ -308,221 +212,73 @@ body.scan-open #scan{display:flex}
       <span class="ohlc-lbl">C</span><span class="ohlc-v" id="ov-c">—</span>
       <span class="ohlc-chg" id="ov-chg"></span>
     </div>
-    <span id="dataSource">Dữ liệu: — ·
-          Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a></span>
-    <span class="sbar-r">HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025</span>
+    <span id="dataSource">Dữ liệu: — · Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a></span>
+    <span class="sbar-r">HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025 · Chỉ mang tính tham khảo, không phải khuyến nghị đầu tư</span>
   </div>
 </div>
-  
-<aside id="scan">
-  <div class="scan-h">Lọc cổ phiếu <button class="xbtn" id="scan-close">✕</button></div>
-  <div class="scan-f">
-    <label>Volume &gt;<input id="f-vol" type="number" value="500000" step="50000"></label>
-    <label>Williams %R &gt;<input id="f-wr" type="number" value="-60"></label>
-    <label>Sàn<select id="f-ex"><option>ALL</option><option>HOSE</option><option>HNX</option><option>UPCOM</option></select></label>
-    <label>Chu kỳ %R<input id="f-n" type="number" value="14" min="2"></label>
-  </div>
-  <div id="scan-info">Chờ danh sách mã...</div>
-  <div id="scan-list"></div>
-</aside>
-<!-- Lightweight Charts v4 (open-source, MIT license) -->
+
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <script>
-/* ══════════════════════════════════════════════════════════
-   CONFIG
-   ══════════════════════════════════════════════════════════ */
-const QUICK  = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
-const RANGES = { 7:7, 30:30, 90:90, 365:365, 1095:1095, 3650:3650, 0:0 };
+/* ═══ CONFIG ═══ */
+const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
 
 const FMT_PRICE = v => v == null ? '—' : v.toLocaleString('vi-VN');
 const FMT_VOL   = v => {
   if (!v) return '—';
-  if (v >= 1e9)  return (v/1e9).toFixed(2)  + ' tỷ';
-  if (v >= 1e6)  return (v/1e6).toFixed(2)  + ' tr';
-  if (v >= 1e3)  return (v/1e3).toFixed(1)  + ' k';
+  if (v >= 1e9) return (v/1e9).toFixed(2) + ' tỷ';
+  if (v >= 1e6) return (v/1e6).toFixed(2) + ' tr';
+  if (v >= 1e3) return (v/1e3).toFixed(1) + ' k';
   return String(v);
 };
 
-/* ══════════════════════════════════════════════════════════
-   STATE
-   ══════════════════════════════════════════════════════════ */
+/* ═══ STATE ═══ */
 let STOCKS = [], SMAP = {};
 let exFilter = 'ALL';
-let acItems  = [], acIdx = -1;
+let acItems = [], acIdx = -1;
 let curTicker = null, curExchange = null;
 let rangeDays = 365, resolution = 'D';
 let ma20On = false, ma50On = false;
-let lastCandles = null;
+let lastCandles = null, reqId = 0;
+let mainChart = null, volChart = null;
+let candleSeries = null, volSeries = null, ma20Series = null, ma50Series = null;
 
-let mainChart = null, volChart    = null;
-let candleSeries = null, volSeries = null;
-let ma20Series   = null, ma50Series = null;
-
-/* ══════════════════════════════════════════════════════════
-   BOOT
-   ══════════════════════════════════════════════════════════ */
+/* ═══ BOOT ═══ */
 document.addEventListener('DOMContentLoaded', async () => {
-  buildQuickList();
-  setupSearch();
-  setupExTabs();
-  setupToolbar();
-  setupRangeBar();
-  setupMA();
+  buildQuickList(); setupSearch(); setupExTabs(); setupToolbar(); setupRangeBar(); setupMA();
   initCharts();
   updateCount('Đang tải…', false);
-
+  // fetchTickerList() do screener.js định nghĩa (đọc data/screener.json)
   try { await fetchTickerList(); }
-  catch { loadFallback(); }
+  catch (e) { console.warn('Không tải được danh sách mã:', e); loadFallback(); }
 });
 
-/* ══════════════════════════════════════════════════════════
-   TICKER LIST  – TCBS public API
-   ══════════════════════════════════════════════════════════ */
-async function fetchTickerList() {
-  const BASE = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/ticker?locale=vi&page=0&size=2000';
-  const urls = [
-    BASE,
-    `https://corsproxy.io/?${BASE}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(BASE)}`,
-    `https://thingproxy.freeboard.io/fetch/${BASE}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BASE)}`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const res  = await fetchWithTimeout(url, 8000);
-      if (!res.ok) continue;
-      const json = await res.json();
-      const rows = json?.data || [];
-      if (rows.length < 50) continue;
-
-      STOCKS = rows.map(r => {
-        const ex = normEx(r.exchange || r.comGroupCode || '');
-        return ex ? [r.ticker, r.organName || r.shortName || r.ticker, ex] : null;
-      }).filter(Boolean);
-
-      buildMap();
-      updateCount(`${STOCKS.length} mã`, true);
-      document.getElementById('empty-hint').textContent =
-        `Hỗ trợ ${STOCKS.length}+ mã HOSE · HNX · UPCOM`;
-      return;
-    } catch { /* try next */ }
-  }
-  throw new Error('All ticker sources failed');
-}
-
+/* ═══ DANH SÁCH MÃ DỰ PHÒNG (khi thiếu data/screener.json) ═══ */
 const FALLBACK_STOCKS = [
-  // HOSE
-  ["AAA","An Phát Holdings","HOSE"],["ACB","ACB","HOSE"],["AGG","An Gia","HOSE"],
-  ["ANV","Nam Việt Corp","HOSE"],["BCG","Bamboo Capital","HOSE"],["BCM","Becamex","HOSE"],
-  ["BID","BIDV","HOSE"],["BMP","Bình Minh Plastics","HOSE"],["BSR","Bình Sơn","HOSE"],
-  ["BVH","Bảo Việt","HOSE"],["CII","CII","HOSE"],["CMG","CMC Corp","HOSE"],
-  ["CTD","Coteccons","HOSE"],["CTG","VietinBank","HOSE"],["DCM","Đạm Cà Mau","HOSE"],
-  ["DGC","DGC","HOSE"],["DGW","Digiworld","HOSE"],["DHG","DHG Pharma","HOSE"],
-  ["DIG","DIC Corp","HOSE"],["DPM","Đạm Phú Mỹ","HOSE"],["DRC","DRC Rubber","HOSE"],
-  ["DXG","Đất Xanh","HOSE"],["DXS","Đất Xanh Services","HOSE"],
-  ["EIB","Eximbank","HOSE"],["EVF","EVN Finance","HOSE"],["FCN","FECON","HOSE"],
-  ["FPT","FPT Corp","HOSE"],["FRT","FPT Retail","HOSE"],["FTS","FTS Sec","HOSE"],
-  ["GAS","PV Gas","HOSE"],["GEX","Gelex Group","HOSE"],["GMD","Gemadept","HOSE"],
-  ["GVR","VRG","HOSE"],["HAG","HAGL","HOSE"],["HAH","Hải An Transport","HOSE"],
-  ["HBC","Hòa Bình Corp","HOSE"],["HCM","HCMC Sec","HOSE"],["HDB","HDBank","HOSE"],
-  ["HDC","Hà Đô Corp","HOSE"],["HDG","Hà Đô Group","HOSE"],["HNG","HAGL Agri","HOSE"],
-  ["HPG","Hòa Phát","HOSE"],["HPX","Hưng Phát Xanh","HOSE"],["HQC","Hoang Quan","HOSE"],
-  ["HSG","Hoa Sen Steel","HOSE"],["HT1","Hà Tiên 1","HOSE"],["HVN","Vietnam Airlines","HOSE"],
-  ["IDI","IDI","HOSE"],["IMP","Imexpharm","HOSE"],["ITA","Tân Tạo","HOSE"],
-  ["KBC","Kinh Bắc","HOSE"],["KDC","Kido Group","HOSE"],["KDH","Khang Điền","HOSE"],
-  ["KHG","Khải Hoàn Land","HOSE"],["LPB","LienVietPostBank","HOSE"],["LSS","Lam Sơn Sugar","HOSE"],
-  ["MBB","MB Bank","HOSE"],["MCH","Masan Consumer","HOSE"],["MSN","Masan Group","HOSE"],
-  ["MWG","Mobile World","HOSE"],["NAF","Nafoods","HOSE"],["NKG","Nam Kim Steel","HOSE"],
-  ["NLG","Nam Long","HOSE"],["NVL","Novaland","HOSE"],["OCB","OCB","HOSE"],
-  ["OGC","Ocean Group","HOSE"],["PAN","PAN Group","HOSE"],["PDR","Phát Đạt","HOSE"],
-  ["PHR","Phước Hòa Rubber","HOSE"],["PLX","Petrolimex","HOSE"],["PNJ","PNJ","HOSE"],
-  ["POW","PV Power","HOSE"],["PPC","Phả Lại Power","HOSE"],["PTB","Phú Tài","HOSE"],
-  ["PVD","PV Drilling","HOSE"],["PVT","PVTrans","HOSE"],["QNS","Quảng Ngãi Sugar","HOSE"],
-  ["REE","REE Corp","HOSE"],["SAB","Sabeco","HOSE"],["SBT","SBT Sugar","HOSE"],
-  ["SCS","SCS Airport","HOSE"],["SGN","Sài Gòn Ground","HOSE"],["SHB","SHBank","HOSE"],
-  ["SJS","Sudico","HOSE"],["SMC","SMC Steel","HOSE"],["SSB","SeABank","HOSE"],
-  ["SSI","SSI","HOSE"],["STB","Sacombank","HOSE"],["STG","Steraplast","HOSE"],
-  ["TAC","Tường An Oil","HOSE"],["TCB","Techcombank","HOSE"],["TCH","Toàn Cầu","HOSE"],
-  ["THD","Thaiholdings","HOSE"],["TLH","TLH Steel","HOSE"],["TMS","Transimex","HOSE"],
-  ["TNG","TNG Invest","HOSE"],["TPB","TPBank","HOSE"],["TVS","Thiên Việt Sec","HOSE"],
-  ["UDC","Urban Dev","HOSE"],["VCB","Vietcombank","HOSE"],["VCI","Viet Capital Sec","HOSE"],
-  ["VDS","Rồng Việt Sec","HOSE"],["VGC","Viglacera","HOSE"],["VGI","Viettel Global","HOSE"],
-  ["VHC","Vĩnh Hoàn","HOSE"],["VHM","Vinhomes","HOSE"],["VIB","VIB","HOSE"],
-  ["VIC","Vingroup","HOSE"],["VIX","VIX Sec","HOSE"],["VJC","Vietjet","HOSE"],
-  ["VND","VNDirect Sec","HOSE"],["VNM","Vinamilk","HOSE"],["VOS","Vosco","HOSE"],
-  ["VPB","VPBank","HOSE"],["VPI","Văn Phú Invest","HOSE"],["VRE","Vincom Retail","HOSE"],
-  ["VSC","Container VN","HOSE"],["VSH","Vĩnh Sơn–Sông Hinh","HOSE"],["VTP","Viettel Post","HOSE"],
-  ["YEG","Yeah1 Group","HOSE"],
-  // HNX
-  ["ACE","ACE Life","HNX"],["APS","AP Securities","HNX"],["BBS","Vicem Bút Sơn","HNX"],
-  ["BCC","Xi măng Bỉm Sơn","HNX"],["BSI","BIDV Securities","HNX"],["BVS","Bảo Việt Sec","HNX"],
-  ["CDN","Cảng Đà Nẵng","HNX"],["CLH","Xi măng La Hiên","HNX"],["DBC","Dabaco","HNX"],
-  ["DHM","Xi măng Hữu Nghị","HNX"],["DNM","Dệt Nam Định","HNX"],["DPC","Nhựa Đà Nẵng","HNX"],
-  ["GDW","Cấp nước Gò Dầu","HNX"],["HAI","Nông dược HAI","HNX"],["HAN","Hà Nội Sec","HNX"],
-  ["HBS","HBS Sec","HNX"],["HHC","Bánh kẹo Hải Hà","HNX"],["HLC","TH Hà Nội","HNX"],
-  ["HPT","HPT IT Services","HNX"],["HUT","Tasco","HNX"],["HVT","Hóa chất Việt Trì","HNX"],
-  ["IDC","IDICO","HNX"],["KLF","KLF Land","HNX"],["L14","L14","HNX"],
-  ["LAS","LASCO","HNX"],["LIG","Licogi 13","HNX"],["MBS","MB Sec","HNX"],
-  ["MIC","Bảo hiểm Quân đội","HNX"],["NTP","Nhựa Tiền Phong","HNX"],["NVB","NCB","HNX"],
-  ["OCH","Ocean Hospitality","HNX"],["ONE","Truyền thông ONE","HNX"],["PHP","Cảng Hải Phòng","HNX"],
-  ["PMC","Dược PMC","HNX"],["PME","Pymepharco","HNX"],["POT","Thiết bị Bưu điện","HNX"],
-  ["PVC","PV Coating","HNX"],["PVI","PVI Holdings","HNX"],["PVS","PV Technical","HNX"],
-  ["QBS","Sách Giáo dục","HNX"],["QNC","Xi măng Quảng Ninh","HNX"],["S55","S55","HNX"],
-  ["SHS","SHS Sec","HNX"],["SLS","Mía đường Sơn La","HNX"],["TBC","Thủy điện Thác Bà","HNX"],
-  ["TDN","Thép Đà Nẵng","HNX"],["THB","Bia Thanh Hóa","HNX"],["TMT","ÔTô TMT","HNX"],
-  ["TNG","TNG Invest HNX","HNX"],["TVD","Than Vàng Danh","HNX"],["TVN","Thép Việt","HNX"],
-  ["VCC","Vicostone","HNX"],["VCG","Vinaconex","HNX"],["VGS","Thép VGS","HNX"],
-  ["VMI","Máy thiết bị VN","HNX"],["VNA","Vinalines","HNX"],["VNR","Tái BH VN","HNX"],
-  ["VSE","Ứng dụng CN","HNX"],["VTC","VTC Media","HNX"],
-  // UPCOM
-  ["ACV","ACV","UPCOM"],["BAB","Bắc Á Bank","UPCOM"],["BVB","Bản Việt Bank","UPCOM"],
-  ["CNG","CNG Vietnam","UPCOM"],["CTF","City Auto","UPCOM"],["KLB","Kiên Long Bank","UPCOM"],
-  ["MCH","Masan Consumer","UPCOM"],["MML","Masan MEATLife","UPCOM"],
-  ["MSR","Masan Resources","UPCOM"],["NAB","Nam A Bank","UPCOM"],
-  ["NSC","Giống cây trồng VN","UPCOM"],["NT2","NT2","UPCOM"],
-  ["OIL","PVOIL","UPCOM"],["PGB","Petrolimex Insurance","UPCOM"],
-  ["QTP","Quảng Ninh Thermal","UPCOM"],["RAL","Điện Quang","UPCOM"],
-  ["SGB","Saigonbank","UPCOM"],["SNZ","Sonadezi","UPCOM"],
-  ["SVB","Viet A Bank","UPCOM"],["TLG","Thiên Long","UPCOM"],
-  ["TRA","Traphaco","UPCOM"],["TRC","Cao su Tây Ninh","UPCOM"],
-  ["TYA","Dệt Thành Công","UPCOM"],["VAB","Việt Á Bank","UPCOM"],
-  ["VBB","VBB","UPCOM"],["VEA","VEAM","UPCOM"],["VGT","Vinatex","UPCOM"],
-  ["VMD","Vimedimex","UPCOM"],["VNL","Logistics VN","UPCOM"],
-  ["VPS","VPS Sec","UPCOM"],["VTB","Vietbank","UPCOM"],
-  ["WSS","WSS Sec","UPCOM"],
-];
+  ["ACB","Á Châu"],["BID","BIDV"],["BVH","Bảo Việt"],["CTG","VietinBank"],["DGC","Hóa chất Đức Giang"],
+  ["FPT","Tập đoàn FPT"],["GAS","PV Gas"],["GVR","Cao su Việt Nam"],["HDB","HDBank"],["HPG","Hòa Phát"],
+  ["MBB","MB Bank"],["MSN","Masan Group"],["MWG","Mobile World"],["PLX","Petrolimex"],["PNJ","PNJ"],
+  ["POW","PV Power"],["REE","REE Corp"],["SAB","Sabeco"],["SHB","SHBank"],["SSI","SSI"],
+  ["STB","Sacombank"],["TCB","Techcombank"],["TPB","TPBank"],["VCB","Vietcombank"],["VHM","Vinhomes"],
+  ["VIB","VIB"],["VIC","Vingroup"],["VJC","Vietjet"],["VNM","Vinamilk"],["VPB","VPBank"],
+].map(([t, n]) => [t, n, 'HOSE']);
 
 function loadFallback() {
   STOCKS = FALLBACK_STOCKS;
   buildMap();
-  updateCount(`${STOCKS.length} mã (offline)`, true);
-  document.getElementById('empty-hint').textContent =
-    `Hỗ trợ ${STOCKS.length}+ mã HOSE · HNX · UPCOM`;
+  updateCount(`${STOCKS.length} mã (dự phòng)`, true);
+  document.getElementById('empty-hint').textContent = 'Danh sách đầy đủ chưa tải được – đang dùng danh sách rút gọn';
 }
-
-function normEx(raw) {
-  const s = (raw||'').toUpperCase();
-  if (s.includes('HOSE')||s==='HSX'||s==='HCM') return 'HOSE';
-  if (s.includes('HNX')||s==='HASTC')           return 'HNX';
-  if (s.includes('UPCOM')||s==='UPC')           return 'UPCOM';
-  return null;
-}
-
-function buildMap() {
-  SMAP = {};
-  STOCKS.forEach(([t,n,ex]) => { SMAP[t] = {name:n, exchange:ex}; });
-}
-
+function buildMap() { SMAP = {}; STOCKS.forEach(([t,n,ex]) => { SMAP[t] = {name:n, exchange:ex}; }); }
 function updateCount(t, ok) {
-  const el = document.getElementById('cnt');
-  el.textContent = t; el.classList.toggle('ok', ok);
+  const el = document.getElementById('cnt'); el.textContent = t; el.classList.toggle('ok', ok);
 }
 
-/* ══════════════════════════════════════════════════════════
-   CHART INIT
-   ══════════════════════════════════════════════════════════ */
+/* ═══ CHART INIT ═══ */
 function initCharts() {
+  if (typeof LightweightCharts === 'undefined') {
+    showState('error', 'Không tải được thư viện biểu đồ (CDN).\nKiểm tra mạng rồi tải lại trang.');
+    return;
+  }
   const COMMON = {
     layout: { background:{type:'solid',color:'#0d1117'}, textColor:'#8b949e' },
     grid:   { vertLines:{color:'#161b22'}, horzLines:{color:'#161b22'} },
@@ -532,9 +288,7 @@ function initCharts() {
     handleScale:{ mouseWheel:true, pinch:true },
     handleScroll:{ mouseWheel:true, pressedMouseMove:true, horzTouchDrag:true },
   };
-
-  const cEl = document.getElementById('chart');
-  const vEl = document.getElementById('vol-chart');
+  const cEl = document.getElementById('chart'), vEl = document.getElementById('vol-chart');
 
   mainChart = LightweightCharts.createChart(cEl, { ...COMMON, autoSize:true });
   volChart  = LightweightCharts.createChart(vEl, {
@@ -544,191 +298,85 @@ function initCharts() {
     timeScale:{ visible:false, borderColor:'#21262d' },
     crosshair:{ vertLine:{visible:true}, horzLine:{visible:false} },
   });
-
   candleSeries = mainChart.addCandlestickSeries({
-    upColor:'#2ecc71', downColor:'#e74c3c',
-    borderUpColor:'#2ecc71', borderDownColor:'#e74c3c',
+    upColor:'#2ecc71', downColor:'#e74c3c', borderUpColor:'#2ecc71', borderDownColor:'#e74c3c',
     wickUpColor:'#2ecc71', wickDownColor:'#e74c3c',
   });
-  volSeries = volChart.addHistogramSeries({
-    priceFormat:{type:'volume'},
-    priceScaleId:'',
-  });
+  volSeries = volChart.addHistogramSeries({ priceFormat:{type:'volume'}, priceScaleId:'' });
   volChart.priceScale('').applyOptions({ scaleMargins:{top:0.1, bottom:0} });
 
   let syncing = false;
-  function syncCross(src, tgt) {
-    src.subscribeCrosshairMove(p => {
-      if (syncing) return; syncing=true;
-      tgt.setCrosshairPosition(p.seriesData?.get(candleSeries)?.close??0,
-                               p.time??null, volSeries);
-      syncing=false;
-    });
-  }
-  syncCross(mainChart, volChart);
-
-  mainChart.timeScale().subscribeVisibleLogicalRangeChange(r => {
-    if (syncing) return; syncing=true;
-    volChart.timeScale().setVisibleLogicalRange(r);
-    syncing=false;
-  });
-  volChart.timeScale().subscribeVisibleLogicalRangeChange(r => {
-    if (syncing) return; syncing=true;
-    mainChart.timeScale().setVisibleLogicalRange(r);
-    syncing=false;
-  });
-
   mainChart.subscribeCrosshairMove(p => {
+    if (!syncing) {
+      syncing = true;
+      volChart.setCrosshairPosition(p.seriesData?.get(candleSeries)?.close ?? 0, p.time ?? null, volSeries);
+      syncing = false;
+    }
     const bar = p.seriesData?.get(candleSeries);
     if (!bar) return;
     const prev = candleSeries.dataByIndex(p.logical - 1);
-    const chg  = prev ? ((bar.close - prev.close)/prev.close*100) : 0;
+    const chg = prev ? ((bar.close - prev.close) / prev.close * 100) : 0;
     document.getElementById('ov-o').textContent = FMT_PRICE(bar.open);
     document.getElementById('ov-h').textContent = FMT_PRICE(bar.high);
     document.getElementById('ov-l').textContent = FMT_PRICE(bar.low);
     document.getElementById('ov-c').textContent = FMT_PRICE(bar.close);
     const chgEl = document.getElementById('ov-chg');
-    chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(2)+'%';
-    chgEl.className = 'ohlc-chg '+(chg>=0?'up':'dn');
+    chgEl.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '%';
+    chgEl.className = 'ohlc-chg ' + (chg>=0 ? 'up' : 'dn');
   });
-
+  mainChart.timeScale().subscribeVisibleLogicalRangeChange(r => {
+    if (syncing || !r) return; syncing = true; volChart.timeScale().setVisibleLogicalRange(r); syncing = false;
+  });
+  volChart.timeScale().subscribeVisibleLogicalRangeChange(r => {
+    if (syncing || !r) return; syncing = true; mainChart.timeScale().setVisibleLogicalRange(r); syncing = false;
+  });
   window.addEventListener('resize', () => {
     mainChart.applyOptions({ width: cEl.offsetWidth });
     volChart.applyOptions({ width: vEl.offsetWidth });
   });
 }
 
-/* ══════════════════════════════════════════════════════════
-   FETCH HELPER
-   ══════════════════════════════════════════════════════════ */
+/* ═══ DATA ═══ */
 function fetchWithTimeout(url, ms) {
   const ctrl = new AbortController();
-  const tid  = setTimeout(() => ctrl.abort(), ms);
+  const tid = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { signal: ctrl.signal })
     .then(r => { clearTimeout(tid); return r; })
     .catch(e => { clearTimeout(tid); throw e; });
 }
 
-let lastSource = null;
-
-async function trySource(url, parseFn, label, timeoutMs) {
-  try {
-    const res = await fetchWithTimeout(url, timeoutMs);
-    if (!res.ok) { console.warn(`[VNChart] ${label} HTTP ${res.status}`); return null; }
-    const text = await res.text();
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      // Some sources (or stale locally-generated files) can contain bare
-      // NaN/Infinity tokens, which are invalid JSON. Sanitize once and retry
-      // instead of failing the whole file over a handful of bad rows.
-      const sanitized = text
-        .replace(/\bNaN\b/g, 'null')
-        .replace(/\b-?Infinity\b/g, 'null');
-      json = JSON.parse(sanitized);
-    }
-    const candles = parseFn(json);
-    if (candles && candles.length >= 2) {
-      console.info(`[VNChart] ✓ ${label}`);
-      lastSource = { label, updated: json?.updated };
-      return candles;
-    }
-    console.warn(`[VNChart] ${label} no candles`);
-    return null;
-  } catch (e) {
-    console.warn(`[VNChart] ${label} error:`, e.message);
-    return null;
-  }
-}
-
-function updateDataSourceLabel() {
-  const el = document.getElementById('dataSource');
-  if (!el || !lastSource) return;
-  const NAMES = {
-    local: 'Yahoo Finance (cache nội bộ, cập nhật hàng ngày)',
-    Entrade: 'Entrade X',
-    SSI: 'SSI iBoard',
-    TCBS: 'TCBS',
-    'corsproxy.io': 'TCBS (qua proxy)',
-    allorigins: 'TCBS (qua proxy)',
-    thingproxy: 'TCBS (qua proxy)',
-    codetabs: 'TCBS (qua proxy)',
-  };
-  const name = NAMES[lastSource.label] || lastSource.label;
-  const suffix = lastSource.updated
-    ? ` <span style="opacity:.7">(cập nhật ${new Date(lastSource.updated).toLocaleString('vi-VN')})</span>`
-    : '';
-  el.innerHTML = `Dữ liệu: ${name}${suffix} ·
-          Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a>`;
+async function loadLocal(ticker) {
+  const res = await fetchWithTimeout(`data/${encodeURIComponent(ticker)}.json`, 8000);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const txt = (await res.text()).replace(/\bNaN\b/g, 'null').replace(/-?Infinity\b/g, 'null');
+  return JSON.parse(txt);
 }
 
 async function loadChartData() {
   if (!curTicker) return;
+  const my = ++reqId, tk = curTicker;       // bỏ qua kết quả cũ nếu người dùng đã chọn mã khác
   showState('loading');
+  const from = rangeDays > 0 ? Math.floor(Date.now()/1000) - rangeDays * 86400 : 0;
 
-  const now  = Math.floor(Date.now() / 1000);
-  const from = rangeDays > 0
-    ? now - rangeDays * 86400
-    : Math.floor(new Date('2000-01-01').getTime() / 1000);
-
-  const rD = resolution;
-  const rE = resolution === 'W' ? '1W' : resolution === 'M' ? '1M' : '1D';
-  const t  = encodeURIComponent(curTicker);
-
-  let candles = await trySource(
-    `data/${curTicker}.json`,
-    json => parseLocalFile(json, from, resolution),
-    'local', 5000
-  );
+  let candles = null, err = '';
+  try { candles = parseLocalFile(await loadLocal(tk), from, resolution); }
+  catch (e) { err = e.message; console.warn('[VNChart]', tk, e); }
+  if (my !== reqId) return;
 
   if (!candles) {
-    const ENTRADE = `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock` +
-      `?from=${from}&to=${now}&symbol=${t}&resolution=${rE}`;
-    const SSI = `https://iboard-query.ssi.com.vn/v2/stock-price/his-price` +
-      `?symbol=${t}&resolution=${rD}&from=${from}&to=${now}`;
-    candles = await Promise.any([
-      trySource(ENTRADE, parseTVFormat, 'Entrade', 8000),
-      trySource(SSI,     parseTVFormat, 'SSI',     8000),
-    ].map(p => p.then(c => c ?? Promise.reject('no data')))).catch(() => null);
-  }
-
-  if (!candles) {
-    const TCBS = `https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/his-price` +
-      `?ticker=${t}&type=stock&resolution=${rD}&from=${from}&to=${now}`;
-    candles = await trySource(TCBS, parseTCBS, 'TCBS', 10000);
-
-    if (!candles) candles = await trySource(
-      `https://corsproxy.io/?${TCBS}`, parseTCBS, 'corsproxy.io', 10000);
-    if (!candles) candles = await trySource(
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(TCBS)}`,
-      parseTCBS, 'allorigins', 10000);
-    if (!candles) candles = await trySource(
-      `https://thingproxy.freeboard.io/fetch/${TCBS}`,
-      parseTCBS, 'thingproxy', 10000);
-    if (!candles) candles = await trySource(
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(TCBS)}`,
-      parseTCBS, 'codetabs', 10000);
-  }
-
-  if (!candles) {
-    showState('error',
-      `Không tải được dữ liệu cho mã "${curTicker}".\n` +
-      `💡 Thiếu file data/${curTicker}.json – chạy GitHub Actions để tạo dữ liệu.\n` +
-      `Xem Console (F12) để biết chi tiết.`
-    );
+    showState('error', `Không có dữ liệu cho mã "${tk}" (${err || 'file rỗng'}).\n` +
+                       `Kiểm tra file data/${tk}.json và GitHub Actions.`);
     return;
   }
+  document.getElementById('dataSource').innerHTML =
+    'Dữ liệu: Yahoo Finance (cập nhật hằng ngày, có thể trễ) · Biểu đồ: ' +
+    '<a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a>';
 
-  updateDataSourceLabel();
-
-  const volData = candles.map(c => ({
-    time:  c.time,
-    value: c.volume,
-    color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
-  }));
   candleSeries.setData(candles);
-  volSeries.setData(volData);
+  volSeries.setData(candles.map(c => ({
+    time: c.time, value: c.volume,
+    color: c.close >= c.open ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.5)',
+  })));
   lastCandles = candles;
   renderMA(candles);
   if (typeof renderKTIndicators === 'function') renderKTIndicators(candles);
@@ -741,398 +389,197 @@ function parseLocalFile(json, fromTs, res) {
   const raw = Array.isArray(json) ? json : json?.candles;
   if (!Array.isArray(raw) || raw.length < 2) return null;
 
-  const normalised = raw.map(row => {
+  const rows = raw.map(row => {
     const [d, o, h, l, c, v] = row;
     if (o == null || h == null || l == null || c == null) return null;
     const ts = typeof d === 'number' ? d : dateToTime(d);
     const ov=+o, hv=+h, lv=+l, cv=+c, vv=+v;
-    if (!ts || !isFinite(ov) || !isFinite(hv) || !isFinite(lv) || !isFinite(cv) || ov<=0 || hv<=0 || lv<=0 || cv<=0) return null;
+    if (!ts || !isFinite(ov) || !isFinite(hv) || !isFinite(lv) || !isFinite(cv) ||
+        ov<=0 || hv<=0 || lv<=0 || cv<=0) return null;
     return [ts, ov, hv, lv, cv, isFinite(vv) && vv > 0 ? vv : 0];
   }).filter(Boolean).sort((a,b) => a[0] - b[0]);
-  if (normalised.length < 2) return null;
+  if (rows.length < 2) return null;
 
-  let filtered = normalised.filter(([ts]) => ts >= fromTs);
-  if (!filtered.length) filtered = normalised;
+  let filtered = rows.filter(([ts]) => ts >= fromTs);
+  if (!filtered.length) filtered = rows;
 
-  if (res === 'D') {
-    return filtered.map(([ts,o,h,l,c,v]) => ({
-      time:ts, open:o, high:h, low:l, close:c, volume:v
-    }));
-  }
+  if (res === 'D')
+    return filtered.map(([ts,o,h,l,c,v]) => ({ time:ts, open:o, high:h, low:l, close:c, volume:v }));
 
   const bucketKey = ts => {
     const d = new Date(ts * 1000);
-    if (res === 'W') {
-      const day = d.getUTCDay();
-      return ts - (day === 0 ? 6 : day - 1) * 86400;
-    }
+    if (res === 'W') { const day = d.getUTCDay(); return ts - (day === 0 ? 6 : day - 1) * 86400; }
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 1000;
   };
-
   const map = new Map();
-  for (const [ts, o, h, l, c, v] of filtered) {
+  for (const [ts,o,h,l,c,v] of filtered) {
     const k = bucketKey(ts);
     if (!map.has(k)) map.set(k, { time:k, open:o, high:h, low:l, close:c, volume:v });
-    else {
-      const b = map.get(k);
-      b.high = Math.max(b.high, h);
-      b.low  = Math.min(b.low,  l);
-      b.close = c;
-      b.volume += v;
-    }
+    else { const b = map.get(k); b.high = Math.max(b.high,h); b.low = Math.min(b.low,l); b.close = c; b.volume += v; }
   }
   const agg = [...map.values()].sort((a,b) => a.time - b.time);
   return agg.length >= 2 ? agg : null;
 }
 
-function parseTVFormat(json) {
-  const t = json?.t || json?.time || [];
-  const o = json?.o || json?.open  || [];
-  const h = json?.h || json?.high  || [];
-  const l = json?.l || json?.low   || [];
-  const c = json?.c || json?.close || [];
-  const v = json?.v || json?.volume|| [];
-  if (!Array.isArray(t) || !t.length) return null;
-
-  const candles = t.map((ts, i) => {
-    const ov=+o[i], hv=+h[i], lv=+l[i], cv=+c[i];
-    if (!isFinite(ov)||!isFinite(hv)||!isFinite(lv)||!isFinite(cv)) return null;
-    const sec = ts > 1e10 ? Math.floor(ts / 1000) : ts;
-    const d = new Date(sec * 1000);
-    const midnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / 1000;
-    return { time: midnight, open:ov, high:hv, low:lv, close:cv, volume:isFinite(+v[i]) ? +v[i] : 0 };
-  }).filter(Boolean).sort((a,b) => a.time - b.time);
-  return dedup(candles);
-}
-
-function parseTCBS(json) {
-  const rows = json?.data || json?.stockPriceList || [];
-  if (!rows.length) return null;
-  const candles = rows.map(r => {
-    const t = dateToTime(r.tradingDate || r.date);
-    if (!t) return null;
-    return {
-      time:   t,
-      open:  +(r.open  || r.priceOpen  || 0),
-      high:  +(r.high  || r.priceHigh  || 0),
-      low:   +(r.low   || r.priceLow   || 0),
-      close: +(r.close || r.priceClose || 0),
-      volume:+(r.volume|| r.dealVolume || 0),
-    };
-  }).filter(Boolean).sort((a,b) => a.time - b.time);
-  return dedup(candles);
-}
-
-function dedup(arr) {
-  const seen = new Set(), out = [];
-  for (const c of arr) {
-    if (!seen.has(c.time)) { seen.add(c.time); out.push(c); }
-  }
-  return out.length ? out : null;
-}
-
 function dateToTime(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  return Math.floor(new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`).getTime()/1000);
+  const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? Math.floor(new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`).getTime() / 1000) : null;
 }
 
 function calcMA(data, n) {
   const out = [];
-  for (let i=n-1; i<data.length; i++) {
-    const sum = data.slice(i-n+1,i+1).reduce((a,c)=>a+c.close,0);
-    out.push({ time: data[i].time, value: sum/n });
-  }
+  for (let i = n-1; i < data.length; i++)
+    out.push({ time: data[i].time, value: data.slice(i-n+1, i+1).reduce((a,c) => a + c.close, 0) / n });
   return out;
 }
-
 function renderMA(data) {
-  if (!ma20Series) {
-    ma20Series = mainChart.addLineSeries({ color:'#3498db', lineWidth:1,
-      priceLineVisible:false, lastValueVisible:false });
-  }
-  if (!ma50Series) {
-    ma50Series = mainChart.addLineSeries({ color:'#e67e22', lineWidth:1,
-      priceLineVisible:false, lastValueVisible:false });
-  }
-  ma20Series.setData(ma20On && data.length>=20 ? calcMA(data,20) : []);
-  ma50Series.setData(ma50On && data.length>=50 ? calcMA(data,50) : []);
+  if (!ma20Series) ma20Series = mainChart.addLineSeries({ color:'#3498db', lineWidth:1, priceLineVisible:false, lastValueVisible:false });
+  if (!ma50Series) ma50Series = mainChart.addLineSeries({ color:'#e67e22', lineWidth:1, priceLineVisible:false, lastValueVisible:false });
+  ma20Series.setData(ma20On && data.length >= 20 ? calcMA(data,20) : []);
+  ma50Series.setData(ma50On && data.length >= 50 ? calcMA(data,50) : []);
 }
 
+/* ═══ UI ═══ */
 function showState(state, msg) {
-  document.getElementById('empty').classList.toggle('hidden',   state!=='empty');
-  document.getElementById('loading').classList.toggle('hidden', state!=='loading');
-  document.getElementById('errmsg').classList.toggle('hidden',  state!=='error');
-  if (state==='error' && msg) document.getElementById('err-txt').textContent = msg;
+  document.getElementById('empty').classList.toggle('hidden',   state !== 'empty');
+  document.getElementById('loading').classList.toggle('hidden', state !== 'loading');
+  document.getElementById('errmsg').classList.toggle('hidden',  state !== 'error');
+  if (state === 'error' && msg) document.getElementById('err-txt').textContent = msg;
 }
 
 function loadTicker(ticker, forceEx) {
   ticker = ticker.toUpperCase().trim();
   if (!ticker) return;
-
   const info = SMAP[ticker];
-  let exchange = forceEx || (info ? info.exchange : (exFilter!=='ALL' ? exFilter : 'HOSE'));
+  const exchange = forceEx || (info ? info.exchange : (exFilter !== 'ALL' ? exFilter : 'HOSE'));
+  curTicker = ticker; curExchange = exchange;
 
-  curTicker   = ticker;
-  curExchange = exchange;
-
-  document.querySelectorAll('.qpill').forEach(p =>
-    p.classList.toggle('on', p.dataset.t===ticker));
-
-  const ctb = document.getElementById('ctb');
-  ctb.classList.add('vis');
+  document.querySelectorAll('.qpill').forEach(p => p.classList.toggle('on', p.dataset.t === ticker));
+  document.getElementById('ctb').classList.add('vis');
   document.getElementById('ctb-sym').textContent = ticker;
   document.getElementById('ctb-nm').textContent  = info?.name ?? '';
   const exEl = document.getElementById('ctb-ex');
-  exEl.textContent  = exchange;
-  exEl.className    = `ctb-ex ${exchange}`;
-  document.querySelectorAll('.xbtn').forEach(b =>
-    b.classList.toggle('on', b.dataset.x===exchange));
-
+  exEl.textContent = exchange; exEl.className = `ctb-ex ${exchange}`;
+  document.querySelectorAll('.xbtn').forEach(b => b.classList.toggle('on', b.dataset.x === exchange));
   document.getElementById('rbar').classList.add('vis');
-
   loadChartData();
 }
 
 function buildQuickList() {
   const wrap = document.getElementById('qlist');
-  const lbl  = document.createElement('span');
-  lbl.className='qlbl'; lbl.textContent='Phổ biến:';
+  const lbl = document.createElement('span'); lbl.className = 'qlbl'; lbl.textContent = 'Phổ biến:';
   wrap.appendChild(lbl);
   QUICK.forEach(t => {
     const b = document.createElement('button');
-    b.className='qpill'; b.textContent=t; b.dataset.t=t;
-    b.addEventListener('click', ()=>loadTicker(t));
+    b.className = 'qpill'; b.textContent = t; b.dataset.t = t;
+    b.addEventListener('click', () => loadTicker(t));
     wrap.appendChild(b);
   });
 }
 
 function setupExTabs() {
-  document.querySelectorAll('.ex-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ex-tab').forEach(b=>b.classList.remove('on'));
-      btn.classList.add('on');
-      exFilter = btn.dataset.ex;
-      acIdx = -1;
-      showAC(document.getElementById('q').value);
-    });
-  });
+  document.querySelectorAll('.ex-tab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.ex-tab').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    exFilter = btn.dataset.ex; acIdx = -1;
+    showAC(document.getElementById('q').value);
+  }));
 }
-
 function setupToolbar() {
-  document.querySelectorAll('.xbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (!curTicker) return;
-      loadTicker(curTicker, btn.dataset.x);
-    });
-  });
+  document.querySelectorAll('.xbtn').forEach(btn => btn.addEventListener('click', () => {
+    if (curTicker) loadTicker(curTicker, btn.dataset.x);
+  }));
 }
-
 function setupRangeBar() {
-  document.querySelectorAll('.rbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('on'));
-      btn.classList.add('on');
-      rangeDays = parseInt(btn.dataset.r);
-      if (curTicker) loadChartData();
-    });
-  });
-  document.querySelectorAll('.resbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.resbtn').forEach(b=>b.classList.remove('on'));
-      btn.classList.add('on');
-      resolution = btn.dataset.res;
-      if (curTicker) loadChartData();
-    });
-  });
+  document.querySelectorAll('.rbtn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); rangeDays = parseInt(btn.dataset.r);
+    if (curTicker) loadChartData();
+  }));
+  document.querySelectorAll('.resbtn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.resbtn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); resolution = btn.dataset.res;
+    if (curTicker) loadChartData();
+  }));
 }
-
 function setupMA() {
-  ['20','50'].forEach(n => {
-    document.getElementById(`ma${n}-toggle`).addEventListener('click', () => {
-      const el = document.getElementById(`ma${n}-toggle`);
-      el.classList.toggle('on');
-      if (n==='20') ma20On = !ma20On;
-      else          ma50On = !ma50On;
-      if (curTicker) {
-        const data = lastCandles ?? [];
-        if (data.length) renderMA(data);
-        else loadChartData();
-      }
-    });
-  });
+  ['20','50'].forEach(n => document.getElementById(`ma${n}-toggle`).addEventListener('click', e => {
+    e.currentTarget.classList.toggle('on');
+    if (n === '20') ma20On = !ma20On; else ma50On = !ma50On;
+    if (curTicker) { if (lastCandles?.length) renderMA(lastCandles); else loadChartData(); }
+  }));
 }
 
+/* ═══ SEARCH ═══ */
 function setupSearch() {
-  const inp = document.getElementById('q');
-  const clr = document.getElementById('clr');
-
+  const inp = document.getElementById('q'), clr = document.getElementById('clr');
   inp.addEventListener('input', () => {
-    acIdx = -1;
-    clr.style.display = inp.value ? 'block' : 'none';
-    showAC(inp.value);
+    acIdx = -1; clr.style.display = inp.value ? 'block' : 'none'; showAC(inp.value);
   });
-
-  clr.addEventListener('click', () => {
-    inp.value=''; clr.style.display='none'; closeAC(); inp.focus();
-  });
-
+  clr.addEventListener('click', () => { inp.value = ''; clr.style.display = 'none'; closeAC(); inp.focus(); });
   inp.addEventListener('keydown', e => {
-    if (e.key==='ArrowDown') { e.preventDefault(); acIdx=Math.min(acIdx+1,acItems.length-1); highlightAC(); }
-    else if (e.key==='ArrowUp') { e.preventDefault(); acIdx=Math.max(acIdx-1,-1); highlightAC(); }
-    else if (e.key==='Enter') {
+    if (e.key === 'ArrowDown') { e.preventDefault(); acIdx = Math.min(acIdx+1, acItems.length-1); highlightAC(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); acIdx = Math.max(acIdx-1, -1); highlightAC(); }
+    else if (e.key === 'Enter') {
       e.preventDefault();
-      if (acIdx>=0 && acItems[acIdx]) pickAC(acItems[acIdx]);
-      else { const v=inp.value.trim().toUpperCase(); if(v) { closeAC(); loadTicker(v); } }
-    }
-    else if (e.key==='Escape') closeAC();
+      if (acIdx >= 0 && acItems[acIdx]) pickAC(acItems[acIdx]);
+      else { const v = inp.value.trim().toUpperCase(); if (v) { closeAC(); loadTicker(v); } }
+    } else if (e.key === 'Escape') closeAC();
   });
-
-  document.addEventListener('click', e => {
-    if (!document.getElementById('sw').contains(e.target)) closeAC();
-  });
+  document.addEventListener('click', e => { if (!document.getElementById('sw').contains(e.target)) closeAC(); });
 }
 
 function showAC(raw) {
   const val = raw.trim().toUpperCase();
-  const el  = document.getElementById('ac');
-  el.innerHTML=''; acItems=[]; acIdx=-1;
-  if (!val || !STOCKS.length) { el.style.display='none'; return; }
+  const el = document.getElementById('ac');
+  el.innerHTML = ''; acItems = []; acIdx = -1;
+  if (!val || !STOCKS.length) { el.style.display = 'none'; return; }
 
-  const exact=[], starts=[], name=[];
+  const exact = [], starts = [], name = [];
   STOCKS.forEach(item => {
-    const [t,n,ex]=item;
-    if (exFilter!=='ALL' && ex!==exFilter) return;
-    if (t===val)                        exact.push(item);
-    else if (t.startsWith(val))         starts.push(item);
+    const [t,n,ex] = item;
+    if (exFilter !== 'ALL' && ex !== exFilter) return;
+    if (t === val) exact.push(item);
+    else if (t.startsWith(val)) starts.push(item);
     else if (n.toUpperCase().includes(val)) name.push(item);
   });
+  const merged = [...exact, ...starts, ...name].slice(0, 20);
+  if (!merged.length) { el.style.display = 'none'; return; }
+  acItems = merged;
 
-  const merged=[...exact,...starts,...name].slice(0,20);
-  if (!merged.length) { el.style.display='none'; return; }
-  acItems=merged;
-
-  function grp(label, items) {
+  const grp = (label, items) => {
     if (!items.length) return;
-    const hdr=document.createElement('div'); hdr.className='ac-hdr'; hdr.textContent=label;
+    const hdr = document.createElement('div'); hdr.className = 'ac-hdr'; hdr.textContent = label;
     el.appendChild(hdr);
     items.forEach(item => {
-      const [t,n,ex]=item;
-      const row=document.createElement('div'); row.className='ac-row'; row.dataset.t=t;
-      const ts=document.createElement('span'); ts.className='ac-t'; ts.textContent=t;
-      const ns=document.createElement('span'); ns.className='ac-n'; ns.textContent=n;
-      const es=document.createElement('span'); es.className=`ac-ex ${ex}`; es.textContent=ex;
-      row.append(ts,ns,es);
-      row.addEventListener('mouseenter',()=>{acIdx=acItems.indexOf(item);highlightAC();});
-      row.addEventListener('click',()=>pickAC(item));
+      const [t,n,ex] = item;
+      const row = document.createElement('div'); row.className = 'ac-row'; row.dataset.t = t;
+      const ts = document.createElement('span'); ts.className = 'ac-t'; ts.textContent = t;
+      const ns = document.createElement('span'); ns.className = 'ac-n'; ns.textContent = n;
+      const es = document.createElement('span'); es.className = `ac-ex ${ex}`; es.textContent = ex;
+      row.append(ts, ns, es);
+      row.addEventListener('mouseenter', () => { acIdx = acItems.indexOf(item); highlightAC(); });
+      row.addEventListener('click', () => pickAC(item));
       el.appendChild(row);
     });
-  }
+  };
   grp('Khớp chính xác', exact.slice(0,3));
   grp('Mã bắt đầu bằng', starts.slice(0,10));
   grp('Theo tên công ty', name.slice(0,8));
-
-  el.style.display='block';
+  el.style.display = 'block';
 }
-
 function highlightAC() {
-  document.querySelectorAll('.ac-row').forEach(r =>
-    r.classList.toggle('sel', r.dataset.t===acItems[acIdx]?.[0]));
+  document.querySelectorAll('.ac-row').forEach(r => r.classList.toggle('sel', r.dataset.t === acItems[acIdx]?.[0]));
 }
-
 function pickAC(item) {
   if (!item) return;
-  const inp=document.getElementById('q');
-  inp.value=item[0];
-  document.getElementById('clr').style.display='block';
+  document.getElementById('q').value = item[0];
+  document.getElementById('clr').style.display = 'block';
   closeAC(); loadTicker(item[0]);
 }
-
-function closeAC() {
-  document.getElementById('ac').style.display='none';
-  acItems=[]; acIdx=-1;
-}
+function closeAC() { document.getElementById('ac').style.display = 'none'; acItems = []; acIdx = -1; }
 </script>
-  /* ═══ BỘ LỌC: Volume & Williams %R ═══ */
-const scanCache = {};            // ticker -> {close, vol, rows:[[h,l,c]...]}
-let scanTotal = 0, scanDone = 0, scanRunning = false;
-
-function wrOf(rows, n) {
-  if (rows.length < n) return null;
-  const w = rows.slice(-n);
-  const hh = Math.max(...w.map(r => r[0])), ll = Math.min(...w.map(r => r[1]));
-  return hh === ll ? null : (hh - rows[rows.length-1][2]) / (hh - ll) * -100;
-}
-
-async function scanOne(t) {
-  try {
-    const res = await fetchWithTimeout(`data/${t}.json`, 8000);
-    if (!res.ok) return;
-    const text = (await res.text()).replace(/\bNaN\b/g,'null').replace(/\b-?Infinity\b/g,'null');
-    const json = JSON.parse(text);
-    const raw = (Array.isArray(json) ? json : json?.candles) || [];
-    const rows = raw.filter(r => r[2]>0 && r[3]>0 && r[4]>0)
-                    .sort((a,b) => (a[0] > b[0] ? 1 : -1));
-    if (rows.length < 2) return;
-    const last = rows[rows.length-1];
-    scanCache[t] = { vol:+last[5] || 0, close:+last[4],
-                     rows: rows.slice(-60).map(r => [+r[2], +r[3], +r[4]]) };
-  } catch {}
-}
-
-async function startScan() {
-  if (scanRunning) return;
-  scanRunning = true;
-  const list = [...new Set(STOCKS.map(s => s[0]))].filter(t => !scanCache[t]);
-  scanTotal = list.length; scanDone = 0;
-  let i = 0;
-  const worker = async () => {
-    while (i < list.length) {
-      await scanOne(list[i++]);
-      scanDone++;
-      if (scanDone % 25 === 0) renderScan();
-    }
-  };
-  await Promise.all(Array.from({length: 8}, worker));
-  scanRunning = false;
-  renderScan();
-}
-
-function renderScan() {
-  const minVol = +document.getElementById('f-vol').value || 0;
-  const minWr  = +document.getElementById('f-wr').value;
-  const ex     = document.getElementById('f-ex').value;
-  const n      = Math.max(2, +document.getElementById('f-n').value || 14);
-  const out = [];
-  for (const [t, c] of Object.entries(scanCache)) {
-    if (ex !== 'ALL' && SMAP[t]?.exchange !== ex) continue;
-    const wr = wrOf(c.rows, n);
-    if (wr !== null && c.vol > minVol && wr > minWr) out.push({t, c, wr});
-  }
-  out.sort((a,b) => b.c.vol - a.c.vol);
-  document.getElementById('scan-info').textContent =
-    `${out.length} mã phù hợp · đã quét ${Object.keys(scanCache).length}/${scanTotal || Object.keys(scanCache).length}` +
-    (scanRunning ? ' (đang tải...)' : '');
-  const box = document.getElementById('scan-list');
-  box.innerHTML = '';
-  out.forEach(({t, c, wr}) => {
-    const d = document.createElement('div');
-    d.className = 'sc-row' + (t === curTicker ? ' on' : '');
-    d.innerHTML = `<b>${t}</b><span>${FMT_PRICE(c.close)} · ${FMT_VOL(c.vol)}</span><span class="wr">%R ${wr.toFixed(1)}</span>`;
-    d.addEventListener('click', () => { loadTicker(t); renderScan(); });
-    box.appendChild(d);
-  });
-}
-
-function setupScanPanel() {
-  if (window.innerWidth > 768) document.body.classList.add('scan-open');
-  const tg = () => document.body.classList.toggle('scan-open');
-  document.getElementById('scan-toggle').addEventListener('click', tg);
-  document.getElementById('scan-close').addEventListener('click', tg);
-  ['f-vol','f-wr','f-ex','f-n'].forEach(id =>
-    document.getElementById(id).addEventListener('input', renderScan));
-}
+<script src="screener.js"></script>
 <script src="kt-indicators.js"></script>
 </body>
 </html>
