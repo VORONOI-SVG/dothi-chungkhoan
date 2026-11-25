@@ -2,8 +2,8 @@ name: Update Vietnamese Stock Data
 
 on:
   schedule:
-    # 18:30 UTC = 01:30 sáng giờ Việt Nam (sau phiên cuối ngày), thứ 2 - thứ 6
-    - cron: '30 18 * * 1-5'
+    # 10:30 UTC = 17:30 giờ Việt Nam (sau khi HOSE đóng cửa 14:45), thứ 2 - thứ 6
+    - cron: '30 10 * * 1-5'
   workflow_dispatch:
 
 permissions:
