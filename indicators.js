@@ -10,11 +10,12 @@
 'use strict';
 
 /* ─── CẤU HÌNH (đổi số ở đây) ─── */
+const MOBILE = window.innerWidth < 700;
 const CFG = {
-  paneHeight: 110,   // chiều cao mặc định mỗi panel chỉ báo (px) — kéo thanh giữa các panel để đổi
-  minPane: 50,       // chiều cao tối thiểu của panel chỉ báo (px)
-  minMain: 140,      // chiều cao tối thiểu của khung nến (px)
-  priceScaleWidth: 72,                    // bề rộng trục giá, giữ các panel thẳng hàng
+  paneHeight: MOBILE ? 80 : 110,   // chiều cao mặc định mỗi panel chỉ báo (px) — kéo thanh giữa các panel để đổi
+  minPane: 50,                     // chiều cao tối thiểu của panel chỉ báo (px)
+  minMain: MOBILE ? 120 : 140,     // chiều cao tối thiểu của khung nến (px)
+  priceScaleWidth: MOBILE ? 56 : 72,      // bề rộng trục giá, giữ các panel thẳng hàng
   showMainTimeAxis: false,                // false: chỉ panel cuối hiện trục thời gian
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
   air: { length: 34, smoothing: 9, atrMult: 1.0, pipMult: 0.25, pct: 17, thr: 0.2, rsiLen: 14, rsiThr: 6 },
@@ -267,6 +268,7 @@ function injectCSS() {
       background:var(--border);transition:background .15s}
     .ind-split::after{content:'';position:absolute;left:50%;top:2px;width:36px;height:3px;margin-left:-18px;
       border-radius:2px;background:var(--muted);opacity:.5}
+    @media (pointer:coarse){.ind-split{flex-basis:16px}.ind-split::after{top:6px}}
     .ind-split:hover,.ind-split.drag{background:var(--accent)}
     .ind-split:hover::after,.ind-split.drag::after{background:#000;opacity:.6}
     .ind-legend{position:absolute;left:8px;top:3px;z-index:3;font-size:11px;line-height:1.4;
@@ -305,7 +307,7 @@ function build() {
     anchor.after(el); anchor = el;
     const chart = mkChart(el, i === 2);
     el.appendChild(lg);
-    panes.push({ el, chart, lg, sp, h: CFG.paneHeight });
+    panes.push({ el, chart, lg, sp, h: CFG.paneHeight, want: CFG.paneHeight });
   }
   setupSplitters();
   mainChart.applyOptions({
@@ -361,10 +363,12 @@ function build() {
 /* ─── kéo thanh ngang giữa các panel để đổi kích thước ─── */
 function setupSplitters() {
   const area = document.getElementById('chart-area');
-  const SP = 7;                                            // bề dày thanh kéo (px), khớp CSS
+  const SP = () => panes[0].sp.offsetHeight || 7;          // bề dày thanh kéo (px)
   const apply = () => panes.forEach(p => { p.el.style.flex = `0 0 ${Math.round(p.h)}px`; });
-  const maxTotal = () => area.clientHeight - panes.length * SP - CFG.minMain;
-  const fit = () => {                                      // cửa sổ thấp lại → thu nhỏ các panel từ dưới lên
+  const maxTotal = () => area.clientHeight - panes.length * SP() - CFG.minMain;
+  const fit = () => {                                      // khung thấp lại → thu nhỏ các panel từ dưới lên; cao lại → trả về cỡ đã chọn
+    if (area.clientHeight < 100) return;
+    panes.forEach(p => { p.h = p.want; });
     let over = panes.reduce((s, p) => s + p.h, 0) - maxTotal();
     for (let i = panes.length - 1; i >= 0 && over > 0; i--) {
       const cut = Math.min(over, panes[i].h - CFG.minPane);
@@ -391,6 +395,8 @@ function setupSplitters() {
         A.h = Math.max(CFG.minPane, Math.min(hA + dy, tot - CFG.minPane));
         B.h = tot - A.h;
       }
+      if (A) A.want = A.h;
+      B.want = B.h;
       apply();
     });
     const end = e => {
@@ -401,7 +407,7 @@ function setupSplitters() {
     p.sp.addEventListener('pointerup', end);
     p.sp.addEventListener('pointercancel', end);
   });
-  window.addEventListener('resize', fit);
+  new ResizeObserver(fit).observe(area);                   // chạy cả khi thanh công cụ phía trên hiện ra/ẩn đi
   apply(); fit();
 }
 
