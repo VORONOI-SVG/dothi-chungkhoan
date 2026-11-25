@@ -118,6 +118,9 @@
     .ohlc-v{color:var(--text);font-weight:600}
     .ohlc-chg.up{color:var(--accent)} .ohlc-chg.dn{color:var(--red)}
 
+    /* Ẩn dòng Tất cả/HOSE/HNX/UPCOM và dòng "Phổ biến" (giữ lại trong DOM để screener.js không bị lỗi) */
+    .ex-tabs,.quick{display:none !important}
+
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:var(--bg)}
     ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
