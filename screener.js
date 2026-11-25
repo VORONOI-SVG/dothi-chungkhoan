@@ -147,8 +147,10 @@
     const minWr = isNaN(wrIn) ? -100 : wrIn;
     const ex = $('f-ex').value;
 
-    let latest = '';
-    SCREEN.forEach(r => { if (r.d > latest) latest = r.d; });   // bỏ mã không có phiên mới nhất
+    // Phiên mới nhất = ngày có nhiều mã nhất (vài mã lệch ngày sẽ bị loại, không làm mất cả danh sách)
+    const cntD = {};
+    SCREEN.forEach(r => { cntD[r.d] = (cntD[r.d] || 0) + 1; });
+    const latest = Object.keys(cntD).sort((a, b) => cntD[b] - cntD[a] || (a < b ? 1 : -1))[0] || '';
 
     const out = SCREEN
       .filter(r => r.d === latest && r.wr !== null && r.v > minVol && r.wr > minWr &&
