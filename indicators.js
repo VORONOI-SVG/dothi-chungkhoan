@@ -20,7 +20,7 @@ const CFG = {
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
   air: { length: 34, smoothing: 9, atrMult: 1.0, pipMult: 0.25, pct: 17, thr: 0.2, rsiLen: 14, rsiThr: 6 },
   kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60 },
-  equalSplit: MOBILE,              // true: khung nến + 3 panel chia đều 4 phần bằng nhau (cho đến khi bạn tự kéo thanh chia)
+  equalSplit: true,                // true: khung nến + 3 panel chia đều 4 phần bằng nhau (cho đến khi bạn tự kéo thanh chia)
 };
 
 const NONE = 'rgba(0,0,0,0)';
