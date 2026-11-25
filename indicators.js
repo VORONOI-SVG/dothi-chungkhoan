@@ -19,7 +19,8 @@ const CFG = {
   showMainTimeAxis: false,                // false: chỉ panel cuối hiện trục thời gian
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
   air: { length: 34, smoothing: 9, atrMult: 1.0, pipMult: 0.25, pct: 17, thr: 0.2, rsiLen: 14, rsiThr: 6 },
-  kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60 },
+  kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60,
+         dotR: MOBILE ? 1.5 : 2.5 },   // bán kính chấm giao cắt KVO/Signal (px) — chỉnh số này để to/nhỏ hơn
 };
 
 const NONE = 'rgba(0,0,0,0)';
@@ -513,6 +514,20 @@ function drawBands() {
   ctx.beginPath(); ctx.rect(0, 0, w, p.cv.height / dpr); ctx.clip();
   fill(dc.up, dc.iu, 'rgba(76,175,80,.35)');
   fill(dc.lo, dc.il, 'rgba(242,54,69,.35)');
+
+  // chấm giao cắt KVO/Signal: bán kính cố định, không phình to theo khoảng cách giữa các nến
+  const R = CFG.kvo.dotR, cr = state.cross;
+  const dots = (flags, color, dy) => {
+    ctx.fillStyle = color;
+    for (let i = i0; i <= i1; i++) {
+      if (!flags[i] || dc.kvo[i] == null) continue;
+      const x = ts.logicalToCoordinate(i), y = sKV.kvo.priceToCoordinate(dc.kvo[i]);
+      if (x == null || y == null) continue;
+      ctx.beginPath(); ctx.arc(x, y + dy, R, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  dots(cr.up, '#ff9800', R + 3);     // cắt lên: chấm nằm dưới đường
+  dots(cr.dn, '#2962ff', -(R + 3));  // cắt xuống: chấm nằm trên đường
   ctx.restore();
 }
 
@@ -530,7 +545,8 @@ window.renderIndicators = function (candles, full) {
   const vo = calcVO(F), air = calcAIR(F), kv = calcKVO(F);
   const S = arr => arr.slice(off, off + n);
   const idx = new Map(V.map((c, i) => [c.time, i]));
-  state = { V, off, idx, vo, air, kv, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il) } };
+  state = { V, off, idx, vo, air, kv, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il), kvo: S(kv.kvo) },
+            cross: { up: S(kv.crossUp), dn: S(kv.crossDn) } };
 
   const pt = (arr, fn) => V.map((c, i) => {
     const v = arr[i + off];
@@ -572,13 +588,7 @@ window.renderIndicators = function (candles, full) {
     sKV.sig.setData  (pt(kv.sig, (t, v) => ({ time: t, value: v })));
     sKV.upper.setData(pt(kv.up,  (t, v) => ({ time: t, value: v })));
     sKV.lower.setData(pt(kv.lo,  (t, v) => ({ time: t, value: v })));
-    const m3 = [];
-    V.forEach((c, i) => {
-      const k = i + off;
-      if (kv.crossUp[k]) m3.push({ time: c.time, position: 'belowBar', color: '#ff9800', shape: 'circle', size: 1 });
-      if (kv.crossDn[k]) m3.push({ time: c.time, position: 'aboveBar', color: '#2962ff', shape: 'circle', size: 1 });
-    });
-    sKV.kvo.setMarkers(m3);
+    sKV.kvo.setMarkers([]);   // chấm giao cắt giờ vẽ bằng canvas trong drawBands()
 
     // đường phân kỳ (chỉ vẽ cặp pivot nằm trong đoạn đang xem, tối đa 80 đoạn mỗi loại)
     divSeries.forEach(s => panes[2].chart.removeSeries(s)); divSeries = [];
