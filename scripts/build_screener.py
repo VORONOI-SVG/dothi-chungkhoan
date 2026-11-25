@@ -82,7 +82,10 @@ def main():
     if len(out_rows) < MIN_TICKERS:
         sys.exit(f"Chỉ có {len(out_rows)} mã hợp lệ (< {MIN_TICKERS}); dừng để không ghi đè dữ liệu cũ.")
 
-    latest = max(r["d"] for r in out_rows)
+    counts = {}
+    for r in out_rows:
+        counts[r["d"]] = counts.get(r["d"], 0) + 1
+    latest = max(counts, key=lambda d: (counts[d], d))   # ngày có nhiều mã nhất
     for r in out_rows:
         r["stale"] = r["d"] != latest   # mã thiếu phiên mới nhất (tạm ngừng/thiếu dữ liệu)
 
