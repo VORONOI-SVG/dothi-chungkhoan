@@ -21,6 +21,7 @@ const CFG = {
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
   air: { length: 34, smoothing: 9, atrMult: 1.0, pipMult: 0.25, pct: 17, thr: 0.2, rsiLen: 14, rsiThr: 6 },
   kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60 },
+  dctm: { hi: 80, mid: 60, color: '#00bcd4', colorHi: '#ffeb3b' },   // DC Trend Meter: mức tham chiếu 80/60; trên 80 đường đổi sang colorHi
   equalSplit: true,                // true: khung nến + 3 panel chia đều 4 phần bằng nhau (cho đến khi bạn tự kéo thanh chia)
 };
 
@@ -356,6 +357,10 @@ function build() {
     priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
     autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) });
   c1.priceScale('dctm').applyOptions({ visible: false, scaleMargins: { top: 0.1, bottom: 0.1 } });
+  sVO.dcTm.createPriceLine({ price: CFG.dctm.hi, color: 'rgba(76,175,80,.7)', lineWidth: 1,         // 80: xu hướng tăng mạnh
+    lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false, title: '' });
+  sVO.dcTm.createPriceLine({ price: CFG.dctm.mid, color: 'rgba(255,235,59,.5)', lineWidth: 1,        // 60: xu hướng tăng yếu
+    lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false, title: '' });
   sVO.vh.createPriceLine({ price: 0, color: 'rgba(255,255,255,.25)', lineWidth: 1,
     lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: '' });
 
@@ -502,7 +507,7 @@ function paintLegends(i) {
   l1.innerHTML = `<b>Vortex Oscillator</b>` +
     `<span style="color:${vh != null && vh >= 0 ? '#4CAF50' : '#FF5252'}">Vortex ${fmt3(vh)}</span>` +
     `<span style="color:#fff">Micro ${fmt3(vo.micro[i + o])}</span>` +
-    `<span style="color:#00bcd4">DC ${state.dtm[i + o] == null ? '—' : state.dtm[i + o].toFixed(1)}</span>`;
+    `<span style="color:${state.dtm[i + o] > CFG.dctm.hi ? CFG.dctm.colorHi : CFG.dctm.color}">DC ${state.dtm[i + o] == null ? '—' : state.dtm[i + o].toFixed(1)}</span>`;
   l2.innerHTML = `<b>AIR Vortex ADX</b>` +
     `<span style="color:#b5a1e2">ADX ${fmt3(ar.vx[i + o])}</span>` +
     `<span style="color:${GR}">+DI ${fmt3(ar.pl[i + o])}</span>` +
@@ -584,7 +589,7 @@ window.renderIndicators = function (candles, full) {
     sVO.short.setData  (pt(vo.hist, (t, v) => ({ time: t, value: v, color: hexA(v > 0 ? '#E040FB' : '#9C27B0', 0.7) })));
     sVO.vh.setData     (pt(vo.vh,   (t, v) => ({ time: t, value: v, color: hexA(v >= 0 ? '#4CAF50' : '#FF5252', 0.6) })));
     sVO.micro.setData  (pt(vo.micro,(t, v) => ({ time: t, value: v })));
-    sVO.dcTm.setData   (pt(dtm,     (t, v) => ({ time: t, value: v })));
+    sVO.dcTm.setData   (pt(dtm,     (t, v) => ({ time: t, value: v, color: v > CFG.dctm.hi ? CFG.dctm.colorHi : CFG.dctm.color })));
     const m1 = [];
     V.forEach((c, i) => {
       const k = i + off;
