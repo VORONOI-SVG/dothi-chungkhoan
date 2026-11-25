@@ -15,6 +15,7 @@ const CFG = {
   paneHeight: MOBILE ? 80 : 110,   // chiều cao mặc định mỗi panel chỉ báo (px) — kéo thanh giữa các panel để đổi
   minPane: 50,                     // chiều cao tối thiểu của panel chỉ báo (px)
   minMain: MOBILE ? 120 : 140,     // chiều cao tối thiểu của khung nến (px)
+  splitTouch: 6,                   // bề dày thanh kéo trên màn hình cảm ứng (px) — vùng chạm thực tế vẫn rộng hơn
   priceScaleWidth: MOBILE ? 56 : 72,      // bề rộng trục giá, giữ các panel thẳng hàng
   showMainTimeAxis: false,                // false: chỉ panel cuối hiện trục thời gian
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
@@ -269,13 +270,22 @@ function injectCSS() {
       background:var(--border);transition:background .15s}
     .ind-split::after{content:'';position:absolute;left:50%;top:2px;width:36px;height:3px;margin-left:-18px;
       border-radius:2px;background:var(--muted);opacity:.5}
-    @media (pointer:coarse){.ind-split{flex-basis:16px}.ind-split::after{top:6px}}
+    @media (pointer:coarse){      /* cảm ứng: thanh nhìn thấy mỏng, nhưng vùng chạm vẫn rộng (::before vô hình) để dễ kéo */
+      .ind-split{flex-basis:${CFG.splitTouch}px}
+      .ind-split::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+      .ind-split::after{top:${Math.max(0, Math.round((CFG.splitTouch - 3) / 2))}px;width:28px;margin-left:-14px}
+    }
     .ind-split:hover,.ind-split.drag{background:var(--accent)}
     .ind-split:hover::after,.ind-split.drag::after{background:#000;opacity:.6}
     .ind-legend{position:absolute;left:8px;top:3px;z-index:3;font-size:11px;line-height:1.4;
       pointer-events:none;white-space:nowrap;color:var(--muted)}
     .ind-legend b{color:var(--text);margin-right:6px}
     .ind-legend span{margin-right:8px}
+    @media (max-width:700px){
+      .ind-legend{left:5px;top:1px;font-size:9px;line-height:1.3}
+      .ind-legend b{margin-right:4px}
+      .ind-legend span{margin-right:5px}
+    }
     .ind-canvas{position:absolute;left:0;top:0;pointer-events:none;z-index:2}`;
   document.head.appendChild(st);
 }
