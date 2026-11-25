@@ -283,7 +283,7 @@ function injectCSS() {
 function mkChart(el, showTime) {
   return LightweightCharts.createChart(el, {
     autoSize: true,
-    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#8b949e' },
+    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#8b949e', attributionLogo: false },
     grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: '#21262d', minimumWidth: CFG.priceScaleWidth, scaleMargins: { top: 0.15, bottom: 0.1 } },
