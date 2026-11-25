@@ -2,7 +2,7 @@
    - Vỏ app (HTML/JS/CSS/icon/thư viện biểu đồ): cache sẵn, mở được khi mất mạng
    - data/*.json: ưu tiên mạng để luôn có dữ liệu mới, mất mạng thì dùng bản đã cache
    Mỗi lần sửa code, đổi số VERSION để máy người dùng tải bản mới. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = 'vnchart-shell-' + VERSION;
 const DATA_CACHE  = 'vnchart-data-' + VERSION;
 
@@ -75,8 +75,14 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // file tĩnh còn lại (cùng domain + thư viện CDN): dùng cache ngay, âm thầm cập nhật nền
-  if (url.origin === location.origin || url.hostname === 'cdn.jsdelivr.net') {
+  // file của bạn (js/html/css/icon): mạng trước để luôn nhận bản mới, mất mạng thì dùng cache
+  if (url.origin === location.origin) {
+    e.respondWith(networkFirst(req, SHELL_CACHE));
+    return;
+  }
+
+  // thư viện CDN (hiếm khi đổi): dùng cache ngay, âm thầm cập nhật nền
+  if (url.hostname === 'cdn.jsdelivr.net') {
     e.respondWith(staleWhileRevalidate(req, SHELL_CACHE));
   }
 });
