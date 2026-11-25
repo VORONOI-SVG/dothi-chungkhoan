@@ -4,6 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
+  <link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d1117">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#21262d;
@@ -242,6 +247,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW lỗi:', e));
+  });
+}
+</script>
 <script>
 /* ═══ CONFIG ═══ */
 const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
