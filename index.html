@@ -96,9 +96,6 @@
     .chart-area{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
     #chart{flex:1;min-height:0;position:relative}
     #vol-chart{height:0;flex-shrink:0;display:none}
-    #kt2-chart{flex:0;min-height:0;display:none;border-top:1px solid var(--border);position:relative}
-    #kt2-overlay,#fvg-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
-    #kt2-chart.vis{display:block;flex:1}
 
     .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
       justify-content:center;gap:12px;color:var(--muted);pointer-events:none;z-index:10}
@@ -189,7 +186,7 @@
   <div class="chart-area" id="chart-area">
     <div id="chart"></div>
     <div id="vol-chart"></div>
-    <div id="kt2-chart"></div>
+    <!-- 3 panel chỉ báo (Vortex Oscillator, AIR Vortex ADX, Klinger) do indicators.js tự tạo ngay dưới #vol-chart -->
 
     <div class="overlay" id="empty">
       <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -358,8 +355,12 @@ async function loadChartData() {
   showState('loading');
   const from = rangeDays > 0 ? Math.floor(Date.now()/1000) - rangeDays * 86400 : 0;
 
-  let candles = null, err = '';
-  try { candles = parseLocalFile(await loadLocal(tk), from, resolution); }
+  let candles = null, fullCandles = null, err = '';
+  try {
+    const json = await loadLocal(tk);
+    candles     = parseLocalFile(json, from, resolution);
+    fullCandles = parseLocalFile(json, 0,    resolution);   // toàn bộ lịch sử → dùng để tính chỉ báo
+  }
   catch (e) { err = e.message; console.warn('[VNChart]', tk, e); }
   if (my !== reqId) return;
 
@@ -379,7 +380,7 @@ async function loadChartData() {
   })));
   lastCandles = candles;
   renderMA(candles);
-  if (typeof renderKTIndicators === 'function') renderKTIndicators(candles);
+  if (typeof renderIndicators === 'function') renderIndicators(candles, fullCandles || candles);
   mainChart.timeScale().fitContent();
   showState('chart');
   document.getElementById('ohlc').style.display = 'flex';
@@ -580,6 +581,6 @@ function pickAC(item) {
 function closeAC() { document.getElementById('ac').style.display = 'none'; acItems = []; acIdx = -1; }
 </script>
 <script src="screener.js"></script>
-<script src="kt-indicators.js"></script>
+<script src="indicators.js"></script>
 </body>
 </html>
