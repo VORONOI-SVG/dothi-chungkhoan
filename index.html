@@ -12,7 +12,7 @@
       --radius:7px;--font:'Inter','Segoe UI',system-ui,sans-serif}
     html,body{height:100%;background:var(--bg);color:var(--text);
       font-family:var(--font);font-size:14px;line-height:1.5}
-    .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 
     header{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--surface);
       border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
@@ -120,6 +120,30 @@
 
     /* Ẩn dòng Tất cả/HOSE/HNX/UPCOM và dòng "Phổ biến" (giữ lại trong DOM để screener.js không bị lỗi) */
     .ex-tabs,.quick{display:none !important}
+
+    /* ═══ ĐIỆN THOẠI: thu gọn các thanh phía trên để chừa chỗ cho đồ thị + 3 panel chỉ báo ═══ */
+    @media (max-width:700px){
+      html,body{font-size:13px}
+      header{padding:6px 8px;gap:6px}
+      .logo{font-size:0;gap:0}                      /* chỉ giữ icon, bỏ chữ "VN Chart" */
+      .search-wrap{min-width:0;max-width:none}
+      #q{padding:6px 26px 6px 30px;font-size:13px}
+      #cnt{display:none}
+      #ctb{flex-wrap:nowrap}
+      .ctb-left{flex-wrap:nowrap;gap:6px;padding:4px 8px;overflow:hidden}
+      .ctb-sym{font-size:13px}
+      .ctb-nm,.ctb-ex,.ctb-right .ctb-lbl{display:none}
+      .ctb-right{padding:4px 8px;gap:3px}
+      .xbtn{padding:2px 7px}
+      .range-bar{flex-wrap:nowrap;overflow-x:auto;padding:4px 8px;row-gap:0;scrollbar-width:none}
+      .range-bar::-webkit-scrollbar{display:none}
+      .range-bar > *{flex-shrink:0}
+      .rb-right{margin-left:8px;flex-wrap:nowrap}
+      .rb-right > *{flex-shrink:0}
+      .rbtn,.resbtn{padding:3px 7px}
+      .sbar{padding:2px 8px;font-size:10px;gap:6px}
+      .sbar-r,#dataSource{display:none}
+    }
 
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:var(--bg)}
