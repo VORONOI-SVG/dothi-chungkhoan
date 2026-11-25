@@ -150,6 +150,24 @@ function calcVO(C) {
   return { hist, h2, h3, vh, micro, cu, cd, xmu, xmd };
 }
 
+/* ══════════ CHỈ BÁO 1b — DONCHIAN CHANNEL TREND METER (vẽ chung panel với Vortex, thang 0–100) ══════════ */
+function dcPct(close, len) {                       // _dcp() trong Pine: vị trí của giá trong kênh Donchian (0–1)
+  const n = close.length, out = new Array(n).fill(null);
+  for (let i = len - 1; i < n; i++) {
+    let hi = -Infinity, lo = Infinity;
+    for (let j = i - len + 1; j <= i; j++) { if (close[j] > hi) hi = close[j]; if (close[j] < lo) lo = close[j]; }
+    out[i] = hi === lo ? 0.5 : (close[i] - lo) / (hi - lo);   // kênh phẳng (giá đứng yên) → coi như giữa kênh
+  }
+  return out;
+}
+function calcDCTM(C) {
+  const close = C.map(c => c.close);
+  const e20 = emaArr(dcPct(close, 20), 10), e40 = emaArr(dcPct(close, 40), 10),
+        e60 = emaArr(dcPct(close, 60), 10), e100 = emaArr(dcPct(close, 100), 15);
+  return close.map((_, i) => (e20[i] == null || e40[i] == null || e60[i] == null || e100[i] == null) ? null
+    : 100 * (4 * e20[i] + 3 * e40[i] + 2 * e60[i] + 1 * e100[i]) / 10);
+}
+
 /* ══════════ CHỈ BÁO 2 — AIR VORTEX ADX ══════════ */
 const GR = '#b6f1b8', RD = '#f581a8', UPc = '#57d132', DNc = '#e42626';   // theme "Classic"
 function calcAIR(C) {
@@ -333,6 +351,11 @@ function build() {
   sVO.short   = c1.addHistogramSeries({ ...LINE, priceFormat: pf });
   sVO.vh      = c1.addHistogramSeries({ ...LINE, priceFormat: pf });
   sVO.micro   = c1.addLineSeries({ ...LINE, color: '#ffffff', lineWidth: 1, priceFormat: pf });
+  // DC Trend Meter: thang riêng 0–100 (ẩn trục) để không lệch với thang của Vortex; không vẽ đường tham chiếu / tô màu
+  sVO.dcTm    = c1.addLineSeries({ ...LINE, color: '#00bcd4', lineWidth: 1, priceScaleId: 'dctm',
+    priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
+    autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) });
+  c1.priceScale('dctm').applyOptions({ visible: false, scaleMargins: { top: 0.1, bottom: 0.1 } });
   sVO.vh.createPriceLine({ price: 0, color: 'rgba(255,255,255,.25)', lineWidth: 1,
     lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: '' });
 
@@ -478,7 +501,8 @@ function paintLegends(i) {
   const vh = vo.vh[i + o];
   l1.innerHTML = `<b>Vortex Oscillator</b>` +
     `<span style="color:${vh != null && vh >= 0 ? '#4CAF50' : '#FF5252'}">Vortex ${fmt3(vh)}</span>` +
-    `<span style="color:#fff">Micro ${fmt3(vo.micro[i + o])}</span>`;
+    `<span style="color:#fff">Micro ${fmt3(vo.micro[i + o])}</span>` +
+    `<span style="color:#00bcd4">DC ${state.dtm[i + o] == null ? '—' : state.dtm[i + o].toFixed(1)}</span>`;
   l2.innerHTML = `<b>AIR Vortex ADX</b>` +
     `<span style="color:#b5a1e2">ADX ${fmt3(ar.vx[i + o])}</span>` +
     `<span style="color:${GR}">+DI ${fmt3(ar.pl[i + o])}</span>` +
@@ -543,10 +567,10 @@ window.renderIndicators = function (candles, full) {
   if (off < 0) { F = candles; off = 0; }
   const V = F.slice(off), n = V.length;
 
-  const vo = calcVO(F), air = calcAIR(F), kv = calcKVO(F);
+  const vo = calcVO(F), air = calcAIR(F), kv = calcKVO(F), dtm = calcDCTM(F);
   const S = arr => arr.slice(off, off + n);
   const idx = new Map(V.map((c, i) => [c.time, i]));
-  state = { V, off, idx, vo, air, kv, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il) } };
+  state = { V, off, idx, vo, air, kv, dtm, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il) } };
 
   const pt = (arr, fn) => V.map((c, i) => {
     const v = arr[i + off];
@@ -560,6 +584,7 @@ window.renderIndicators = function (candles, full) {
     sVO.short.setData  (pt(vo.hist, (t, v) => ({ time: t, value: v, color: hexA(v > 0 ? '#E040FB' : '#9C27B0', 0.7) })));
     sVO.vh.setData     (pt(vo.vh,   (t, v) => ({ time: t, value: v, color: hexA(v >= 0 ? '#4CAF50' : '#FF5252', 0.6) })));
     sVO.micro.setData  (pt(vo.micro,(t, v) => ({ time: t, value: v })));
+    sVO.dcTm.setData   (pt(dtm,     (t, v) => ({ time: t, value: v })));
     const m1 = [];
     V.forEach((c, i) => {
       const k = i + off;
