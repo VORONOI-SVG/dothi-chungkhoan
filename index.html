@@ -4,11 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VN Stock Chart – Biểu đồ chứng khoán Việt Nam</title>
-  <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0d1117">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="mobile-web-app-capable" content="yes">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#21262d;
@@ -148,6 +143,7 @@
       .rbtn,.resbtn{padding:3px 7px}
       .sbar{padding:2px 8px;font-size:10px;gap:6px}
       .sbar-r,#dataSource{display:none}
+      #tvAttr{margin-left:auto}
     }
 
     ::-webkit-scrollbar{width:5px;height:5px}
@@ -243,17 +239,12 @@
     </div>
     <span id="dataSource">Dữ liệu: — · Biểu đồ: <a href="https://tradingview.com/lightweight-charts/" target="_blank">Lightweight Charts</a></span>
     <span class="sbar-r">HOSE · HNX · UPCOM &nbsp;·&nbsp; © VN Chart 2025 · Chỉ mang tính tham khảo, không phải khuyến nghị đầu tư</span>
+    <!-- Ghi nhận bản quyền theo giấy phép Lightweight Charts (thay cho logo trên đồ thị) — nên giữ lại -->
+    <span id="tvAttr">© 2025 <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView, Inc.</a></span>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
-  <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW lỗi:', e));
-  });
-}
-</script>
 <script>
 /* ═══ CONFIG ═══ */
 const QUICK = ["VNM","VIC","HPG","TCB","VCB","FPT","MBB","SSI","VJC","GAS"];
@@ -316,7 +307,7 @@ function initCharts() {
     return;
   }
   const COMMON = {
-    layout: { background:{type:'solid',color:'#0d1117'}, textColor:'#8b949e' },
+    layout: { background:{type:'solid',color:'#0d1117'}, textColor:'#8b949e', attributionLogo:false },
     grid:   { vertLines:{color:'#161b22'}, horzLines:{color:'#161b22'} },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     timeScale: { borderColor:'#21262d', timeVisible:true, secondsVisible:false },
