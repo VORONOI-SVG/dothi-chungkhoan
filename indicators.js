@@ -19,8 +19,8 @@ const CFG = {
   showMainTimeAxis: false,                // false: chỉ panel cuối hiện trục thời gian
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
   air: { length: 34, smoothing: 9, atrMult: 1.0, pipMult: 0.25, pct: 17, thr: 0.2, rsiLen: 14, rsiThr: 6 },
-  kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60,
-         dotR: MOBILE ? 1.5 : 2.5 },   // bán kính chấm giao cắt KVO/Signal (px) — chỉnh số này để to/nhỏ hơn
+  kvo: { fast: 34, slow: 55, sig: 13, dcLen: 55, dcBand: 8, pivL: 5, pivR: 5, divMin: 5, divMax: 60 },
+  equalSplit: MOBILE,              // true: khung nến + 3 panel chia đều 4 phần bằng nhau (cho đến khi bạn tự kéo thanh chia)
 };
 
 const NONE = 'rgba(0,0,0,0)';
@@ -367,8 +367,13 @@ function setupSplitters() {
   const SP = () => panes[0].sp.offsetHeight || 7;          // bề dày thanh kéo (px)
   const apply = () => panes.forEach(p => { p.el.style.flex = `0 0 ${Math.round(p.h)}px`; });
   const maxTotal = () => area.clientHeight - panes.length * SP() - CFG.minMain;
+  let userSized = false;                                   // true sau khi người dùng tự kéo thanh chia
   const fit = () => {                                      // khung thấp lại → thu nhỏ các panel từ dưới lên; cao lại → trả về cỡ đã chọn
     if (area.clientHeight < 100) return;
+    if (CFG.equalSplit && !userSized) {                    // chia đều: nến + 3 panel = 4 phần bằng nhau
+      const eq = Math.max(CFG.minPane, Math.floor((area.clientHeight - panes.length * SP()) / (panes.length + 1)));
+      panes.forEach(p => { p.want = eq; });
+    }
     panes.forEach(p => { p.h = p.want; });
     let over = panes.reduce((s, p) => s + p.h, 0) - maxTotal();
     for (let i = panes.length - 1; i >= 0 && over > 0; i--) {
@@ -381,7 +386,7 @@ function setupSplitters() {
     const A = i > 0 ? panes[i - 1] : null, B = p;          // A: panel phía trên thanh (null = khung nến)
     let y0 = 0, hA = 0, hB = 0, dragging = false;
     p.sp.addEventListener('pointerdown', e => {
-      dragging = true; y0 = e.clientY; hA = A ? A.h : 0; hB = B.h;
+      dragging = true; userSized = true; y0 = e.clientY; hA = A ? A.h : 0; hB = B.h;
       p.sp.setPointerCapture(e.pointerId); p.sp.classList.add('drag');
       document.body.style.userSelect = 'none'; e.preventDefault();
     });
@@ -514,20 +519,6 @@ function drawBands() {
   ctx.beginPath(); ctx.rect(0, 0, w, p.cv.height / dpr); ctx.clip();
   fill(dc.up, dc.iu, 'rgba(76,175,80,.35)');
   fill(dc.lo, dc.il, 'rgba(242,54,69,.35)');
-
-  // chấm giao cắt KVO/Signal: bán kính cố định, không phình to theo khoảng cách giữa các nến
-  const R = CFG.kvo.dotR, cr = state.cross;
-  const dots = (flags, color, dy) => {
-    ctx.fillStyle = color;
-    for (let i = i0; i <= i1; i++) {
-      if (!flags[i] || dc.kvo[i] == null) continue;
-      const x = ts.logicalToCoordinate(i), y = sKV.kvo.priceToCoordinate(dc.kvo[i]);
-      if (x == null || y == null) continue;
-      ctx.beginPath(); ctx.arc(x, y + dy, R, 0, Math.PI * 2); ctx.fill();
-    }
-  };
-  dots(cr.up, '#ff9800', R + 3);     // cắt lên: chấm nằm dưới đường
-  dots(cr.dn, '#2962ff', -(R + 3));  // cắt xuống: chấm nằm trên đường
   ctx.restore();
 }
 
@@ -545,8 +536,7 @@ window.renderIndicators = function (candles, full) {
   const vo = calcVO(F), air = calcAIR(F), kv = calcKVO(F);
   const S = arr => arr.slice(off, off + n);
   const idx = new Map(V.map((c, i) => [c.time, i]));
-  state = { V, off, idx, vo, air, kv, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il), kvo: S(kv.kvo) },
-            cross: { up: S(kv.crossUp), dn: S(kv.crossDn) } };
+  state = { V, off, idx, vo, air, kv, dc: { up: S(kv.up), lo: S(kv.lo), iu: S(kv.iu), il: S(kv.il) } };
 
   const pt = (arr, fn) => V.map((c, i) => {
     const v = arr[i + off];
