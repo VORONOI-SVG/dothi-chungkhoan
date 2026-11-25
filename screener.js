@@ -71,7 +71,7 @@
   panel.innerHTML = `
     <div class="scan-h"><span>Lọc cổ phiếu</span><button class="scan-btn" id="scan-close">✕</button></div>
     <div class="scan-f">
-      <label>Volume &gt;<input id="f-vol" type="number" value="500000" step="50000" min="0"></label>
+      <label>Volume &gt;<input id="f-vol" type="number" value="5000" step="1000" min="0"></label>
       <label>Williams %R &gt;<input id="f-wr" type="number" value="-60" step="1" min="-100" max="0"></label>
       <label style="grid-column:1/3">Sàn
         <select id="f-ex"><option value="ALL">Tất cả</option><option>HOSE</option><option>HNX</option><option>UPCOM</option></select>
