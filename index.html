@@ -209,17 +209,8 @@
   </div>
 
   <div class="range-bar" id="rbar">
-    <button class="rbtn" data-r="7">1T</button>
-    <button class="rbtn" data-r="30">1M</button>
-    <button class="rbtn" data-r="90">3M</button>
-    <button class="rbtn on" data-r="365">1N</button>
-    <button class="rbtn" data-r="1095">3N</button>
-    <button class="rbtn" data-r="3650">10N</button>
-    <button class="rbtn" data-r="0">Tất cả</button>
-    <div class="rb-sep"></div>
     <button class="resbtn on" data-res="D">Ngày</button>
     <button class="resbtn" data-res="W">Tuần</button>
-    <button class="resbtn" data-res="M">Tháng</button>
     <div class="rb-right">
       <span class="ctb-lbl">MA:</span>
       <button class="ma-toggle" id="ma20-toggle" data-ma="20">MA20</button>
@@ -279,7 +270,9 @@ let STOCKS = [], SMAP = {};
 let exFilter = 'ALL';
 let acItems = [], acIdx = -1;
 let curTicker = null, curExchange = null;
-let rangeDays = 365, resolution = 'D';
+let rangeDays = 0, resolution = 'D';   // 0 = nạp toàn bộ lịch sử; khung nhìn ban đầu do VIEW_BARS quyết định
+const VIEW_BARS = 40;   // số nến hiển thị mặc định khi mở một mã (kéo sang trái để xem thêm)
+const RIGHT_PAD = 30;   // số ô nến để trống bên phải cây nến cuối
 let ma20On = false, ma50On = false;
 let lastCandles = null, reqId = 0;
 let mainChart = null, volChart = null;
@@ -427,7 +420,9 @@ async function loadChartData() {
   lastCandles = candles;
   renderMA(candles);
   if (typeof renderIndicators === 'function') renderIndicators(candles, fullCandles || candles);
-  mainChart.timeScale().fitContent();
+  // khung nhìn mặc định: VIEW_BARS nến + RIGHT_PAD ô trống bên phải (nến cuối có chỉ số n-1)
+  const nC = candles.length;
+  mainChart.timeScale().setVisibleLogicalRange({ from: Math.max(0, nC - VIEW_BARS), to: nC - 1 + RIGHT_PAD });
   showState('chart');
   document.getElementById('ohlc').style.display = 'flex';
 }
