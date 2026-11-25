@@ -51,16 +51,17 @@
     body.scan-open .app{width:100vw;height:calc(100vh - var(--scan-h));height:calc(100dvh - var(--scan-h))}
     #scan{top:auto;bottom:0;left:0;right:0;width:100vw;min-width:0;height:var(--scan-h);
       border-left:0;border-top:1px solid var(--border)}
-    .scan-h{padding:3px 10px;font-size:12px}
-    .scan-h .scan-btn{padding:1px 8px}
-    .scan-f{grid-template-columns:1fr 1fr 1fr;gap:6px;padding:4px 10px;font-size:10px}
-    .scan-f label{gap:1px}
+    .scan-h{padding:2px 10px;font-size:11px}
+    .scan-h .scan-btn{padding:0 7px;font-size:10px}
+    #scan-toggle{padding:3px 8px;font-size:10px}
+    .scan-f{grid-template-columns:1fr 1fr 1fr;gap:5px;padding:3px 10px;font-size:9px}
+    .scan-f label{gap:0}
     .scan-f label[style]{grid-column:auto !important}
-    .scan-f input,.scan-f select{padding:2px 5px;font-size:12px}
-    #scan-info{padding:3px 10px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .sc-row{padding:4px 10px;gap:6px;font-size:11px;grid-template-columns:44px 1fr auto}
-    .sc-row b{font-size:12px}
-    .sc-empty{padding:8px 10px}
+    .scan-f input,.scan-f select{padding:1px 4px;font-size:11px}
+    #scan-info{padding:2px 10px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sc-row{padding:3px 10px;gap:6px;font-size:10px;grid-template-columns:40px 1fr auto}
+    .sc-row b{font-size:11px}
+    .sc-empty{padding:6px 10px;font-size:10px}
   }`;
   document.head.appendChild(style);
 
