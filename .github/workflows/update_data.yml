@@ -2,16 +2,21 @@ name: Update Vietnamese Stock Data
 
 on:
   schedule:
-    # Chạy vào lúc 18:30 UTC = 01:30 sáng giờ Việt Nam (sau khi chốt phiên cuối ngày)
+    # 18:30 UTC = 01:30 sáng giờ Việt Nam (sau phiên cuối ngày), thứ 2 - thứ 6
     - cron: '30 18 * * 1-5'
-  workflow_dispatch: # Cho phép nhấn chạy thủ công bằng tay
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: stock-data
+  cancel-in-progress: false
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,11 +27,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          pip install requests yfinance pandas
+        run: pip install requests yfinance pandas
 
       - name: Fetch stock data
-        run: python scripts/fetch_stocks.py
+        run: python scripts/fetch_data.py
+
+      - name: Build screener index
+        run: python scripts/build_screener.py
 
       - name: Commit & push data files
         run: |
