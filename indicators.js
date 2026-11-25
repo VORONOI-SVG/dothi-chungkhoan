@@ -11,7 +11,9 @@
 
 /* ─── CẤU HÌNH (đổi số ở đây) ─── */
 const CFG = {
-  paneHeight: 'clamp(80px, 13vh, 130px)', // chiều cao mỗi panel chỉ báo
+  paneHeight: 110,   // chiều cao mặc định mỗi panel chỉ báo (px) — kéo thanh giữa các panel để đổi
+  minPane: 50,       // chiều cao tối thiểu của panel chỉ báo (px)
+  minMain: 140,      // chiều cao tối thiểu của khung nến (px)
   priceScaleWidth: 72,                    // bề rộng trục giá, giữ các panel thẳng hàng
   showMainTimeAxis: false,                // false: chỉ panel cuối hiện trục thời gian
   vo:  { s: 6, l: 27, l2: 72, l3: 234, f1: 3, f2: 2, f3: 4, micro: 6 },
@@ -259,8 +261,14 @@ let sVO = {}, sAIR = {}, sKV = {};
 function injectCSS() {
   const st = document.createElement('style');
   st.textContent = `
-    #chart{min-height:200px}
-    .ind-pane{flex:0 0 ${CFG.paneHeight};position:relative;min-height:0;border-top:1px solid var(--border)}
+    #chart{min-height:${CFG.minMain}px}
+    .ind-pane{flex:0 0 ${CFG.paneHeight}px;position:relative;min-height:0;overflow:hidden}
+    .ind-split{flex:0 0 7px;position:relative;z-index:6;cursor:row-resize;touch-action:none;
+      background:var(--border);transition:background .15s}
+    .ind-split::after{content:'';position:absolute;left:50%;top:2px;width:36px;height:3px;margin-left:-18px;
+      border-radius:2px;background:var(--muted);opacity:.5}
+    .ind-split:hover,.ind-split.drag{background:var(--accent)}
+    .ind-split:hover::after,.ind-split.drag::after{background:#000;opacity:.6}
     .ind-legend{position:absolute;left:8px;top:3px;z-index:3;font-size:11px;line-height:1.4;
       pointer-events:none;white-space:nowrap;color:var(--muted)}
     .ind-legend b{color:var(--text);margin-right:6px}
@@ -288,14 +296,18 @@ function build() {
   injectCSS();
   let anchor = document.getElementById('vol-chart');
   for (let i = 0; i < 3; i++) {
+    const sp = document.createElement('div');            // thanh kéo phía trên mỗi panel
+    sp.className = 'ind-split'; sp.title = 'Kéo để đổi kích thước panel';
+    anchor.after(sp); anchor = sp;
     const el = document.createElement('div');
     el.className = 'ind-pane'; el.id = 'ind-p' + i;
     const lg = document.createElement('div'); lg.className = 'ind-legend';
     anchor.after(el); anchor = el;
     const chart = mkChart(el, i === 2);
     el.appendChild(lg);
-    panes.push({ el, chart, lg });
+    panes.push({ el, chart, lg, sp, h: CFG.paneHeight });
   }
+  setupSplitters();
   mainChart.applyOptions({
     rightPriceScale: { minimumWidth: CFG.priceScaleWidth },
     timeScale: { visible: CFG.showMainTimeAxis },
@@ -344,6 +356,53 @@ function build() {
   linkCharts();
   mainReady = true;
   paintLegends(null);
+}
+
+/* ─── kéo thanh ngang giữa các panel để đổi kích thước ─── */
+function setupSplitters() {
+  const area = document.getElementById('chart-area');
+  const SP = 7;                                            // bề dày thanh kéo (px), khớp CSS
+  const apply = () => panes.forEach(p => { p.el.style.flex = `0 0 ${Math.round(p.h)}px`; });
+  const maxTotal = () => area.clientHeight - panes.length * SP - CFG.minMain;
+  const fit = () => {                                      // cửa sổ thấp lại → thu nhỏ các panel từ dưới lên
+    let over = panes.reduce((s, p) => s + p.h, 0) - maxTotal();
+    for (let i = panes.length - 1; i >= 0 && over > 0; i--) {
+      const cut = Math.min(over, panes[i].h - CFG.minPane);
+      if (cut > 0) { panes[i].h -= cut; over -= cut; }
+    }
+    apply();
+  };
+  panes.forEach((p, i) => {
+    const A = i > 0 ? panes[i - 1] : null, B = p;          // A: panel phía trên thanh (null = khung nến)
+    let y0 = 0, hA = 0, hB = 0, dragging = false;
+    p.sp.addEventListener('pointerdown', e => {
+      dragging = true; y0 = e.clientY; hA = A ? A.h : 0; hB = B.h;
+      p.sp.setPointerCapture(e.pointerId); p.sp.classList.add('drag');
+      document.body.style.userSelect = 'none'; e.preventDefault();
+    });
+    p.sp.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const dy = e.clientY - y0;
+      if (!A) {                                            // giữa khung nến và panel 1: kéo lên → panel 1 cao hơn
+        const others = panes.reduce((s, q) => s + (q === B ? 0 : q.h), 0);
+        B.h = Math.max(CFG.minPane, Math.min(hB - dy, maxTotal() - others));
+      } else {                                             // giữa 2 panel chỉ báo: tổng chiều cao 2 panel giữ nguyên
+        const tot = hA + hB;
+        A.h = Math.max(CFG.minPane, Math.min(hA + dy, tot - CFG.minPane));
+        B.h = tot - A.h;
+      }
+      apply();
+    });
+    const end = e => {
+      if (!dragging) return;
+      dragging = false; p.sp.classList.remove('drag'); document.body.style.userSelect = '';
+      try { p.sp.releasePointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ }
+    };
+    p.sp.addEventListener('pointerup', end);
+    p.sp.addEventListener('pointercancel', end);
+  });
+  window.addEventListener('resize', fit);
+  apply(); fit();
 }
 
 /* ─── đồng bộ trục thời gian + crosshair giữa mainChart và 3 panel ─── */
