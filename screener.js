@@ -54,7 +54,7 @@
     .scan-h{padding:2px 10px;font-size:11px}
     .scan-h .scan-btn{padding:0 7px;font-size:10px}
     #scan-toggle{padding:3px 8px;font-size:10px}
-    .scan-f{grid-template-columns:1fr 1fr 1fr;gap:5px;padding:3px 10px;font-size:9px}
+    .scan-f{grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;padding:3px 10px;font-size:9px}
     .scan-f label{gap:0}
     .scan-f label[style]{grid-column:auto !important}
     .scan-f input,.scan-f select{padding:1px 4px;font-size:11px}
@@ -73,8 +73,11 @@
     <div class="scan-f">
       <label>Volume &gt;<input id="f-vol" type="number" value="5000" step="1000" min="0"></label>
       <label>Williams %R &gt;<input id="f-wr" type="number" value="-60" step="1" min="-100" max="0"></label>
-      <label style="grid-column:1/3">Sàn
+      <label>Sàn
         <select id="f-ex"><option value="ALL">Tất cả</option><option>HOSE</option><option>HNX</option><option>UPCOM</option></select>
+      </label>
+      <label>AIR Vortex ADX
+        <select id="f-air"><option value="ALL">Tất cả</option><option value="G">Xanh</option></select>
       </label>
     </div>
     <div id="scan-info">Đang tải danh sách…</div>
@@ -160,6 +163,48 @@
     render();
   }
 
+  /* ── Điều kiện AIR Vortex ADX (cột xanh ở nến cuối) ──
+     Cần toàn bộ lịch sử nên chỉ tải file của các mã đã qua các điều kiện khác, và chỉ khi bật lọc "Xanh". */
+  const AIR = {};                         // mã → 'g' | 'r' | 'n' | 'x' (lỗi)
+  const airQ = [], airSeen = new Set();
+  let airRun = 0, airDone = 0;
+
+  async function airOne(t) {
+    try {
+      if (typeof window.vnAirStatus !== 'function') return 'x';
+      const res = await fetchWithTimeout(`data/${encodeURIComponent(t)}.json`, 10000);
+      if (!res.ok) return 'x';
+      const j = JSON.parse(clean(await res.text()));
+      const raw = Array.isArray(j) ? j : (j && j.candles);
+      if (!Array.isArray(raw)) return 'x';
+      const rows = [];
+      for (const r of raw) {
+        if (!Array.isArray(r) || r.length < 5) continue;
+        const o = +r[1], h = +r[2], l = +r[3], c = +r[4], v = +r[5];
+        if (!(o > 0 && h > 0 && l > 0 && c > 0)) continue;
+        rows.push([r[0], o, h, l, c, isFinite(v) && v > 0 ? v : 0]);
+      }
+      rows.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+      const C = rows.map((r, i) => ({ time: i, open: r[1], high: r[2], low: r[3], close: r[4], volume: r[5] }));
+      return window.vnAirStatus(C);
+    } catch (e) { return 'x'; }
+  }
+  function pumpAir() {
+    while (airRun < 6 && airQ.length) {
+      const t = airQ.shift();
+      airRun++;
+      airOne(t).then(s => { AIR[t] = s; }).finally(() => {
+        airRun--; airDone++;
+        if ((!airQ.length && airRun === 0) || airDone % 10 === 0) render();
+        pumpAir();
+      });
+    }
+  }
+  function queueAir(t) {
+    if (airSeen.has(t)) return;
+    airSeen.add(t); airQ.push(t); pumpAir();
+  }
+
   /* ── Hiển thị: tự lọc theo điều kiện, không cần bấm gì ── */
   function render() {
     const minVol = parseFloat($('f-vol').value) || 0;
@@ -172,14 +217,22 @@
     SCREEN.forEach(r => { cntD[r.d] = (cntD[r.d] || 0) + 1; });
     const latest = Object.keys(cntD).sort((a, b) => cntD[b] - cntD[a] || (a < b ? 1 : -1))[0] || '';
 
-    const out = SCREEN
+    const base = SCREEN
       .filter(r => r.d === latest && r.wr !== null && r.v > minVol && r.wr > minWr &&
                    (ex === 'ALL' || r.ex === ex))
       .sort((a, b) => b.v - a.v);
 
+    let out = base, airPending = 0;
+    if ($('f-air').value === 'G') {
+      base.forEach(r => { if (!(r.t in AIR)) queueAir(r.t); });
+      airPending = base.filter(r => !(r.t in AIR)).length;
+      out = base.filter(r => AIR[r.t] === 'g');
+    }
+
     $('scan-info').textContent =
       `${out.length} mã phù hợp / ${SCREEN.length} mã có dữ liệu` +
       (scanning ? ` · đang quét ${scanDone}/${scanTotal}…` : '') +
+      (airPending ? ` · đang tính AIR (còn ${airPending})…` : '') +
       (latest ? ` · phiên ${latest}` : '') + ' · %R(14)';
 
     const box = $('scan-list');
@@ -187,7 +240,7 @@
     if (!out.length) {
       const e = document.createElement('div');
       e.className = 'sc-empty';
-      e.textContent = scanning ? 'Đang quét dữ liệu…' : 'Không có mã nào thỏa điều kiện.';
+      e.textContent = (scanning || airPending) ? 'Đang quét dữ liệu…' : 'Không có mã nào thỏa điều kiện.';
       box.appendChild(e);
       return;
     }
@@ -233,7 +286,7 @@
     }
   }
 
-  ['f-vol', 'f-wr', 'f-ex'].forEach(id => $(id).addEventListener('input', render));
+  ['f-vol', 'f-wr', 'f-ex', 'f-air'].forEach(id => $(id).addEventListener('input', render));
 
   // index.html gọi fetchTickerList() khi khởi động
   window.fetchTickerList = loadList;
