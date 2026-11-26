@@ -636,5 +636,15 @@ window.renderIndicators = function (candles, full) {
   scheduleBands();
 };
 
+/* Cho bộ lọc (screener.js) hỏi trạng thái AIR Vortex ADX ở nến cuối:
+   'g' = cột histogram xanh (cả xanh sáng "buy" lẫn xanh đậm), 'r' = đỏ, 'n' = không màu */
+window.vnAirStatus = function (C) {
+  if (!C || C.length < 60) return 'n';
+  const col = calcAIR(C).histCol[C.length - 1];
+  if (col === GR || col === hexA(UPc, 0.65)) return 'g';
+  if (col === RD || col === hexA(DNc, 0.65)) return 'r';
+  return 'n';
+};
+
 document.addEventListener('DOMContentLoaded', build);
 })();
