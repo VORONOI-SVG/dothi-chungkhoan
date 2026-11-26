@@ -77,7 +77,7 @@
         <select id="f-ex"><option value="ALL">Tất cả</option><option>HOSE</option><option>HNX</option><option>UPCOM</option></select>
       </label>
       <label>AIR Vortex ADX
-        <select id="f-air"><option value="ALL">Tất cả</option><option value="G">Xanh</option></select>
+        <select id="f-air"><option value="G" selected>Xanh</option><option value="ALL">Tất cả</option></select>
       </label>
     </div>
     <div id="scan-info">Đang tải danh sách…</div>
